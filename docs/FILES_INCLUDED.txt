@@ -1,0 +1,9 @@
+app/Http/Controllers/CustomerOrderController.php
+app/Http/Controllers/SettingController.php
+routes/web.php
+resources/views/layout/web.blade.php
+resources/views/layout/admin.blade.php
+resources/views/website/main.blade.php
+resources/views/website/shop.blade.php
+resources/views/admin/meanleap/setting.blade.php
+README_UPDATE.md
