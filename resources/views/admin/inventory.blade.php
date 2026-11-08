@@ -240,6 +240,10 @@
         </button>
     </div>
 
+    <div class="d-flex justify-content-end mb-3">
+        @include('admin.partials.export-actions', ['exportType' => 'inventory'])
+    </div>
+
     <div class="inv-card">
 
         @if(session('success'))
@@ -260,15 +264,22 @@
                 @endforeach
             </select>
 
+            <select name="category_id" class="form-select" aria-label="Category">
+                <option value="">All categories</option>
+                @foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id') == $category->category_id)>{{ $category->category_name }}</option>@endforeach
+            </select>
             <select name="type" id="filterType" class="form-select">
                 <option value="">All types</option>
                 <option value="in" @selected(request('type') == 'in')>Stock In</option>
                 <option value="out" @selected(request('type') == 'out')>Stock Out</option>
             </select>
-
+            <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" aria-label="From date">
+            <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" aria-label="To date">
+            <input type="search" name="search" class="form-control" value="{{ request('search') }}" placeholder="Search reason or note...">
+            <select name="sort_dir" class="form-select" aria-label="Sort by movement date"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select>
             <button type="submit" class="btn-search">Filter</button>
 
-            @if(request('product_id') || request('type'))
+            @if(request()->hasAny(['product_id','category_id','type','date_from','date_to','search']))
                 <a href="{{ route('inventory.index') }}" class="btn-clear">Clear</a>
             @endif
         </form>
@@ -390,7 +401,7 @@
 
                 <div class="mb-3">
                     <label class="form-label">Note (optional)</label>
-                    <textarea name="note" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+                    <textarea name="note" class="form-control" rows="2" placeholder="Additional details..." data-optional></textarea>
                 </div>
 
             </div>

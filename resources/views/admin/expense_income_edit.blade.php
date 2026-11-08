@@ -37,7 +37,7 @@
             </div>
             <div class="mt-3 mb-4">
                 <label class="form-label fw-semibold">Note <span class="text-muted fw-normal">(optional)</span></label>
-                <textarea name="note" rows="3" maxlength="2000" class="form-control">{{ old('note', $transaction->note) }}</textarea>
+                <textarea name="note" rows="3" maxlength="2000" class="form-control" data-optional>{{ old('note', $transaction->note) }}</textarea>
                 @error('note')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
             </div>
             <div class="d-flex justify-content-end gap-2">

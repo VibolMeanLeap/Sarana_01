@@ -15,12 +15,12 @@
                     </div>
                     <div class="form-group">
                         <label for="phone">Phone</label>
-                        <input type="text" class="form-control form-control-rounded" id="phone" name="phone" value="{{ old('phone', $supplier->phone) }}">
+                        <input type="text" class="form-control form-control-rounded" id="phone" name="phone" value="{{ old('phone', $supplier->phone) }}" data-optional>
                         <p class="invalid-feedback m-0"></p>
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" class="form-control form-control-rounded" id="email" name="email" value="{{ old('email', $supplier->email) }}">
+                        <input type="email" class="form-control form-control-rounded" id="email" name="email" value="{{ old('email', $supplier->email) }}" data-optional>
                         <p class="invalid-feedback m-0"></p>
                     </div>
                     <div class="form-group row">

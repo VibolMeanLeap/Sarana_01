@@ -11,8 +11,22 @@ class DeliveryController extends Controller
     public function index(Request $request)
     {
         $deliveries = Delivery::with(['order.customer'])
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
-            ->latest('delivery_id')
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('start_date'), fn ($query) => $query->whereHas('order', fn ($orderQuery) => $orderQuery->whereDate('order_date', '>=', $request->input('start_date'))))
+            ->when($request->filled('end_date'), fn ($query) => $query->whereHas('order', fn ($orderQuery) => $orderQuery->whereDate('order_date', '<=', $request->input('end_date'))))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $term = trim((string) $request->input('search'));
+                $query->where(function ($nested) use ($term) {
+                    $nested->where('address', 'like', "%{$term}%")
+                        ->orWhere('order_id', 'like', "%{$term}%")
+                        ->orWhereHas('order.customer', fn ($customerQuery) => $customerQuery->where('name', 'like', "%{$term}%"));
+                });
+            })
+            ->when($request->input('sort_by') === 'delivery_id', fn ($query) => $query->orderBy('delivery_id', in_array($request->input('sort_dir'), ['asc', 'desc'], true) ? $request->input('sort_dir') : 'desc'), function ($query) use ($request) {
+                $direction = in_array($request->input('sort_dir'), ['asc', 'desc'], true) ? $request->input('sort_dir') : 'desc';
+                $query->orderBy(\App\Models\Order::query()->select('order_date')->whereColumn('orders.order_id', 'delivery.order_id'), $direction)
+                    ->orderByDesc('delivery_id');
+            })
             ->paginate(15)
             ->withQueryString();
 

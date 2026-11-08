@@ -177,7 +177,7 @@
 
                 <div class="cat-form-group">
                     <label for="description" class="cat-form-label">Description</label>
-                    <textarea name="description" id="description" class="cat-form-control" rows="4" placeholder="Enter description">{{ old('description') }}</textarea>
+                    <textarea name="description" id="description" class="cat-form-control" rows="4" placeholder="Enter description" data-optional>{{ old('description') }}</textarea>
                 </div>
 
                 <div class="cat-form-actions d-flex justify-content-center align-items-center gap-3 mt-3">

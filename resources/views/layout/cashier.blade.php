@@ -23,6 +23,8 @@
         @media(max-width:767px){.cashier-top{height:auto;min-height:70px;padding:12px 15px;gap:10px;align-items:flex-start;flex-direction:column}.cashier-nav{flex-wrap:wrap}.cashier-main{padding:20px 14px 32px}}
     </style>
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
 <body>
 <header class="cashier-top">
@@ -58,5 +60,8 @@
 @endif
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
+<script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
+<script src="{{ asset('assets/js/form-validation.js') }}"></script>
+<script src="{{ asset('assets/js/password-toggle.js') }}"></script>
 </body>
 </html>

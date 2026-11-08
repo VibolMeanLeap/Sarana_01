@@ -16,19 +16,26 @@ class PurchaseController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $purchases = Purchase::with(['supplier', 'product', 'user'])
-            ->when($search, function ($query) use ($search) {
-                $query->where('purchase_id', 'like', "%{$search}%")
-                    ->orWhereHas('product', fn ($productQuery) => $productQuery->where('product_name', 'like', "%{$search}%"))
-                    ->orWhereHas('supplier', fn ($supplierQuery) => $supplierQuery->where('name', 'like', "%{$search}%"));
+        $search = trim((string) $request->input('search', ''));
+        $query = Purchase::with(['supplier', 'product', 'user'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('purchase_id', 'like', "%{$search}%")
+                        ->orWhereHas('product', fn ($productQuery) => $productQuery->where('product_name', 'like', "%{$search}%"))
+                        ->orWhereHas('supplier', fn ($supplierQuery) => $supplierQuery->where('name', 'like', "%{$search}%"));
+                });
             })
-            ->latest('purchase_id')
-            ->paginate(15)
-            ->withQueryString();
+            ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->input('product_id')))
+            ->when($request->filled('supplier_id'), fn ($q) => $q->where('supplier_id', $request->input('supplier_id')))
+            ->when($request->filled('date_from'), fn ($q) => $q->whereDate('purchase_date', '>=', $request->input('date_from')))
+            ->when($request->filled('date_to'), fn ($q) => $q->whereDate('purchase_date', '<=', $request->input('date_to')));
+
+        $sortBy = in_array($request->input('sort_by'), ['purchase_date', 'purchase_id', 'quantity', 'cost_price'], true) ? $request->input('sort_by') : 'purchase_date';
+        $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $purchases = $query->orderBy($sortBy, $sortDirection)->orderByDesc('purchase_id')->paginate(15)->withQueryString();
 
         $suppliers = Supplier::orderBy('name')->get();
-        $products = Product::orderBy('product_name')->get();
+        $products = Product::where('product_type', 'stock')->orderBy('product_name')->get();
 
         return view('admin.purchase', compact('purchases', 'suppliers', 'products'));
     }
@@ -36,7 +43,7 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::orderBy('name')->get();
-        $products = Product::orderBy('product_name')->get();
+        $products = Product::where('product_type', 'stock')->orderBy('product_name')->get();
 
         return view('admin.purchase.create', compact('suppliers', 'products'));
     }
@@ -50,6 +57,11 @@ class PurchaseController extends Controller
             'cost_price' => 'required|numeric|min:0',
             'purchase_date' => 'required|date',
         ]);
+
+        $selectedProduct = Product::findOrFail($validated['product_id']);
+        if (! $selectedProduct->isStockTracked()) {
+            return back()->withInput()->withErrors(['product_id' => 'Purchases can only be recorded for Stock products.']);
+        }
 
         DB::transaction(function () use ($validated) {
             $product = Product::where('product_id', $validated['product_id'])
@@ -78,7 +90,7 @@ class PurchaseController extends Controller
     public function edit(Purchase $purchase)
     {
         $suppliers = Supplier::orderBy('name')->get();
-        $products = Product::orderBy('product_name')->get();
+        $products = Product::where('product_type', 'stock')->orderBy('product_name')->get();
 
         return view('admin.purchase.edit', compact('purchase', 'suppliers', 'products'));
     }
@@ -111,7 +123,7 @@ class PurchaseController extends Controller
 
             $oldProduct = $products->get($lockedPurchase->product_id);
             $newProduct = $products->get($validated['product_id']);
-            if (!$oldProduct || !$newProduct || (int) $oldProduct->qty < (int) $lockedPurchase->quantity) {
+            if (!$oldProduct || !$newProduct || ! $oldProduct->isStockTracked() || ! $newProduct->isStockTracked() || (int) $oldProduct->qty < (int) $lockedPurchase->quantity) {
                 return false;
             }
 

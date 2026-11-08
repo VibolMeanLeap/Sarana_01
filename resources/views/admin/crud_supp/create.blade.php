@@ -17,13 +17,13 @@
                     <div class="form-group">
                         <label for="phone">Phone</label>
                         <input type="text" class="form-control form-control-rounded" id="phone" name="phone"
-                            placeholder="Enter Your Mobile Number">
+                            placeholder="Enter Your Mobile Number" data-optional>
                         <p class="invalid-feedback m-0"></p>
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
                         <input type="email" class="form-control form-control-rounded" id="email" name="email"
-                            placeholder="Enter Your Email">
+                            placeholder="Enter Your Email" data-optional>
                         <p class="invalid-feedback m-0"></p>
                     </div>
                         <div class="form-group row">
@@ -78,7 +78,12 @@
 <script>
     const StoreSuppier = (buttonElement) => {
         let $form = $(buttonElement).closest('form');
-        let payloads = new FormData($form[0]); 
+        if (window.CoffeeCornerFormValidator && !window.CoffeeCornerFormValidator.validate($form[0])) {
+            return;
+        }
+
+        let payloads = new FormData($form[0]);
+        const originalLabel = $(buttonElement).text();
         $(buttonElement).prop('disabled', true).text('Creating...');
 
         $.ajax({
@@ -89,27 +94,26 @@
             contentType: false,
             processData: false,
             success: function (response) {
-                $(buttonElement).prop('disabled', false).text('Create');
-                $form.find('.form-control').removeClass('is-invalid');
-                $form.find('.invalid-feedback').removeClass('text-danger').text('');
+                $(buttonElement).prop('disabled', false).text(originalLabel);
+                $form.find('.form-control').removeClass('is-invalid cc-field-invalid').removeAttr('aria-invalid');
+                $form.find('.invalid-feedback').removeClass('text-danger d-block').text('');
+                $form.find('.cc-validation-summary').remove();
                 if (response.status == 201 || response.status == 200) {
                     $form.trigger('reset');
                     window.location.href = "{{ route('supplier.list') }}";
                 }
             },
             error: function (xhr) {
-                $(buttonElement).prop('disabled', false).text('Create');
-                $form.find('.form-control').removeClass('is-invalid');
-                $form.find('.invalid-feedback').removeClass('text-danger').text('');
+                $(buttonElement).prop('disabled', false).text(originalLabel);
+                $form.find('.form-control').removeClass('is-invalid cc-field-invalid').removeAttr('aria-invalid');
+                $form.find('.invalid-feedback').removeClass('text-danger d-block').text('');
+                $form.find('.cc-validation-summary').remove();
 
                 if (xhr.status === 422 || (xhr.responseJSON && xhr.responseJSON.errors)) {
-                    let errors = xhr.responseJSON.errors;
-                    
-                    $.each(errors, function (key, value) {
-                        let inputField = $form.find(`[name="${key}"]`);
-                        inputField.addClass('is-invalid');
-                        inputField.siblings('.invalid-feedback').addClass('text-danger').text(value[0] || value);
-                    });
+                    const errors = xhr.responseJSON?.errors || {};
+                    if (window.CoffeeCornerFormValidator) {
+                        window.CoffeeCornerFormValidator.showErrors($form[0], errors);
+                    }
                 } else {
                    
                     alert('Server error (500). Please check your storage/logs/laravel.log file.');

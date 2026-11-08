@@ -99,7 +99,7 @@ class PosController extends Controller
                     $product = $products->get((int) $item['product_id']);
                     $quantity = (int) $item['quantity'];
 
-                    if (! $product || (int) $product->qty < $quantity) {
+                    if (! $product || ($product->isStockTracked() && (int) $product->qty < $quantity)) {
                         throw ValidationException::withMessages([
                             'cart' => 'Not enough stock for '.($product?->product_name ?? 'one of the selected products').'. Please refresh and try again.',
                         ]);

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\OrderType;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -23,10 +24,13 @@ class OrderController extends Controller
             'source' => ['nullable', 'in:pos,website'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'sort_by' => ['nullable', 'in:order_date,order_id,final_price'],
+            'sort_dir' => ['nullable', 'in:asc,desc'],
+            'per_page' => ['nullable', 'integer', 'in:10,25,50,100'],
         ]);
 
         $query = Order::query()
-            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments'])
+            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'orderItems.product'])
             ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions']);
 
         $search = trim((string) ($validated['search'] ?? ''));
@@ -67,9 +71,18 @@ class OrderController extends Controller
             $query->whereDate('order_date', '<=', $validated['end_date']);
         }
 
-        $orders = $query->orderByDesc('order_date')
+        $sortBy = ['order_date' => 'order_date', 'order_id' => 'order_id', 'final_price' => 'final_price'][$validated['sort_by'] ?? 'order_date'];
+        $sortDirection = $validated['sort_dir'] ?? 'desc';
+        $perPage = (int) ($validated['per_page'] ?? 10);
+
+        // These totals are calculated before pagination so the table footer
+        // represents every record matching the active filters, not this page.
+        $filteredOrderCount = (clone $query)->count();
+        $filteredFinalTotal = (float) (clone $query)->sum(DB::raw('COALESCE(final_price, total_amount, 0)'));
+
+        $orders = $query->orderBy($sortBy, $sortDirection)
             ->orderByDesc('order_id')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         $summary = [
@@ -83,7 +96,7 @@ class OrderController extends Controller
                 ->sum('final_price'),
         ];
 
-        return view('admin.older', compact('orders', 'summary'));
+        return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage'));
     }
 
     // ============================================

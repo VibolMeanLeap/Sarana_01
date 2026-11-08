@@ -16,11 +16,21 @@
     .orders-panel { background:#fff; border:1px solid #e8eee9; border-radius:16px; box-shadow:0 5px 17px rgba(23,65,42,.035); overflow:hidden; }
     .orders-panel-head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:18px 20px; border-bottom:1px solid #edf1ee; }
     .orders-panel-title { font:800 16px 'Manrope',sans-serif; margin:0; color:#24332b; }
-    .orders-filter { display:grid; grid-template-columns:minmax(190px,1.5fr) repeat(4,minmax(130px,1fr)) auto auto; gap:9px; padding:16px 20px; border-bottom:1px solid #edf1ee; }
+    .orders-filter { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; padding:16px 20px; border-bottom:1px solid #edf1ee; }
     .orders-filter .form-control,.orders-filter .form-select { min-width:0; height:40px; font-size:12px; }
     .orders-filter .btn { height:40px; white-space:nowrap; font-size:12px; font-weight:700; }
     .orders-table-wrap { overflow-x:auto; }
-    .orders-table { width:100%; min-width:1380px; border-collapse:collapse; }
+    .order-summary-row { cursor:pointer; }
+    .order-summary-row:focus { outline:2px solid #8cb99d; outline-offset:-2px; }
+    .order-expand-hint { display:block; margin-top:3px; color:#8a978e; font-size:10px; font-weight:600; }
+    .order-expand-hint i { transition:transform .18s ease; }
+    .order-summary-row[aria-expanded="true"] .order-expand-hint i { transform:rotate(180deg); }
+    .order-items-detail > td { padding:0 !important; background:#f7faf8 !important; }
+    .order-items-panel { margin:10px 14px 14px; padding:14px 16px; border:1px solid #e1ebe4; border-radius:12px; background:#fff; }
+    .order-line-table thead th { color:#829087; font-size:10px; letter-spacing:.5px; text-transform:uppercase; border-bottom:1px solid #edf1ee; }
+    .order-line-table tbody td { font-size:11px; padding:9px 8px; }
+
+    .orders-table { width:100%; min-width:1160px; border-collapse:collapse; }
     .orders-table thead th { padding:12px 13px; text-align:left; color:#89948d; font-size:10px; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; border-bottom:1px solid #edf1ee; }
     .orders-table tbody td { padding:13px; color:#4f5c54; font-size:12px; vertical-align:middle; border-bottom:1px solid #f0f3f0; }
     .orders-table tbody tr:hover { background:#fbfcfb; }
@@ -39,10 +49,19 @@
     .orders-actions .btn { font-size:11px; font-weight:700; }
     .items-link { color:#176b4b; font-weight:800; text-decoration:none; }
     .items-link:hover { color:#104d38; text-decoration:underline; }
-    .orders-pagination { padding:14px 20px; display:flex; justify-content:flex-end; }
+    .order-sub-link { display:inline-flex; align-items:center; gap:4px; margin-top:3px; color:#7b887f; font-size:10px; font-weight:700; text-decoration:none; }
+    .order-sub-link:hover { color:#176b4b; }
+    .status-pill.compact { min-width:42px; justify-content:center; padding:4px 7px; font-size:9px; letter-spacing:.25px; }
+    .orders-table tfoot td { padding:14px 13px; background:#f5f8f5; border-top:2px solid #dce8df; color:#26382e; font-size:12px; font-weight:800; }
+    .orders-table tfoot .grand-total { color:#176b4b; font-size:15px; white-space:nowrap; }
+    .orders-pagination { padding:13px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
     .orders-pagination .pagination { margin:0; }
+    .orders-pagination-info { color:#7c8980; font-size:11px; }
+    .orders-filter .wide-search { grid-column:span 2; }
+    .orders-filter .per-page-select { min-width:90px; }
+
     @media(max-width:1100px) { .orders-filter { grid-template-columns:repeat(3,minmax(0,1fr)); } }
-    @media(max-width:700px) { .orders-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } .orders-filter { grid-template-columns:repeat(2,minmax(0,1fr)); padding:13px; } .orders-filter .search-control { grid-column:1/-1; } }
+    @media(max-width:700px) { .orders-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } .orders-filter { grid-template-columns:repeat(2,minmax(0,1fr)); padding:13px; } .orders-filter .wide-search { grid-column:1/-1; } }
 </style>
 @endpush
 
@@ -81,7 +100,7 @@
         </div>
 
         <form action="{{ route('admin.orders.index') }}" method="GET" class="orders-filter" id="ordersFilterForm">
-            <input class="form-control search-control" type="text" name="search" placeholder="Order ID, customer, phone, cashier, transaction..." value="{{ request('search') }}">
+            <input class="form-control search-control wide-search" type="text" name="search" placeholder="Order ID, customer, phone, cashier, transaction..." value="{{ request('search') }}">
             <select class="form-select" name="payment_status" aria-label="Payment status">
                 <option value="">All payments</option>
                 <option value="paid" @selected(request('payment_status', request('status')) === 'paid')>Paid</option>
@@ -100,17 +119,28 @@
             </select>
             <input class="form-control" type="date" name="start_date" aria-label="Start date" value="{{ request('start_date') }}">
             <input class="form-control" type="date" name="end_date" aria-label="End date" value="{{ request('end_date') }}">
+            <select class="form-select" name="sort_by" aria-label="Sort orders by"><option value="order_date" @selected(request('sort_by', 'order_date') === 'order_date')>Order date</option><option value="order_id" @selected(request('sort_by') === 'order_id')>Order number</option><option value="final_price" @selected(request('sort_by') === 'final_price')>Final total</option></select>
+            <select class="form-select" name="sort_dir" aria-label="Sort direction"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option><option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option></select>
+            <select class="form-select per-page-select" name="per_page" aria-label="Rows per page">
+                <option value="10" @selected(($perPage ?? 10) === 10)>10 / page</option>
+                <option value="25" @selected(($perPage ?? 10) === 25)>25 / page</option>
+                <option value="50" @selected(($perPage ?? 10) === 50)>50 / page</option>
+                <option value="100" @selected(($perPage ?? 10) === 100)>100 / page</option>
+            </select>
             <button type="submit" class="btn btn-success">Filter</button>
             <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary">Reset</a>
         </form>
 
+        <div class="px-3 px-md-4 py-3 d-flex justify-content-end">
+            @include('admin.partials.export-actions', ['exportType' => 'orders'])
+        </div>
         <div class="orders-table-wrap">
             <table class="orders-table">
                 <thead>
                     <tr>
                         <th>Order</th><th>Customer</th><th>Phone</th><th>Cashier</th><th>Type</th><th>Source</th>
-                        <th>Items</th><th>Subtotal</th><th>Discount</th><th>Final price</th><th>Payment method</th>
-                        <th>Payment</th><th>Order status</th><th>Date</th><th>Actions</th>
+                        <th>Subtotal</th><th>Discount</th><th>Final</th><th>Method</th>
+                        <th>Payment</th><th>Status</th><th>Date</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,20 +157,26 @@
                             && (int) $row->cash_transactions_count === 0;
                         $nextStatus = ['pending' => 'confirmed', 'confirmed' => 'preparing', 'preparing' => 'ready', 'ready' => 'completed'][$orderStatus] ?? null;
                     @endphp
-                    <tr>
-                        <td><span class="order-id">#{{ $row->order_id }}</span></td>
+                    <tr class="order-summary-row" data-order-row="{{ $row->order_id }}" tabindex="0" aria-expanded="false" title="Click anywhere on this row to view sold items">
+                        <td>
+                            <span class="order-id">#{{ $row->order_id }}</span>
+                            <span class="order-expand-hint"><i class="bi bi-chevron-down"></i> {{ (int) $row->order_items_count }} items</span>
+                        </td>
                         <td>{{ $row->customer?->name ?: 'Walk-in' }}</td>
                         <td>{{ $row->customer?->phone ?: '—' }}</td>
                         <td>{{ $row->cashier?->name ?: 'Website' }}</td>
                         <td>{{ $row->orderType?->order_name ?: '—' }}</td>
                         <td><span class="status-pill {{ $row->order_source === 'website' ? 'confirmed' : 'ready' }}">{{ ucfirst($row->order_source ?: 'pos') }}</span></td>
-                        <td><a class="items-link" href="{{ route('admin.older_items', ['order_id' => $row->order_id]) }}">{{ (int) $row->order_items_count }} · View</a></td>
                         <td>${{ number_format((float) $row->total_amount, 2) }}</td>
                         <td>{{ number_format((float) $row->discount, 2) }}%</td>
                         <td class="fw-bold">${{ number_format((float) $row->final_price, 2) }}</td>
                         <td>{{ $row->paymentMethod?->payment_name ?: ($payment?->provider === 'aba_payway' ? 'ABA KHQR' : '—') }}</td>
-                        <td><span class="status-pill {{ $paymentStatus }}">{{ str_replace('_', ' ', ucfirst($paymentStatus)) }}</span></td>
-                        <td><span class="status-pill {{ in_array($orderStatus, $orderStatuses, true) ? $orderStatus : 'pending' }}">{{ str_replace('_', ' ', ucfirst($orderStatus)) }}</span></td>
+                        @php
+                            $paymentShort = ['paid' => 'PAID', 'unpaid' => 'UNPD', 'pending' => 'PEND', 'failed' => 'FAIL', 'declined' => 'DECL', 'expired' => 'EXP', 'review_required' => 'REVIEW'][$paymentStatus] ?? strtoupper(substr($paymentStatus, 0, 5));
+                            $orderShort = ['pending' => 'PEND', 'confirmed' => 'CONF', 'preparing' => 'PREP', 'ready' => 'READY', 'completed' => 'DONE', 'cancelled' => 'CXL'][$orderStatus] ?? strtoupper(substr($orderStatus, 0, 5));
+                        @endphp
+                        <td><span class="status-pill compact {{ $paymentStatus }}" title="Payment: {{ str_replace('_', ' ', ucfirst($paymentStatus)) }}" aria-label="Payment: {{ str_replace('_', ' ', ucfirst($paymentStatus)) }}">{{ $paymentShort }}</span></td>
+                        <td><span class="status-pill compact {{ in_array($orderStatus, $orderStatuses, true) ? $orderStatus : 'pending' }}" title="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}" aria-label="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}">{{ $orderShort }}</span></td>
                         <td>{{ $row->order_date?->format('d M Y, h:i A') ?: '—' }}</td>
                         <td>
                             <div class="orders-actions">
@@ -171,13 +207,87 @@
                             </div>
                         </td>
                     </tr>
+                    <tr class="order-items-detail d-none" id="order-items-{{ $row->order_id }}">
+                        <td colspan="14">
+                            <div class="order-items-panel">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                    <div>
+                                        <strong>Items sold in order #{{ $row->order_id }}</strong>
+                                        <span class="text-muted small ms-2">{{ $row->orderItems->count() }} line(s)</span>
+                                    </div>
+                                    <strong class="text-success">Order total: ${{ number_format((float) ($row->final_price ?? $row->total_amount), 2) }}</strong>
+                                </div>
+                                @if($row->orderItems->isNotEmpty())
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle mb-0 order-line-table">
+                                            <thead><tr><th>Product</th><th>Type</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Line total</th></tr></thead>
+                                            <tbody>
+                                            @foreach($row->orderItems as $line)
+                                                <tr>
+                                                    <td>{{ $line->product?->product_name ?? ('Deleted product #'.($line->product_id ?? '')) }}</td>
+                                                    <td><span class="badge {{ $line->product && $line->product->isStockTracked() ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $line->product ? ($line->product->isStockTracked() ? 'Stock' : 'Non-stock') : 'Archived' }}</span></td>
+                                                    <td class="text-end">{{ number_format((int) $line->quantity) }}</td>
+                                                    <td class="text-end">${{ number_format((float) $line->price, 2) }}</td>
+                                                    <td class="text-end fw-semibold">${{ number_format((float) $line->price * (int) $line->quantity, 2) }}</td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="text-muted small py-2">No line items were recorded for this order.</div>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
                 @empty
-                    <tr><td colspan="15" class="text-center text-muted py-5">No orders match these filters.</td></tr>
+                    <tr><td colspan="14" class="text-center text-muted py-5">No orders match these filters.</td></tr>
                 @endforelse
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="8">FILTERED FINAL TOTAL <span class="text-muted fw-normal">({{ number_format($filteredOrderCount ?? 0) }} matching orders · all pages)</span></td>
+                        <td class="grand-total">${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
+                        <td colspan="5"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
-        <div class="orders-pagination">{{ $orders->links('pagination::bootstrap-5') }}</div>
+        <div class="orders-pagination">
+            <div class="orders-pagination-info">
+                Showing {{ $orders->firstItem() ?? 0 }}–{{ $orders->lastItem() ?? 0 }} of {{ number_format($orders->total()) }} orders
+            </div>
+            {{ $orders->links('pagination::bootstrap-5') }}
+        </div>
     </section>
 </div>
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleOrderDetails = (row) => {
+        const orderId = row.dataset.orderRow;
+        const detail = document.getElementById(`order-items-${orderId}`);
+        if (!detail) return;
+        const opening = detail.classList.contains('d-none');
+        detail.classList.toggle('d-none', !opening);
+        row.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    };
+    document.querySelectorAll('[data-order-row]').forEach(row => {
+        row.addEventListener('click', event => {
+            if (event.target.closest('a,button,form,input,select,textarea,label')) return;
+            toggleOrderDetails(row);
+        });
+        row.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                if (event.target !== row && event.target.closest('a,button,form,input,select,textarea,label')) return;
+                event.preventDefault();
+                toggleOrderDetails(row);
+            }
+        });
+    });
+});
+</script>
+@endsection
+
 @endsection

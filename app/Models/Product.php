@@ -50,4 +50,11 @@ class Product extends Model
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'supplier_id');
     }
+
+    /** Stock-tracked unless explicitly classified as non-stock. Legacy Drink/Food values remain stock-tracked. */
+    public function isStockTracked(): bool
+    {
+        $type = strtolower(trim((string) $this->product_type));
+        return ! in_array($type, ['non-stock', 'non stock', 'nonstock', 'no stock', 'service', 'digital', 'untracked'], true);
+    }
 }

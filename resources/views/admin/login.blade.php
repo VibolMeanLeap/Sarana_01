@@ -49,7 +49,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="password-input" class="auth-label">Password</label>
-                    <div class="auth-field"><i class="bi bi-key field-icon"></i><input id="password-input" type="password" name="password" class="form-control auth-input" placeholder="Enter your password" autocomplete="current-password" required><button class="auth-eye" type="button" id="toggle-password" aria-label="Show password"><i class="bi bi-eye" id="toggle-icon"></i></button></div>
+                    <div class="auth-field"><i class="bi bi-key field-icon"></i><input id="password-input" type="password" name="password" class="form-control auth-input" placeholder="Enter your password" autocomplete="current-password" required><button class="auth-eye" type="button" id="toggle-password" aria-label="Show password" aria-pressed="false" title="Show password"><i class="bi bi-eye" id="toggle-icon" aria-hidden="true"></i></button></div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mb-4"><div class="form-check auth-remember"><input class="form-check-input" type="checkbox" value="1" id="remember" name="remember"><label class="form-check-label" for="remember">Remember this device</label></div><span class="small text-muted"><i class="bi bi-person-badge me-1"></i>Staff only</span></div>
                 <button type="submit" class="btn auth-submit w-100">Sign in to workspace <i class="bi bi-arrow-right ms-2"></i></button>
@@ -65,11 +65,18 @@
     const input = document.getElementById('password-input');
     const button = document.getElementById('toggle-password');
     const icon = document.getElementById('toggle-icon');
-    button?.addEventListener('click', () => {
+    if (!input || !button || !icon || button.dataset.passwordToggleReady === '1') return;
+
+    button.dataset.passwordToggleReady = '1';
+    button.addEventListener('click', () => {
         const show = input.type === 'password';
         input.type = show ? 'text' : 'password';
-        icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        icon.classList.toggle('bi-eye', !show);
+        icon.classList.toggle('bi-eye-slash', show);
         button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        button.setAttribute('title', show ? 'Hide password' : 'Show password');
+        button.setAttribute('aria-pressed', show ? 'true' : 'false');
+        input.focus({ preventScroll: true });
     });
 })();
 </script>

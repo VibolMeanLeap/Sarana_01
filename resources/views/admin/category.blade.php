@@ -175,12 +175,23 @@
             <i class="fa fa-plus"></i> Add New Category
         </a>
     </div>
+    <div class="d-flex justify-content-end mb-3">
+        @include('admin.partials.export-actions', ['exportType' => 'categories'])
+    </div>
 
     <div class="cat-card">
 
         <form action="{{ route('categories.index') }}" method="GET" class="cat-search-form">
             <input type="text" name="search" class="form-control" placeholder="Search category..." value="{{ request('search') }}">
-            <button class="btn-search" type="submit">Search</button>
+            <select name="sort_by" class="form-select ms-2" style="max-width:190px;height:42px;border-radius:8px" aria-label="Sort categories">
+                <option value="category_id" @selected(request('sort_by', 'category_id') === 'category_id')>Recently added</option>
+                <option value="category_name" @selected(request('sort_by') === 'category_name')>Category name</option>
+            </select>
+            <select name="sort_dir" class="form-select ms-2" style="max-width:145px;height:42px;border-radius:8px" aria-label="Sort direction">
+                <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option>
+                <option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option>
+            </select>
+            <button class="btn-search ms-2" type="submit">Search</button>
 
             @if(request('search'))
                 <a href="{{ route('categories.index') }}" class="btn-clear">Cancel</a>

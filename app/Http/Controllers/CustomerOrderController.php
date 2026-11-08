@@ -31,7 +31,7 @@ class CustomerOrderController extends Controller
         $products = Product::query()
             ->with('category')
             ->where('status', 'Active')
-            ->where('qty', '>', 0)
+            ->where(function ($query) { $query->where('qty', '>', 0)->orWhereRaw("LOWER(TRIM(COALESCE(product_type, ''))) IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')"); })
             ->orderByDesc('product_id')
             ->limit(8)
             ->get();
@@ -50,7 +50,7 @@ class CustomerOrderController extends Controller
         $products = Product::query()
             ->with('category')
             ->where('status', 'Active')
-            ->where('qty', '>', 0)
+            ->where(function ($query) { $query->where('qty', '>', 0)->orWhereRaw("LOWER(TRIM(COALESCE(product_type, ''))) IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')"); })
             ->orderBy('category_id')
             ->orderBy('product_name')
             ->paginate(12);
@@ -62,7 +62,7 @@ class CustomerOrderController extends Controller
             ->activeNow()
             ->whereHas('product', fn ($query) => $query
                 ->where('status', 'Active')
-                ->where('qty', '>', 0))
+                ->where(function ($productQuery) { $productQuery->where('qty', '>', 0)->orWhereRaw("LOWER(TRIM(COALESCE(product_type, ''))) IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')"); }))
             ->orderByDesc('discount')
             ->get();
 
@@ -89,13 +89,13 @@ class CustomerOrderController extends Controller
             return back()->with('cart_error', 'This product is no longer available. Please refresh the menu.');
         }
 
-        if ((int) $product->qty < 1) {
+        if ($product->isStockTracked() && (int) $product->qty < 1) {
             return back()->with('cart_error', 'This product is currently out of stock.');
         }
 
         $cart = (array) $request->session()->get('web_cart', []);
         $currentQuantity = (int) ($cart[$productId] ?? 0);
-        if ($currentQuantity + 1 > (int) $product->qty) {
+        if ($product->isStockTracked() && $currentQuantity + 1 > (int) $product->qty) {
             return back()->with('cart_error', 'You cannot add more than the available stock.');
         }
 
@@ -113,7 +113,7 @@ class CustomerOrderController extends Controller
             ->where('status', 'Active')
             ->firstOrFail();
 
-        if ((int) $validated['quantity'] > (int) $product->qty) {
+        if ($product->isStockTracked() && (int) $validated['quantity'] > (int) $product->qty) {
             return back()->with('cart_error', 'Requested quantity exceeds available stock.');
         }
 
@@ -217,7 +217,7 @@ class CustomerOrderController extends Controller
                 foreach ($cart as $productId => $quantity) {
                     $product = $products->get((int) $productId);
                     $quantity = (int) $quantity;
-                    if (! $product || $quantity < 1 || $quantity > (int) $product->qty) {
+                    if (! $product || $quantity < 1 || ($product->isStockTracked() && $quantity > (int) $product->qty)) {
                         throw ValidationException::withMessages(['cart' => 'There is not enough stock for '.($product?->product_name ?? 'a selected product').'.']);
                     }
                     $offer = $activeOffers->get((int) $productId);

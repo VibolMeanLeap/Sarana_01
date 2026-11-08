@@ -12,6 +12,8 @@
         body{background:var(--pos-bg);color:var(--pos-ink);font-family:Inter,'Segoe UI',sans-serif;font-size:14px}.pos-navbar{min-height:70px;background:#fff;border-bottom:1px solid var(--pos-line)}.pos-brand{font-weight:800;letter-spacing:-.5px;color:var(--pos-ink);text-decoration:none}.pos-mark{width:38px;height:38px;border-radius:12px;background:var(--pos-green);color:#fff;display:grid;place-items:center;font-size:18px}.pos-main{padding:26px 28px;max-width:1800px;margin:auto}.pos-panel{background:#fff;border:1px solid var(--pos-line);border-radius:16px;box-shadow:0 4px 16px rgba(29,57,39,.035)}.product-card{position:relative;border:1px solid var(--pos-line);border-radius:13px;padding:12px;background:#fff;min-height:190px;height:100%;cursor:pointer;transition:.18s;display:flex;flex-direction:column}.product-card:hover{border-color:#81b99a;box-shadow:0 8px 18px rgba(24,81,52,.09);transform:translateY(-2px)}.product-card.is-out{opacity:.55;cursor:not-allowed}.product-image{width:100%;height:102px;object-fit:cover;border-radius:9px;background:#f1f5f2}.product-placeholder{height:102px;border-radius:9px;background:#f1f5f2;color:#8ba897;display:grid;place-items:center;font-size:34px}.product-title{font-weight:700;font-size:13px;margin:10px 0 4px;line-height:1.3}.product-price{font-weight:800;color:var(--pos-green);margin-top:auto}.stock-pill{font-size:10px;border-radius:100px;padding:3px 7px;background:#eaf4ed;color:#347453}.stock-pill.out{background:#fdeceb;color:#b33f39}.category-btn{border:1px solid var(--pos-line);border-radius:11px;background:#fff;padding:10px 13px;color:#66736a;font-weight:700;white-space:nowrap}.category-btn.active,.category-btn:hover{background:#e9f4ee;color:var(--pos-green);border-color:#bcdac8}.search-box{border:1px solid var(--pos-line);border-radius:11px;padding:10px 13px;background:#fff}.search-box:focus{outline:2px solid #176b4b22;border-color:#7db79a}.checkout-panel{position:sticky;top:90px}.checkout-title{font-weight:800;font-size:17px}.cart-scroll{max-height:345px;overflow:auto}.qty-btn{width:25px;height:25px;border:1px solid #cfe1d5;border-radius:7px;background:#f6faf7;color:var(--pos-green);font-weight:800}.qty-btn:hover{background:#e5f2e9}.btn-pos{background:var(--pos-green);border-color:var(--pos-green);color:#fff;font-weight:700;border-radius:10px;padding:11px 14px}.btn-pos:hover{background:#105239;color:#fff}.btn-pos-outline{border:1px solid var(--pos-line);background:#fff;color:#46544b;border-radius:10px;font-weight:700;padding:10px 14px}.mini-label{font-size:11px;color:var(--pos-muted);font-weight:700;text-transform:uppercase;letter-spacing:.7px}.info-note{background:#eff7f1;border:1px solid #d8eade;border-radius:10px;color:#426b53;padding:10px 12px;font-size:12px;line-height:1.45}
         @media(max-width:991px){.pos-main{padding:18px}.checkout-panel{position:static}}@media(max-width:575px){.pos-main{padding:12px}.pos-navbar{padding:10px 0}}
     </style>
+    <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
 <body data-exchange-rate="{{ (float)($shopSettings?->exchange_rate ?: 4100) }}">
 @php
@@ -54,7 +56,7 @@
             <div class="modal-body pt-3">
                 <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-1" style="background:#f2f7f3"><span class="text-muted fw-semibold">Amount to collect</span><strong id="paymentPreviewTotal" class="fs-3" style="color:#176b4b">$0.00</strong></div>
                 <div class="text-end small text-muted mb-3">Approximately <strong id="paymentPreviewKhr">៛0</strong></div>
-                <div class="mb-3"><label for="checkoutCustomer" class="form-label fw-semibold">Customer</label><select class="form-select" name="customer_id" id="checkoutCustomer"><option value="">Walk-in customer</option>@foreach($customers as $customer)<option value="{{ $customer->customer_id }}">{{ $customer->name }} · {{ $customer->phone }}</option>@endforeach</select></div>
+                <div class="mb-3"><label for="checkoutCustomer" class="form-label fw-semibold">Customer</label><select class="form-select" name="customer_id" id="checkoutCustomer" data-optional><option value="">Walk-in customer</option>@foreach($customers as $customer)<option value="{{ $customer->customer_id }}">{{ $customer->name }} · {{ $customer->phone }}</option>@endforeach</select></div>
                 <div class="row g-3">
                     <div class="col-6"><label for="checkoutOrderType" class="form-label fw-semibold">Order type</label><select class="form-select" name="order_type_id" id="checkoutOrderType" required>@foreach($orderTypes as $type)<option value="{{ $type->order_type_id }}" @selected(strtolower($type->order_name) === 'dine-in')>{{ $type->order_name }}</option>@endforeach</select></div>
                     <div class="col-6"><label for="checkoutPayment" class="form-label fw-semibold">Payment method</label><select class="form-select" name="payment_method_id" id="checkoutPayment" required>@foreach($paymentMethods as $method)<option value="{{ $method->payment_method_id }}">{{ $method->payment_name }}</option>@endforeach</select></div>
@@ -107,14 +109,15 @@
 
         productItems.forEach(element => element.addEventListener('click', () => {
             const id = String(element.dataset.id);
-            const stock = Number(element.dataset.stock || 0);
-            if (stock < 1) return;
+            const tracksStock = element.dataset.stockTracked !== '0';
+            const stock = tracksStock ? Number(element.dataset.stock || 0) : Number.MAX_SAFE_INTEGER;
+            if (tracksStock && stock < 1) return;
             const item = cart.find(row => row.id === id);
             if (item) {
-                if (item.qty >= stock) return;
+                if (tracksStock && item.qty >= stock) return;
                 item.qty += 1;
             } else {
-                cart.push({ id, title: element.dataset.title || 'Product', price: Number(element.dataset.price || 0), qty: 1, stock });
+                cart.push({ id, title: element.dataset.title || 'Product', price: Number(element.dataset.price || 0), qty: 1, stock, tracksStock });
             }
             renderCart();
         }));
@@ -147,7 +150,7 @@
                     const qtyWrap = document.createElement('div'); qtyWrap.className = 'd-inline-flex align-items-center gap-1';
                     qtyWrap.appendChild(makeButton('−', 'qty-btn', () => { item.qty -= 1; if (item.qty < 1) cart = cart.filter(row => row.id !== item.id); renderCart(); }));
                     const qty = document.createElement('span'); qty.className = 'fw-bold px-1'; qty.textContent = String(item.qty); qtyWrap.appendChild(qty);
-                    qtyWrap.appendChild(makeButton('+', 'qty-btn', () => { if (item.qty < item.stock) item.qty += 1; renderCart(); }));
+                    qtyWrap.appendChild(makeButton('+', 'qty-btn', () => { if (!item.tracksStock || item.qty < item.stock) item.qty += 1; renderCart(); }));
                     qtyCell.appendChild(qtyWrap);
                     const totalCell = document.createElement('td'); totalCell.className = 'text-end fw-bold'; totalCell.textContent = money(item.price * item.qty);
                     row.append(removeCell, nameCell, qtyCell, totalCell); cartContainer.appendChild(row);
@@ -192,5 +195,8 @@
         applyFilters();
     });
 </script>
+<script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
+<script src="{{ asset('assets/js/form-validation.js') }}"></script>
+<script src="{{ asset('assets/js/password-toggle.js') }}"></script>
 </body>
 </html>

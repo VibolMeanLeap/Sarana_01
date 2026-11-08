@@ -26,14 +26,14 @@
             <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" id="productGrid">
                 @forelse($products as $product)
                     @php($hasImage = $product->image && file_exists(public_path('images/'.$product->image)))
-                    <div class="col product-item" data-category="{{ $product->category_id ?? 'none' }}" data-id="{{ $product->product_id }}" data-title="{{ $product->product_name }}" data-price="{{ (float)$product->price }}" data-stock="{{ (int)$product->qty }}">
-                        <div class="product-card {{ (int)$product->qty < 1 ? 'is-out' : '' }}">
+                    <div class="col product-item" data-category="{{ $product->category_id ?? 'none' }}" data-id="{{ $product->product_id }}" data-title="{{ $product->product_name }}" data-price="{{ (float)$product->price }}" data-stock="{{ (int)$product->qty }}" data-stock-tracked="{{ $product->isStockTracked() ? '1' : '0' }}">
+                        <div class="product-card {{ $product->isStockTracked() && (int)$product->qty < 1 ? 'is-out' : '' }}">
                             @if($hasImage)
                                 <img class="product-image" src="{{ asset('images/'.$product->image) }}" alt="{{ $product->product_name }}">
                             @else
                                 <div class="product-placeholder"><i class="bi bi-cup-hot"></i></div>
                             @endif
-                            <div class="d-flex justify-content-between align-items-start gap-1"><div class="product-title">{{ $product->product_name }}</div><span class="stock-pill {{ (int)$product->qty < 1 ? 'out' : '' }}">{{ (int)$product->qty < 1 ? 'Sold out' : (int)$product->qty.' left' }}</span></div>
+                            <div class="d-flex justify-content-between align-items-start gap-1"><div class="product-title">{{ $product->product_name }}</div><span class="stock-pill {{ $product->isStockTracked() && (int)$product->qty < 1 ? 'out' : '' }}">{{ $product->isStockTracked() ? ((int)$product->qty < 1 ? 'Sold out' : (int)$product->qty.' left') : 'Non-stock' }}</span></div>
                             <div class="d-flex justify-content-between align-items-end gap-2 mt-auto"><span class="small text-muted">{{ $product->category->category_name ?? 'General' }}</span><span class="text-end"><span class="product-price d-block">${{ number_format((float)$product->price, 2) }}</span><small class="text-muted">៛{{ number_format((float)$product->price * $exchangeRate, 0) }}</small></span></div>
                         </div>
                     </div>

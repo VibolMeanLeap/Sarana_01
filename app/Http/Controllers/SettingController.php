@@ -8,21 +8,17 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
-    /**
-     * There is one store profile for the whole application, not a list of
-     * independently active settings records.
-     */
+    /** Store profile and staff access workspace. */
     public function index()
     {
         $shop = Settings::query()->orderByDesc('id')->first();
 
-        // Only staff roles are available here. Customer accounts remain in the
-        // public customer registration workflow and cannot be created as staff.
         $staffRoles = Role::query()
             ->whereIn(DB::raw('LOWER(role_name)'), ['admin', 'cashier'])
             ->orderBy('role_name')
@@ -33,8 +29,8 @@ class SettingController extends Controller
             ->with('role')
             ->whereIn('role_id', $staffRoleIds)
             ->orderByDesc('user_id')
-            ->limit(10)
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         $staffTotal = User::query()->whereIn('role_id', $staffRoleIds)->count();
         $adminRoleIds = $staffRoles->filter(fn ($role) => strtolower((string) $role->role_name) === 'admin')->pluck('role_id');
@@ -47,9 +43,10 @@ class SettingController extends Controller
         ));
     }
 
-    /** Create an administrator or cashier account from the Settings workspace. */
+    /** Create an administrator or cashier account from Settings. */
     public function storeStaffAccount(Request $request)
     {
+        $this->normalizeStaffInput($request);
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'username' => ['required', 'string', 'min:3', 'max:200', 'unique:users,username'],
@@ -57,20 +54,15 @@ class SettingController extends Controller
             'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
             'role_id' => ['required', 'integer', 'exists:role,role_id'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'status' => ['required', 'in:active,inactive'],
+            'status' => ['required', Rule::in(['active', 'inactive'])],
         ], [
             'password.confirmed' => 'The password confirmation does not match.',
-            'role_id.required' => 'Please choose whether this account is an administrator or cashier.',
+            'role_id.required' => 'Please choose Administrator or Cashier.',
         ]);
 
         $role = Role::query()->findOrFail($validated['role_id']);
         $roleName = strtolower(trim((string) $role->role_name));
-
-        if (! in_array($roleName, ['admin', 'cashier'], true)) {
-            throw ValidationException::withMessages([
-                'role_id' => 'Only Administrator and Cashier accounts can be created here.',
-            ]);
-        }
+        $this->ensureStaffRole($roleName);
 
         DB::transaction(function () use ($validated, $role) {
             User::create([
@@ -84,18 +76,137 @@ class SettingController extends Controller
             ]);
         });
 
-        return redirect()->route('setting.list')
-            ->with('success', ucfirst($roleName).' account created successfully. The staff member can now sign in with their username and password.');
+        return redirect()->route('setting.list')->with('success', ucfirst($roleName).' account created successfully.');
+    }
+
+    /** Edit staff accounts only from the Settings workspace. */
+    public function editStaffAccount(string $user_id)
+    {
+        $staff = $this->findStaffAccount($user_id);
+        $staffRoles = Role::query()
+            ->whereIn(DB::raw('LOWER(role_name)'), ['admin', 'cashier'])
+            ->orderBy('role_name')
+            ->get();
+
+        return view('admin.meanleap.staff_edit', compact('staff', 'staffRoles'));
+    }
+
+    /** Update a staff profile, role, password or account status. */
+    public function updateStaffAccount(Request $request, string $user_id)
+    {
+        $staff = $this->findStaffAccount($user_id);
+        $this->normalizeStaffInput($request);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'username' => ['required', 'string', 'min:3', 'max:200', Rule::unique('users', 'username')->ignore($staff->user_id, 'user_id')],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($staff->user_id, 'user_id')],
+            'phone' => ['required', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($staff->user_id, 'user_id')],
+            'role_id' => ['required', 'integer', 'exists:role,role_id'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+        ]);
+
+        $role = Role::query()->findOrFail($validated['role_id']);
+        $newRoleName = strtolower(trim((string) $role->role_name));
+        $this->ensureStaffRole($newRoleName);
+        $this->protectLastAdministrator($staff, $newRoleName, $validated['status']);
+
+        DB::transaction(function () use ($staff, $validated, $role) {
+            $staff->name = trim($validated['name']);
+            $staff->username = trim($validated['username']);
+            $staff->email = strtolower(trim($validated['email']));
+            $staff->phone = trim($validated['phone']);
+            $staff->role_id = $role->role_id;
+            $staff->status = $validated['status'];
+
+            if (! empty($validated['password'])) {
+                $staff->password = Hash::make($validated['password']);
+            }
+
+            $staff->save();
+        });
+
+        return redirect()->route('setting.list')->with('success', 'Staff account updated successfully.');
+    }
+
+    /** Preserve audit history by deactivating, never hard-deleting, staff accounts. */
+    public function deactivateStaffAccount(string $user_id)
+    {
+        $staff = $this->findStaffAccount($user_id);
+        $roleName = strtolower((string) $staff->role?->role_name);
+        $this->protectLastAdministrator($staff, $roleName, 'inactive');
+
+        $staff->status = 'inactive';
+        $staff->save();
+
+        return redirect()->route('setting.list')->with('success', 'Staff account deactivated. Historical sales and audit records were preserved.');
+    }
+
+    private function normalizeStaffInput(Request $request): void
+    {
+        $request->merge([
+            'name' => trim((string) $request->input('name', '')),
+            'username' => trim((string) $request->input('username', '')),
+            'email' => strtolower(trim((string) $request->input('email', ''))),
+            'phone' => trim((string) $request->input('phone', '')),
+        ]);
+    }
+
+    private function findStaffAccount(string $userId): User
+    {
+        return User::query()
+            ->with('role')
+            ->where('user_id', $userId)
+            ->whereHas('role', function ($query) {
+                $query->whereIn(DB::raw('LOWER(role_name)'), ['admin', 'cashier']);
+            })
+            ->firstOrFail();
+    }
+
+    private function ensureStaffRole(string $roleName): void
+    {
+        if (! in_array($roleName, ['admin', 'cashier'], true)) {
+            throw ValidationException::withMessages([
+                'role_id' => 'Only Administrator and Cashier roles can be managed in Settings.',
+            ]);
+        }
+    }
+
+    private function protectLastAdministrator(User $staff, string $newRoleName, string $newStatus): void
+    {
+        $isCurrentUser = (int) auth()->id() === (int) $staff->user_id;
+        if ($isCurrentUser && ($newRoleName !== 'admin' || $newStatus !== 'active')) {
+            throw ValidationException::withMessages([
+                'status' => 'You cannot deactivate your own administrator account or remove your administrator access.',
+            ]);
+        }
+
+        $oldRoleName = strtolower((string) $staff->role?->role_name);
+        $isLeavingActiveAdminRole = $oldRoleName === 'admin'
+            && $staff->status === 'active'
+            && ($newRoleName !== 'admin' || $newStatus !== 'active');
+
+        if ($isLeavingActiveAdminRole) {
+            $activeAdmins = User::query()
+                ->where('status', 'active')
+                ->whereHas('role', fn ($query) => $query->whereRaw('LOWER(role_name) = ?', ['admin']))
+                ->count();
+
+            if ($activeAdmins <= 1) {
+                throw ValidationException::withMessages([
+                    'status' => 'The last active administrator cannot be deactivated or changed to cashier. Create another administrator first.',
+                ]);
+            }
+        }
     }
 
     public function create()
     {
         $shop = Settings::query()->orderByDesc('id')->first();
-
         if ($shop) {
             return redirect()->route('setting.edit', $shop->id);
         }
-
         return view('admin.meanleap.Add');
     }
 
@@ -103,17 +214,14 @@ class SettingController extends Controller
     {
         $validated = $this->validatedSettings($request);
         $shop = Settings::query()->orderByDesc('id')->first() ?? new Settings();
-
         $this->saveSettings($shop, $validated, $request);
 
-        return redirect()->route('setting.list')
-            ->with('success', 'Store profile created successfully. Your new branding is now active throughout the application.');
+        return redirect()->route('setting.list')->with('success', 'Store profile created successfully.');
     }
 
     public function edit($id)
     {
         $shop = Settings::findOrFail($id);
-
         return view('admin.meanleap.Edit', compact('shop'));
     }
 
@@ -121,21 +229,14 @@ class SettingController extends Controller
     {
         $shop = Settings::findOrFail($id);
         $validated = $this->validatedSettings($request);
-
         $this->saveSettings($shop, $validated, $request);
 
-        return redirect()->route('setting.list')
-            ->with('success', 'Store profile updated. The new information will appear across the admin, cashier, POS and public website on the next page load.');
+        return redirect()->route('setting.list')->with('success', 'Store profile updated successfully.');
     }
 
-    /**
-     * A store profile must not be deleted: the whole interface depends on it.
-     * Keep the legacy route safe in case an old browser tab still calls it.
-     */
     public function delete($id)
     {
-        return redirect()->route('setting.list')
-            ->with('error', 'The store profile cannot be deleted. Edit the profile to change the information displayed across the system.');
+        return redirect()->route('setting.list')->with('error', 'The store profile cannot be deleted. Edit the profile instead.');
     }
 
     private function validatedSettings(Request $request): array
@@ -158,7 +259,6 @@ class SettingController extends Controller
     private function saveSettings(Settings $shop, array $validated, Request $request): void
     {
         $oldLogo = $shop->logo;
-
         $shop->shop_name = trim($validated['shop_name']);
         $shop->address = $validated['address'] ?? null;
         $shop->tel = $validated['tel'] ?? null;
@@ -166,7 +266,6 @@ class SettingController extends Controller
 
         if ($request->hasFile('logo')) {
             $uploadDirectory = public_path('uploads');
-
             if (! is_dir($uploadDirectory)) {
                 mkdir($uploadDirectory, 0755, true);
             }
@@ -179,7 +278,6 @@ class SettingController extends Controller
 
         $shop->save();
 
-        // Remove an obsolete uploaded logo only after the new record is saved.
         if ($request->hasFile('logo') && $oldLogo && basename($oldLogo) === $oldLogo) {
             $oldLogoPath = public_path('uploads/'.$oldLogo);
             if (is_file($oldLogoPath)) {

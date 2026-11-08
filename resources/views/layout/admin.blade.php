@@ -25,6 +25,8 @@
         @media(max-width:575.98px){.content-area{padding:20px 14px 30px}.topbar{height:66px;padding:0 14px}.page-heading{align-items:flex-start;flex-direction:column}.page-heading h1{font-size:22px}.user-meta{display:none}}
     </style>
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
 <body>
 <div class="app-shell">
@@ -50,8 +52,7 @@
         </nav>
         <div class="nav-label">Operations</div>
         <nav class="app-nav">
-            <a href="{{ route('admin.olders') }}" class="{{ request()->is('admin/olders*') || request()->is('orders*') ? 'active' : '' }}"><i class="bi bi-receipt"></i>Orders</a>
-            <a href="{{ route('admin.older_items') }}" class="{{ request()->is('admin/older_items*') || request()->is('order_items*') ? 'active' : '' }}"><i class="bi bi-list-check"></i>Order items</a>
+            <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i class="bi bi-receipt"></i>Orders</a>
             <a href="{{ route('purchase.index') }}" class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i class="bi bi-cart-check"></i>Purchases</a>
             <a href="{{ route('inventory.index') }}" class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i>Inventory & stock</a>
             <a href="{{ route('expense_income.index') }}" class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i>Income & expenses</a>
@@ -60,10 +61,10 @@
         </nav>
         <div class="nav-label">People & settings</div>
         <nav class="app-nav">
-            <a href="{{ route('customer.list') }}" class="{{ request()->is('admin/customer*') ? 'active' : '' }}"><i class="bi bi-people"></i>Customers</a>
+            <a href="{{ route('customer.list') }}" class="{{ request()->is('admin/customer*') ? 'active' : '' }}"><i class="bi bi-people"></i>Customer directory</a>
             <a href="{{ route('supplier.list') }}" class="{{ request()->is('admin/supplier*') ? 'active' : '' }}"><i class="bi bi-truck-front"></i>Suppliers</a>
-            <a href="{{ route('auth.list') }}" class="{{ request()->is('admin/user*') ? 'active' : '' }}"><i class="bi bi-person-gear"></i>Staff accounts</a>
-            <a href="{{ route('setting.list') }}" class="{{ request()->is('admin/meanleap/setting*') ? 'active' : '' }}"><i class="bi bi-sliders"></i>Settings & team access</a>
+            <a href="{{ route('auth.list') }}" class="{{ request()->is('admin/user*') ? 'active' : '' }}"><i class="bi bi-person-vcard"></i>Customer accounts</a>
+            <a href="{{ route('setting.list') }}" class="{{ request()->is('admin/meanleap/setting*') ? 'active' : '' }}"><i class="bi bi-sliders"></i>Settings & staff management</a>
         </nav>
         <div class="sidebar-bottom">
             <div class="sidebar-note"><strong><i class="bi bi-shield-check me-1"></i>Administrator workspace</strong>Signed-in staff tools are protected by role-based access.</div>
@@ -132,5 +133,8 @@
     })();
 </script>
 @yield('scripts')
+<script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
+<script src="{{ asset('assets/js/form-validation.js') }}"></script>
+<script src="{{ asset('assets/js/password-toggle.js') }}"></script>
 </body>
 </html>

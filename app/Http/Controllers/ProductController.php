@@ -16,11 +16,23 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $category = $request->input('category');
+        $search = trim((string) $request->input('search', ''));
+        $category = $request->input('category', $request->input('category_id'));
+        $status = $request->input('status');
+        $productType = $request->input('product_type');
+        $sortColumns = [
+            'product_id' => 'product_id',
+            'product_name' => 'product_name',
+            'price' => 'price',
+            'qty' => 'qty',
+            'status' => 'status',
+            'product_type' => 'product_type',
+        ];
+        $sortBy = $sortColumns[$request->input('sort_by')] ?? 'product_id';
+        $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         $products = Product::with(['category', 'supplier'])
-            ->when($search, function ($query) use ($search) {
+            ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($nested) use ($search) {
                     $nested->where('product_name', 'like', "%{$search}%")
                         ->orWhere('product_type', 'like', "%{$search}%")
@@ -28,7 +40,9 @@ class ProductController extends Controller
                 });
             })
             ->when($category, fn ($query) => $query->where('category_id', $category))
-            ->orderByDesc('product_id')
+            ->when(in_array($status, ['Active', 'Inactive'], true), fn ($query) => $query->where('status', $status))
+            ->when(in_array($productType, ['stock', 'non-stock'], true), fn ($query) => $query->where('product_type', $productType))
+            ->orderBy($sortBy, $sortDirection)
             ->paginate(10)
             ->withQueryString();
 
@@ -51,12 +65,17 @@ class ProductController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,supplier_id',
             'price' => 'required|numeric|min:0',
             'cost' => 'required|numeric|min:0',
-            'qty' => 'required|integer|min:0',
-            'product_type' => 'nullable|string|max:100',
+            'qty' => 'required_if:product_type,stock|nullable|integer|min:0',
+            'product_type' => 'required|in:stock,non-stock',
             'status' => 'required|in:Active,Inactive',
             'description' => 'nullable|string|max:2000',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
         ]);
+
+        if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
+            return back()->withInput()->withErrors(['qty' => 'Non-stock products do not keep an inventory quantity. Set quantity to 0.']);
+        }
+        $validated['qty'] = ($validated['product_type'] ?? 'stock') === 'non-stock' ? 0 : (int) ($validated['qty'] ?? 0);
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -68,7 +87,7 @@ class ProductController extends Controller
         $initialQty = (int) $validated['qty'];
         $product = DB::transaction(function () use ($validated, $initialQty) {
             $product = Product::create($validated);
-            if ($initialQty > 0) {
+            if ($initialQty > 0 && $product->isStockTracked()) {
                 StockLog::create([
                     'product_id' => $product->product_id,
                     'user_id' => auth()->id(),
@@ -81,7 +100,7 @@ class ProductController extends Controller
             return $product;
         });
 
-        return redirect()->route('products.index')->with('success', 'Product created successfully; opening stock was logged.');
+        return redirect()->route('products.index')->with('success', $product->isStockTracked() && $initialQty > 0 ? 'Product created and opening stock was recorded.' : 'Product created successfully.');
     }
 
     public function edit($id)
@@ -101,12 +120,17 @@ class ProductController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,supplier_id',
             'price' => 'required|numeric|min:0',
             'cost' => 'required|numeric|min:0',
-            'qty' => 'required|integer|min:0',
-            'product_type' => 'nullable|string|max:100',
+            'qty' => 'required_if:product_type,stock|nullable|integer|min:0',
+            'product_type' => 'required|in:stock,non-stock',
             'status' => 'required|in:Active,Inactive',
             'description' => 'nullable|string|max:2000',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
         ]);
+
+        if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
+            return back()->withInput()->withErrors(['qty' => 'Non-stock products do not keep an inventory quantity. Set quantity to 0.']);
+        }
+        $validated['qty'] = ($validated['product_type'] ?? 'stock') === 'non-stock' ? 0 : (int) ($validated['qty'] ?? 0);
 
         $oldImage = $product->image;
         if ($request->hasFile('image')) {
@@ -120,9 +144,24 @@ class ProductController extends Controller
         unset($validated['qty']);
 
         try {
-            DB::transaction(function () use ($id, $validated, $newQty) {
+            $saved = DB::transaction(function () use ($id, $validated, $newQty) {
                 $locked = Product::where('product_id', $id)->lockForUpdate()->firstOrFail();
                 $oldQty = (int) $locked->qty;
+                $requestedStockTracked = ($validated['product_type'] ?? 'stock') === 'stock';
+
+                // Once a product has sales, purchases, or stock movements, its
+                // inventory classification must remain stable for audit accuracy.
+                if ($requestedStockTracked !== $locked->isStockTracked()) {
+                    $hasInventoryHistory = DB::table('order_items')->where('product_id', $locked->product_id)->exists()
+                        || DB::table('purchases')->where('product_id', $locked->product_id)->exists()
+                        || DB::table('stock_logs')->where('product_id', $locked->product_id)->exists();
+                    $wouldDiscardStock = ! $requestedStockTracked && (int) $locked->qty > 0;
+
+                    if ($hasInventoryHistory || $wouldDiscardStock) {
+                        return false;
+                    }
+                }
+
                 $locked->fill($validated);
                 $locked->qty = $newQty;
                 $locked->save();
@@ -135,7 +174,7 @@ class ProductController extends Controller
                 });
 
                 $difference = $newQty - $oldQty;
-                if ($difference !== 0) {
+                if ($difference !== 0 && $locked->isStockTracked()) {
                     StockLog::create([
                         'product_id' => $locked->product_id,
                         'user_id' => auth()->id(),
@@ -145,7 +184,15 @@ class ProductController extends Controller
                         'note' => "Product edit changed quantity from {$oldQty} to {$newQty}.",
                     ]);
                 }
+
+                return true;
             }, 3);
+
+            if ($saved === false) {
+                return back()->withInput()->withErrors([
+                    'product_type' => 'Product type cannot be changed when stock remains or sales, purchases, or stock movements exist. Preserve the inventory history and create a new product with the correct type.',
+                ]);
+            }
         } catch (Throwable $exception) {
             return back()->withInput()->with('error', 'Product update failed. No quantity adjustment was saved.');
         }
@@ -154,7 +201,7 @@ class ProductController extends Controller
             @unlink(public_path('images/'.$oldImage));
         }
 
-        return redirect()->route('products.index')->with('success', 'Product updated; any stock change was recorded in inventory logs.');
+        return redirect()->route('products.index')->with('success', 'Product updated successfully. Any stock quantity change was recorded in the inventory log.');
     }
 
     public function destroy($id)

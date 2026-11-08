@@ -214,6 +214,10 @@
         </a>
     </div>
 
+    <div class="d-flex justify-content-end mb-3">
+        @include('admin.partials.export-actions', ['exportType' => 'products'])
+    </div>
+
     <div class="prod-card">
 
         <form action="{{ route('products.index') }}" method="GET" class="prod-search-form" id="searchForm">
@@ -235,9 +239,29 @@
                placeholder="Search product..." value="{{ request('search') }}">
     </div>
 
+    <select name="status" class="form-select" aria-label="Product status">
+        <option value="">All statuses</option>
+        <option value="Active" @selected(request('status') === 'Active')>Active</option>
+        <option value="Inactive" @selected(request('status') === 'Inactive')>Inactive</option>
+    </select>
+    <select name="product_type" class="form-select" aria-label="Inventory type">
+        <option value="">All product types</option>
+        <option value="stock" @selected(request('product_type') === 'stock')>Stock</option>
+        <option value="non-stock" @selected(request('product_type') === 'non-stock')>Non-stock</option>
+    </select>
+    <select name="sort_by" class="form-select" aria-label="Sort products by">
+        <option value="product_id" @selected(request('sort_by', 'product_id') === 'product_id')>Sort: Recently added (ID)</option>
+        <option value="product_name" @selected(request('sort_by') === 'product_name')>Product name</option>
+        <option value="price" @selected(request('sort_by') === 'price')>Selling price</option>
+        <option value="qty" @selected(request('sort_by') === 'qty')>Stock quantity</option>
+    </select>
+    <select name="sort_dir" class="form-select" aria-label="Sort direction">
+        <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option>
+        <option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option>
+    </select>
     <button type="submit" class="btn-search">Filter</button>
 
-    @if(request('search') || request('category'))
+    @if(request()->hasAny(['search', 'category', 'status', 'product_type', 'sort_by', 'sort_dir']))
         <a href="{{ route('products.index') }}" class="btn-clear">Clear</a>
     @endif
 </form>
@@ -275,8 +299,8 @@
                             <td>{{ $row->category->category_name ?? '-' }}</td>
                             <td>{{ $row->supplier->name ?? '-' }}</td>
                             <td>${{ $row->price !== null ? number_format($row->price, 2) : '-' }}</td>
-                            <td>{{ $row->qty ?? '-' }}</td>
-                            <td>{{ $row->product_type ?? '-' }}</td>
+                            <td>{{ $row->isStockTracked() ? ($row->qty ?? 0) : '—' }}</td>
+                            <td><span class="badge {{ $row->isStockTracked() ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $row->isStockTracked() ? 'Stock' : 'Non-stock' }}</span></td>
                             <td>
                                 @if(strtolower($row->status ?? '') === 'active')
                                     <span class="prod-badge active">Active</span>

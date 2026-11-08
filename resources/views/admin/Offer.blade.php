@@ -44,6 +44,20 @@
         </div>
     </div>
 
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <form method="GET" action="{{ route('offer.list') }}" class="row g-2 align-items-center flex-grow-1">
+            <div class="col-12 col-md-3"><input class="form-control form-control-sm" name="search" value="{{ request('search') }}" placeholder="Search product name..."></div>
+            <div class="col-6 col-md-2"><select name="category_id" class="form-select form-select-sm"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id') == $category->category_id)>{{ $category->category_name }}</option>@endforeach</select></div>
+            <div class="col-6 col-md-2"><select name="product_id" class="form-select form-select-sm"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>{{ $product->product_name }}</option>@endforeach</select></div>
+            <div class="col-6 col-md-2"><select name="status" class="form-select form-select-sm"><option value="">All statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="upcoming" @selected(request('status') === 'upcoming')>Upcoming</option><option value="expired" @selected(request('status') === 'expired')>Expired</option></select></div>
+            <div class="col-6 col-md-3 d-flex gap-2"><input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}" aria-label="Offer start from"><input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}" aria-label="Offer end to"></div>
+            <div class="col-6 col-md-2"><select name="sort_by" class="form-select form-select-sm"><option value="start_date" @selected(request('sort_by', 'start_date') === 'start_date')>Start date</option><option value="end_date" @selected(request('sort_by') === 'end_date')>End date</option><option value="discount" @selected(request('sort_by') === 'discount')>Discount</option></select></div>
+            <div class="col-6 col-md-2"><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option><option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option></select></div>
+            <div class="col-auto"><button type="submit" class="btn btn-success btn-sm">Filter</button><a href="{{ route('offer.list') }}" class="btn btn-outline-secondary btn-sm">Reset</a></div>
+        </form>
+        @include('admin.partials.export-actions', ['exportType' => 'offers'])
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-header bg-white border-0 px-3 px-md-4 pt-4 pb-2">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">

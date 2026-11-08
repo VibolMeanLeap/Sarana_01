@@ -1,12 +1,21 @@
 @extends('layout.admin')
 @section('content')
-<div class="mb-3 d-flex justify-content-between align-items-center">
-    <a href="{{ route('supplier.create') }}" class="btn btn-primary btn-sm ">New Supplier</a>
-    <div class="d-flex justify-content-between align-items-center">
-        <form class="d-none d-md-flex ms-4">
-            <input class="form-control" type="search" name="search" value="{{ Request::get('search') }}"
-                placeholder="Search here...">
-            <button type="submit" class="btn btn-primary btn-sm ml-1">Search</button>
+<div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <a href="{{ route('supplier.create') }}" class="btn btn-primary btn-sm">New Supplier</a>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        @include('admin.partials.export-actions', ['exportType' => 'suppliers'])
+        <form class="d-flex flex-wrap gap-2" method="GET" action="{{ route('supplier.list') }}">
+            <input class="form-control form-control-sm" type="search" name="search" value="{{ request('search') }}" placeholder="Name, email or phone...">
+            <select name="sort_by" class="form-select form-select-sm" aria-label="Sort suppliers">
+                <option value="supplier_id" @selected(request('sort_by', 'supplier_id') === 'supplier_id')>Recently added</option>
+                <option value="name" @selected(request('sort_by') === 'name')>Supplier name</option>
+            </select>
+            <select name="sort_dir" class="form-select form-select-sm" aria-label="Sort direction">
+                <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest / Z-A</option>
+                <option value="asc" @selected(request('sort_dir') === 'asc')>Oldest / A-Z</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+            <a href="{{ route('supplier.list') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
         </form>
     </div>
 </div>

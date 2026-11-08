@@ -12,10 +12,10 @@
     <div class="card-body p-4">
         <div class="row g-3">
             <div class="col-md-6"><label class="form-label fw-semibold" for="shop_name">Shop name *</label><input id="shop_name" type="text" name="shop_name" class="form-control" value="{{ old('shop_name') }}" required maxlength="255"></div>
-            <div class="col-md-6"><label class="form-label fw-semibold" for="tel">Telephone</label><input id="tel" type="text" name="tel" class="form-control" value="{{ old('tel') }}" maxlength="50"></div>
+            <div class="col-md-6"><label class="form-label fw-semibold" for="tel">Telephone</label><input id="tel" type="text" name="tel" class="form-control" value="{{ old('tel') }}" maxlength="50" data-optional></div>
             <div class="col-md-6"><label class="form-label fw-semibold" for="exchange_rate">USD to KHR exchange rate *</label><div class="input-group"><span class="input-group-text">$1 = ៛</span><input id="exchange_rate" type="number" step="0.0001" min="0.0001" name="exchange_rate" class="form-control" value="{{ old('exchange_rate', 4100) }}" required></div></div>
-            <div class="col-md-6"><label class="form-label fw-semibold" for="logo">Shop logo</label><input id="logo" type="file" name="logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><div class="form-text">JPG, PNG or WebP, max 3 MB.</div></div>
-            <div class="col-12"><label class="form-label fw-semibold" for="address">Shop address</label><textarea id="address" name="address" rows="3" class="form-control" maxlength="2000">{{ old('address') }}</textarea></div>
+            <div class="col-md-6"><label class="form-label fw-semibold" for="logo">Shop logo</label><input id="logo" type="file" name="logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-optional><div class="form-text">JPG, PNG or WebP, max 3 MB.</div></div>
+            <div class="col-12"><label class="form-label fw-semibold" for="address">Shop address</label><textarea id="address" name="address" rows="3" class="form-control" maxlength="2000" data-optional>{{ old('address') }}</textarea></div>
         </div>
     </div>
     <div class="card-footer bg-white p-3 d-flex justify-content-end gap-2"><a href="{{ route('setting.list') }}" class="btn btn-cc-light">Cancel</a><button class="btn btn-cc" type="submit"><i class="bi bi-check2-circle me-2"></i>Save store profile</button></div>

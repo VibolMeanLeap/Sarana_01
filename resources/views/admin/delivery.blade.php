@@ -3,10 +3,13 @@
 @section('content')
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Deliveries</h5>
-        <a href="{{ route('delivery.create') }}" class="btn btn-primary btn-sm">
+        <div><h5 class="mb-0">Deliveries</h5><div class="small text-muted">Search and export the current delivery records.</div></div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            @include('admin.partials.export-actions', ['exportType' => 'deliveries'])
+            <a href="{{ route('delivery.create') }}" class="btn btn-primary btn-sm">
             <i class="fa fa-plus"></i> New Delivery
-        </a>
+            </a>
+        </div>
     </div>
 
     <div class="card-body">
@@ -17,7 +20,8 @@
             <div class="alert alert-warning">{{ session('error') }}</div>
         @endif
 
-        <form method="GET" class="row g-2 mb-3">
+        <form method="GET" action="{{ route('delivery.index') }}" class="row g-2 mb-3 align-items-end">
+            <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Search</label><input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Order, customer or address"></div>
             <div class="col-auto">
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All statuses</option>
@@ -27,9 +31,11 @@
                     <option value="cancelled" @selected(request('status') == 'cancelled')>Cancelled</option>
                 </select>
             </div>
-            <div class="col-auto">
-                <button class="btn btn-outline-secondary btn-sm">Filter</button>
-            </div>
+            <div class="col-auto"><label class="form-label small fw-semibold">From</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
+            <div class="col-auto"><label class="form-label small fw-semibold">To</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
+            <div class="col-auto"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest</option></select></div>
+            <input type="hidden" name="sort_by" value="order_date">
+            <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">Filter</button><a href="{{ route('delivery.index') }}" class="btn btn-outline-dark btn-sm">Reset</a></div>
         </form>
 
         <table class="table table-hover align-middle">

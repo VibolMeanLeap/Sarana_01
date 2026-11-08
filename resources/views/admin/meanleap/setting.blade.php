@@ -1,7 +1,7 @@
 @extends('layout.admin')
 
-@section('page_title', 'Store settings & team access')
-@section('topbar_title', 'Store settings & team access')
+@section('page_title', 'Store settings & staff management')
+@section('topbar_title', 'Store settings & staff management')
 
 @section('content')
 <style>
@@ -25,8 +25,8 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
             <div class="small text-uppercase fw-bold mb-2" style="letter-spacing:.16em;color:#e8c990"><i class="bi bi-sliders2-vertical me-2"></i>Control centre</div>
-            <h1 class="h2 fw-bold mb-2">Settings & team access</h1>
-            <p class="mb-0 text-white-50" style="max-width:640px">Manage your shop identity and create secure administrator or cashier accounts from one place.</p>
+            <h1 class="h2 fw-bold mb-2">Settings & staff management</h1>
+            <p class="mb-0 text-white-50" style="max-width:640px">Manage your store profile and the administrator or cashier accounts that operate your business.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <a href="#store-profile" class="btn btn-light rounded-pill fw-bold px-3"><i class="bi bi-shop me-2"></i>Store profile</a>
@@ -96,8 +96,15 @@
 
 <section id="staff-accounts" class="settings-anchor">
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
-        <div><div class="small text-success text-uppercase fw-bold" style="letter-spacing:.12em">People & permissions</div><h2 class="h4 fw-bold mb-1">Staff accounts</h2><p class="text-muted small mb-0">Create staff sign-ins and choose which workspace each person can access.</p></div>
-        <a href="{{ route('auth.list') }}" class="btn btn-outline-success rounded-pill px-3"><i class="bi bi-people me-2"></i>Manage all users</a>
+        <div>
+            <div class="small text-success text-uppercase fw-bold" style="letter-spacing:.12em">People & permissions</div>
+            <h2 class="h4 fw-bold mb-1">Staff management</h2>
+            <p class="text-muted small mb-0">Create, edit and deactivate Administrator or Cashier accounts. Customer accounts are managed in the Customer accounts page.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            @include('admin.partials.export-actions', ['exportType' => 'staff-accounts'])
+            <a href="{{ route('auth.list') }}" class="btn btn-outline-success rounded-pill px-3"><i class="bi bi-person-vcard me-2"></i>Customer accounts</a>
+        </div>
     </div>
 
     <div class="row g-3 mb-3">
@@ -108,49 +115,55 @@
 
     <div class="row g-3 align-items-start">
         <div class="col-12 col-xl-5">
-            <section class="settings-card overflow-hidden">
-                <div class="card-header"><div class="d-flex align-items-center gap-3"><span class="settings-stat-icon"><i class="bi bi-person-plus-fill"></i></span><div><h3 class="h6 fw-bold mb-1">Create a staff account</h3><p class="small text-muted mb-0">Set up access for a new team member.</p></div></div></div>
-                <form method="POST" action="{{ route('setting.staff.store') }}" class="p-4">
+            <section class="settings-card overflow-hidden" id="create-staff-account">
+                <div class="card-header"><div class="d-flex align-items-center gap-3"><span class="settings-stat-icon"><i class="bi bi-person-plus-fill"></i></span><div><h3 class="h6 fw-bold mb-1">Create staff account</h3><p class="small text-muted mb-0">Give a team member secure access to the correct workspace.</p></div></div></div>
+                <form method="POST" action="{{ route('setting.staff.store') }}" class="p-4" data-validation-form>
                     @csrf
-                    <div class="mb-3"><label for="staff_name" class="form-label settings-label">FULL NAME</label><input id="staff_name" name="name" type="text" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" maxlength="255" placeholder="e.g. Dara Sok" required>@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                    <div class="mb-3"><label for="staff_role" class="form-label settings-label">ACCOUNT ROLE</label><select id="staff_role" name="role_id" class="form-select @error('role_id') is-invalid @enderror" required><option value="">Choose a workspace</option>@foreach($staffRoles as $role)<option value="{{ $role->role_id }}" @selected((string) old('role_id') === (string) $role->role_id)>{{ strtolower($role->role_name) === 'admin' ? 'Administrator – full management access' : 'Cashier – POS and order processing' }}</option>@endforeach</select>@error('role_id')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                    <div class="mb-3"><label for="staff_name" class="form-label settings-label">FULL NAME <span class="text-danger">*</span></label><input id="staff_name" name="name" type="text" class="form-control" value="{{ old('name') }}" minlength="2" maxlength="255" placeholder="e.g. Dara Sok" required>@error('name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                    <div class="mb-3"><label for="staff_role" class="form-label settings-label">ACCOUNT ROLE <span class="text-danger">*</span></label><select id="staff_role" name="role_id" class="form-select" required><option value="">Choose a workspace</option>@foreach($staffRoles as $role)<option value="{{ $role->role_id }}" @selected((string) old('role_id') === (string) $role->role_id)>{{ strtolower($role->role_name) === 'admin' ? 'Administrator – full management access' : 'Cashier – POS and order processing' }}</option>@endforeach</select>@error('role_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                     <div class="row g-3">
-                        <div class="col-md-6 mb-3"><label for="staff_phone" class="form-label settings-label">PHONE</label><input id="staff_phone" name="phone" type="text" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" maxlength="20" placeholder="010 123 456" required>@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                        <div class="col-md-6 mb-3"><label for="staff_username" class="form-label settings-label">LOGIN USERNAME</label><input id="staff_username" name="username" type="text" class="form-control @error('username') is-invalid @enderror" value="{{ old('username') }}" maxlength="200" placeholder="dara.cashier" required>@error('username')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                        <div class="col-md-6 mb-3"><label for="staff_phone" class="form-label settings-label">PHONE <span class="text-danger">*</span></label><input id="staff_phone" name="phone" type="tel" class="form-control" value="{{ old('phone') }}" maxlength="20" placeholder="010 123 456" required>@error('phone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                        <div class="col-md-6 mb-3"><label for="staff_username" class="form-label settings-label">LOGIN USERNAME <span class="text-danger">*</span></label><input id="staff_username" name="username" type="text" class="form-control" value="{{ old('username') }}" minlength="3" maxlength="200" placeholder="dara.cashier" required>@error('username')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                     </div>
-                    <div class="mb-3"><label for="staff_email" class="form-label settings-label">EMAIL ADDRESS</label><input id="staff_email" name="email" type="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" maxlength="255" placeholder="staff@coffeecorner.com" required>@error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                    <div class="mb-3"><label for="staff_email" class="form-label settings-label">EMAIL ADDRESS <span class="text-danger">*</span></label><input id="staff_email" name="email" type="email" class="form-control" value="{{ old('email') }}" maxlength="255" placeholder="staff@coffeecorner.com" required>@error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                     <div class="row g-3">
-                        <div class="col-md-6 mb-3"><label for="staff_password" class="form-label settings-label">TEMPORARY PASSWORD</label><input id="staff_password" name="password" type="password" class="form-control @error('password') is-invalid @enderror" minlength="8" autocomplete="new-password" required>@error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                        <div class="col-md-6 mb-3"><label for="staff_password_confirmation" class="form-label settings-label">CONFIRM PASSWORD</label><input id="staff_password_confirmation" name="password_confirmation" type="password" class="form-control" minlength="8" autocomplete="new-password" required></div>
+                        <div class="col-md-6 mb-3"><label for="staff_password" class="form-label settings-label">TEMPORARY PASSWORD <span class="text-danger">*</span></label><input id="staff_password" name="password" type="password" class="form-control" minlength="8" autocomplete="new-password" required>@error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                        <div class="col-md-6 mb-3"><label for="staff_password_confirmation" class="form-label settings-label">CONFIRM PASSWORD <span class="text-danger">*</span></label><input id="staff_password_confirmation" name="password_confirmation" type="password" class="form-control" minlength="8" autocomplete="new-password" required></div>
                     </div>
-                    <div class="mb-4"><label for="staff_status" class="form-label settings-label">ACCOUNT STATUS</label><select id="staff_status" name="status" class="form-select" required><option value="active" @selected(old('status', 'active') === 'active')>Active – can sign in</option><option value="inactive" @selected(old('status') === 'inactive')>Inactive – sign-in blocked</option></select></div>
+                    <div class="mb-4"><label for="staff_status" class="form-label settings-label">ACCOUNT STATUS <span class="text-danger">*</span></label><select id="staff_status" name="status" class="form-select" required><option value="active" @selected(old('status', 'active') === 'active')>Active – can sign in</option><option value="inactive" @selected(old('status') === 'inactive')>Inactive – sign-in blocked</option></select>@error('status')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                     @if($staffRoles->isEmpty())<div class="alert alert-warning small">No admin or cashier roles were found in the <code>role</code> table. Please check your role data before creating accounts.</div>@endif
                     <button type="submit" class="btn btn-cc w-100" @disabled($staffRoles->isEmpty())><i class="bi bi-shield-check me-2"></i>Create staff account</button>
-                    <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-lock-fill me-1"></i>Passwords are securely hashed. Only administrators can create staff accounts.</p>
+                    <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-lock-fill me-1"></i>Passwords are securely hashed. Only administrators can manage staff accounts.</p>
                 </form>
             </section>
         </div>
 
         <div class="col-12 col-xl-7">
             <section class="settings-card overflow-hidden">
-                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h3 class="h6 fw-bold mb-1">Recently added staff</h3><p class="small text-muted mb-0">Latest administrator and cashier accounts.</p></div><span class="badge rounded-pill text-bg-light">{{ $staffAccounts->count() }} shown</span></div>
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h3 class="h6 fw-bold mb-1">All staff accounts</h3><p class="small text-muted mb-0">Edit role and contact details, reset passwords, or deactivate access.</p></div><span class="badge rounded-pill text-bg-light">{{ $staffAccounts->total() }} total</span></div>
                 @if($staffAccounts->isEmpty())
                     <div class="text-center p-5"><i class="bi bi-person-badge display-5 text-success"></i><h4 class="h6 fw-bold mt-3">No staff accounts found</h4><p class="text-muted small mb-0">Create the first cashier or administrator using the form.</p></div>
                 @else
-                    <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th class="ps-4">TEAM MEMBER</th><th>WORKSPACE</th><th>STATUS</th><th class="text-end pe-4">ACTION</th></tr></thead><tbody>
+                    <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th class="ps-4">TEAM MEMBER</th><th>WORKSPACE</th><th>STATUS</th><th class="text-end pe-4">ACTIONS</th></tr></thead><tbody>
                         @foreach($staffAccounts as $staff)
                             <tr>
-                                <td class="ps-4"><div class="d-flex align-items-center gap-2"><span class="settings-avatar">{{ strtoupper(substr($staff->name, 0, 1)) }}</span><div><div class="fw-bold">{{ $staff->name }}</div><div class="small text-muted">{{ $staff->username }}</div></div></div></td>
+                                <td class="ps-4"><div class="d-flex align-items-center gap-2"><span class="settings-avatar">{{ strtoupper(substr($staff->name, 0, 1)) }}</span><div><div class="fw-bold">{{ $staff->name }}</div><div class="small text-muted">{{ $staff->username }} · {{ $staff->email }}</div></div></div></td>
                                 <td><span class="settings-role">{{ ucfirst($staff->role?->role_name ?? 'Unknown') }}</span></td>
                                 <td><span class="settings-status {{ strtolower($staff->status) === 'active' ? 'active' : 'inactive' }}">{{ ucfirst($staff->status) }}</span></td>
-                                <td class="text-end pe-4"><a href="{{ route('auth.edit', $staff->user_id) }}" class="btn btn-sm btn-outline-secondary rounded-pill" title="Edit staff account"><i class="bi bi-pencil-square me-1"></i>Edit</a></td>
+                                <td class="text-end pe-4"><div class="d-inline-flex gap-1"><a href="{{ route('setting.staff.edit', $staff->user_id) }}" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-pencil-square me-1"></i>Edit</a>
+                                    @if((int)$staff->user_id !== (int)auth()->id() && strtolower((string)$staff->role?->role_name) !== 'admin' || ((int)$staff->user_id !== (int)auth()->id() && $activeAdmins > 1))
+                                        @if(strtolower($staff->status) === 'active')
+                                            <form method="POST" action="{{ route('setting.staff.deactivate', $staff->user_id) }}" class="d-inline" onsubmit="return confirm('Deactivate this staff account? Historical records will be preserved.');">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Deactivate</button></form>
+                                        @endif
+                                    @endif
+                                </div></td>
                             </tr>
                         @endforeach
                     </tbody></table></div>
+                    <div class="p-3 border-top">{{ $staffAccounts->links() }}</div>
                 @endif
-                <div class="border-top p-3 d-flex flex-wrap justify-content-between align-items-center gap-2"><span class="small text-muted">For password changes, role updates and deactivation, open staff management.</span><a href="{{ route('auth.list') }}" class="small fw-bold text-success text-decoration-none">Open staff management <i class="bi bi-arrow-right"></i></a></div>
             </section>
-            <div class="alert alert-light border rounded-4 mt-3 small mb-0"><i class="bi bi-info-circle-fill text-success me-2"></i><strong>Role guidance:</strong> Administrators can manage the system and staff. Cashiers can access POS and their order-processing workspace. Create only the level of access each person needs.</div>
+            <div class="alert alert-light border rounded-4 mt-3 small mb-0"><i class="bi bi-info-circle-fill text-success me-2"></i><strong>Security:</strong> You cannot deactivate your own administrator account or the last active administrator. Staff history is retained; deactivation is safer than deleting accounts.</div>
         </div>
     </div>
 </section>

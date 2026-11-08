@@ -26,17 +26,17 @@
                 </div>
                 <div class="mb-4">
                     <label for="logo" class="form-label fw-semibold">Shop logo</label>
-                    <input type="file" id="logo" name="logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-preview-file>
+                    <input type="file" id="logo" name="logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-preview-file data-optional>
                     <div class="form-text">Use a square or horizontal PNG, JPG or WebP image. Maximum file size: 3 MB. Leave blank to keep your current logo.</div>
                 </div>
                 <div class="mb-4">
                     <label for="address" class="form-label fw-semibold">Shop address</label>
-                    <textarea id="address" name="address" class="form-control" rows="3" maxlength="2000" placeholder="Street, district, city, country" data-preview-address>{{ old('address', $shop->address) }}</textarea>
+                    <textarea id="address" name="address" class="form-control" rows="3" maxlength="2000" placeholder="Street, district, city, country" data-preview-address data-optional>{{ old('address', $shop->address) }}</textarea>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="tel" class="form-label fw-semibold">Telephone number</label>
-                        <input type="text" id="tel" name="tel" class="form-control" maxlength="50" value="{{ old('tel', $shop->tel) }}" placeholder="e.g. 010 123 456" data-preview-phone>
+                        <input type="text" id="tel" name="tel" class="form-control" maxlength="50" value="{{ old('tel', $shop->tel) }}" placeholder="e.g. 010 123 456" data-preview-phone data-optional>
                     </div>
                     <div class="col-md-6">
                         <label for="exchange_rate" class="form-label fw-semibold">USD to KHR exchange rate <span class="text-danger">*</span></label>

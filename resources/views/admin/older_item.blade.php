@@ -6,8 +6,6 @@
     .oi-page-bg { background: #f3f4f6; min-height: 100vh; padding: 24px; }
     .oi-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
     .oi-page-title { font-size: 20px; font-weight: 700; color: #111827; margin: 0; }
-    .btn-add-oi { background: #2563eb; border: none; color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 500; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-add-oi:hover { background: #1d4ed8; color: #fff; }
     .oi-card { background: #fff; border-radius: 14px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); padding: 24px; }
     .oi-search-form {
         display: flex;
@@ -69,17 +67,24 @@
 
     <div class="oi-topbar">
         <h4 class="oi-page-title">Order Item List</h4>
-        <a href="{{ route('order_items.create') }}" class="btn-add-oi">
-            <i class="fa fa-plus"></i> Add New Order Item
-        </a>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="small text-muted">Items are generated through POS or website orders.</span>
+            @include('admin.partials.export-actions', ['exportType' => 'order-items'])
+        </div>
     </div>
 
     <div class="oi-card">
 
-        <form action="{{ route('admin.older_items') }}" method="GET" class="oi-search-form">
-            @if($orderId) <input type="hidden" name="order_id" value="{{ $orderId }}"> @endif
-            <input type="text" name="search" class="form-control" placeholder="Search order ID or product..." value="{{ request('search') }}">
-            <button class="btn-search" type="submit">Search</button>
+        <form action="{{ route('admin.older_items') }}" method="GET" class="row g-2 align-items-end mb-3">
+            @if($orderId && !request('order_id')) <input type="hidden" name="order_id" value="{{ $orderId }}"> @endif
+            <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Search</label><input type="text" name="search" class="form-control form-control-sm" placeholder="Order ID or product..." value="{{ request('search') }}"></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Order ID</label><input type="number" min="1" name="order_id" class="form-control form-control-sm" value="{{ request('order_id', $orderId) }}" placeholder="Any order"></div>
+            <div class="col-6 col-md-3"><label class="form-label small fw-semibold">Product</label><select name="product_id" class="form-select form-select-sm"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>{{ $product->product_name }}</option>@endforeach</select></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Category</label><select name="category_id" class="form-select form-select-sm"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id') == $category->category_id)>{{ $category->category_name }}</option>@endforeach</select></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">From date</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">To date</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
+            <div class="col-auto"><button class="btn btn-primary btn-sm" type="submit">Apply filters</button><a href="{{ route('admin.older_items') }}" class="btn btn-outline-secondary btn-sm">Reset</a></div>
         </form>
         @if($orderId)
             <div class="alert alert-info py-2 small d-flex justify-content-between align-items-center">

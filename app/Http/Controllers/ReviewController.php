@@ -12,13 +12,23 @@ class ReviewController extends Controller
     public function index(Request $request)
     {
         $reviews = Review::with(['order', 'customer'])
-            ->when($request->filled('rating'), fn ($query) => $query->where('rating', $request->rating))
-            ->latest('review_id')
+            ->when($request->filled('rating'), fn ($query) => $query->where('rating', $request->input('rating')))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $term = trim((string) $request->input('search'));
+                $query->where(function ($nested) use ($term) {
+                    $nested->where('comment', 'like', "%{$term}%")
+                        ->orWhere('order_id', 'like', "%{$term}%")
+                        ->orWhereHas('customer', fn ($customerQuery) => $customerQuery->where('name', 'like', "%{$term}%"));
+                });
+            })
+            ->when($request->filled('start_date'), fn ($query) => $query->whereHas('order', fn ($orderQuery) => $orderQuery->whereDate('order_date', '>=', $request->input('start_date'))))
+            ->when($request->filled('end_date'), fn ($query) => $query->whereHas('order', fn ($orderQuery) => $orderQuery->whereDate('order_date', '<=', $request->input('end_date'))))
+            ->orderBy(\App\Models\Order::query()->select('order_date')->whereColumn('orders.order_id', 'reviews.order_id'), in_array($request->input('sort_dir'), ['asc', 'desc'], true) ? $request->input('sort_dir') : 'desc')
+            ->orderBy('review_id', in_array($request->input('sort_dir'), ['asc', 'desc'], true) ? $request->input('sort_dir') : 'desc')
             ->paginate(15)
             ->withQueryString();
 
         $avgRating = round((float) (Review::avg('rating') ?? 0), 1);
-
         return view('admin.review', compact('reviews', 'avgRating'));
     }
 

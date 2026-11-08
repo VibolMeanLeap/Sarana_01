@@ -65,7 +65,7 @@
 
                     <div class="ord-form-group">
                         <label for="cashier_id" class="ord-form-label">Cashier</label>
-                        <select name="cashier_id" id="cashier_id" class="ord-form-control">
+                        <select name="cashier_id" id="cashier_id" class="ord-form-control" data-optional>
                             <option value="">-- Select Cashier --</option>
                             @foreach($cashiers as $cashier)
                                 <option value="{{ $cashier->user_id }}" @selected(old('cashier_id', $order->cashier_id) == $cashier->user_id)>{{ $cashier->name }}</option>
@@ -87,7 +87,7 @@
 
                     <div class="ord-form-group">
                         <label for="payment_method_id" class="ord-form-label">Payment Method</label>
-                        <select name="payment_method_id" id="payment_method_id" class="ord-form-control">
+                        <select name="payment_method_id" id="payment_method_id" class="ord-form-control" data-optional>
                             <option value="">-- Select Payment Method --</option>
                             @foreach($paymentMethods as $method)
                                 <option value="{{ $method->payment_method_id }}" @selected(old('payment_method_id', $order->payment_method_id) == $method->payment_method_id)>{{ $method->payment_name }}</option>
@@ -99,12 +99,12 @@
                 <div class="ord-form-row">
                     <div class="ord-form-group">
                         <label for="waiting_num" class="ord-form-label">Waiting Number</label>
-                        <input type="number" min="0" name="waiting_num" id="waiting_num" class="ord-form-control" value="{{ old('waiting_num', $order->waiting_num) }}">
+                        <input type="number" min="0" name="waiting_num" id="waiting_num" class="ord-form-control" value="{{ old('waiting_num', $order->waiting_num) }}" data-optional>
                     </div>
 
                     <div class="ord-form-group">
                         <label for="exchange_rate" class="ord-form-label">Exchange Rate</label>
-                        <input type="number" step="0.01" name="exchange_rate" id="exchange_rate" class="ord-form-control" value="{{ old('exchange_rate', $order->exchange_rate) }}">
+                        <input type="number" step="0.01" name="exchange_rate" id="exchange_rate" class="ord-form-control" value="{{ old('exchange_rate', $order->exchange_rate) }}" data-optional>
                     </div>
                 </div>
 
@@ -116,19 +116,19 @@
 
                     <div class="ord-form-group">
                         <label for="discount" class="ord-form-label">Discount</label>
-                        <input type="number" step="0.01" min="0" name="discount" id="discount" class="ord-form-control" value="{{ old('discount', $order->discount) }}">
+                        <input type="number" step="0.01" min="0" name="discount" id="discount" class="ord-form-control" value="{{ old('discount', $order->discount) }}" data-optional>
                     </div>
                 </div>
 
                 <div class="ord-form-row">
                     <div class="ord-form-group">
                         <label for="final_price" class="ord-form-label">Final Price</label>
-                        <input type="number" step="0.01" min="0" name="final_price" id="final_price" class="ord-form-control" value="{{ old('final_price', $order->final_price) }}">
+                        <input type="number" step="0.01" min="0" name="final_price" id="final_price" class="ord-form-control" value="{{ old('final_price', $order->final_price) }}" data-optional>
                     </div>
 
                     <div class="ord-form-group">
                         <label for="payment_status" class="ord-form-label">Payment Status</label>
-                        <input type="text" name="payment_status" id="payment_status" class="ord-form-control" placeholder="e.g. Pending" value="{{ old('payment_status', $order->payment_status) }}">
+                        <input type="text" name="payment_status" id="payment_status" class="ord-form-control" placeholder="e.g. Pending" value="{{ old('payment_status', $order->payment_status) }}" data-optional>
                     </div>
                 </div>
 

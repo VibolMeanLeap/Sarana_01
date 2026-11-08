@@ -17,6 +17,16 @@
     </div>
 
     <!-- តារាងបង្ហាញបញ្ជីឈ្មោះ Customers -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <form method="GET" action="{{ route('customer.list') }}" class="d-flex flex-wrap gap-2">
+            <input class="form-control form-control-sm" name="search" value="{{ request('search') }}" placeholder="Search name, phone or email...">
+            <select name="sort_by" class="form-select form-select-sm" aria-label="Sort customers"><option value="customer_id" @selected(request('sort_by', 'customer_id') === 'customer_id')>Customer ID</option><option value="name" @selected(request('sort_by') === 'name')>Customer name</option></select>
+            <select name="sort_dir" class="form-select form-select-sm" aria-label="Sort direction"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option><option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option></select>
+            <button class="btn btn-outline-success btn-sm" type="submit"><i class="bi bi-search me-1"></i>Filter</button>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('customer.list') }}">Reset</a>
+        </form>
+        @include('admin.partials.export-actions', ['exportType' => 'customers'])
+    </div>
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-header bg-white py-3 border-0">
             <h5 class="fw-bold text-dark mb-0">Customer List</h5>

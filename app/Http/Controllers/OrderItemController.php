@@ -7,7 +7,6 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\StockLog;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,72 +18,40 @@ class OrderItemController extends Controller
     {
         $search = trim((string) $request->input('search', ''));
         $orderId = $request->input('order_id');
-        $orderItems = OrderItem::with(['order', 'product'])
-            ->when($orderId !== null && $orderId !== '', fn ($query) => $query->where('order_id', $orderId))
+        $productId = $request->input('product_id');
+        $categoryId = $request->input('category_id');
+        $sortBy = in_array($request->input('sort_by'), ['order_date', 'order_item_id', 'quantity', 'price'], true) ? $request->input('sort_by') : 'order_date';
+        $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $orderItems = OrderItem::query()
+            ->select('order_items.*')
+            ->leftJoin('orders as filter_orders', 'filter_orders.order_id', '=', 'order_items.order_id')
+            ->with(['order', 'product'])
+            ->when($orderId !== null && $orderId !== '', fn ($query) => $query->where('order_items.order_id', $orderId))
+            ->when($productId !== null && $productId !== '', fn ($query) => $query->where('order_items.product_id', $productId))
+            ->when($categoryId !== null && $categoryId !== '', fn ($query) => $query->whereHas('product', fn ($productQuery) => $productQuery->where('category_id', $categoryId)))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($nested) use ($search) {
-                    $nested->where('order_id', 'like', "%{$search}%")
-                        ->orWhere('product_id', 'like', "%{$search}%")
+                    $nested->where('order_items.order_id', 'like', "%{$search}%")
+                        ->orWhere('order_items.product_id', 'like', "%{$search}%")
                         ->orWhereHas('product', fn ($productQuery) => $productQuery->where('product_name', 'like', "%{$search}%"));
                 });
             })
-            ->latest('order_item_id')
-            ->paginate(10)
+            ->when($request->filled('start_date'), fn ($query) => $query->whereDate('filter_orders.order_date', '>=', $request->input('start_date')))
+            ->when($request->filled('end_date'), fn ($query) => $query->whereDate('filter_orders.order_date', '<=', $request->input('end_date')))
+            ->orderBy($sortBy === 'order_date' ? 'filter_orders.order_date' : 'order_items.'.$sortBy, $sortDirection)
+            ->orderByDesc('order_items.order_item_id')
+            ->paginate(15)
             ->withQueryString();
 
-        return view('admin.older_item', compact('orderItems', 'orderId'));
+        $products = Product::orderBy('product_name')->get();
+        $categories = \App\Models\Category::orderBy('category_name')->get();
+
+        return view('admin.older_item', compact('orderItems', 'orderId', 'products', 'categories'));
     }
 
-    public function create()
-    {
-        $orders = Order::orderByDesc('order_id')->get();
-        $products = Product::where('status', 'Active')->orderBy('product_name')->get();
-        return view('admin.older_item.create', compact('orders', 'products'));
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'order_id' => 'required|exists:orders,order_id',
-            'product_id' => 'required|exists:product,product_id',
-            'quantity' => 'required|integer|min:1',
-            'price' => 'required|numeric|min:0',
-        ]);
-
-        try {
-            $result = DB::transaction(function () use ($validated) {
-                $order = Order::where('order_id', $validated['order_id'])->lockForUpdate()->firstOrFail();
-                if ($this->orderIsLocked($order)) {
-                    return 'locked';
-                }
-
-                $product = Product::where('product_id', $validated['product_id'])
-                    ->lockForUpdate()
-                    ->firstOrFail();
-                if ((int) $validated['quantity'] > (int) $product->qty) {
-                    return 'stock';
-                }
-
-                OrderItem::create([
-                    ...$validated,
-                    'unit_cost' => (float) $product->cost,
-                ]);
-                $this->syncOrderTotal((int) $order->order_id);
-                return 'ok';
-            }, 3);
-        } catch (QueryException $exception) {
-            return back()->withInput()->with('error', 'The item could not be added. Check stock and the selected order.');
-        }
-
-        if ($result === 'locked') {
-            return back()->withInput()->with('error', 'This order has payment activity or is already paid/cancelled. Its items are locked.');
-        }
-        if ($result === 'stock') {
-            return back()->withInput()->with('error', 'Insufficient stock for the selected product.');
-        }
-
-        return redirect()->route('admin.older_items')->with('success', 'Order item created and stock updated.');
-    }
+    // Order items are created by POS or website checkout. Manual creation is disabled
+    // so administrators cannot bypass order pricing, payment and stock workflows.
 
     public function edit($id)
     {
@@ -141,35 +108,40 @@ class OrderItemController extends Controller
                     return 'product';
                 }
 
-                $availableForReplacement = (int) $newProduct->qty;
-                if ((int) $oldProduct->product_id === (int) $newProduct->product_id) {
+                $oldTracksStock = $oldProduct->isStockTracked();
+                $newTracksStock = $newProduct->isStockTracked();
+                $availableForReplacement = $newTracksStock ? (int) $newProduct->qty : PHP_INT_MAX;
+                if ($newTracksStock && $oldTracksStock && (int) $oldProduct->product_id === (int) $newProduct->product_id) {
                     $availableForReplacement += (int) $item->quantity;
                 }
-                if ((int) $validated['quantity'] > $availableForReplacement) {
+                if ($newTracksStock && (int) $validated['quantity'] > $availableForReplacement) {
                     return 'stock';
                 }
 
-                $oldProduct->qty = (int) $oldProduct->qty + (int) $item->quantity;
-                $oldProduct->save();
-                $newProduct->qty = (int) $newProduct->qty - (int) $validated['quantity'];
-                $newProduct->save();
-
-                StockLog::create([
-                    'product_id' => $oldProduct->product_id,
-                    'user_id' => Auth::id(),
-                    'type' => 'IN',
-                    'quantity' => (int) $item->quantity,
-                    'reason' => 'Sale correction',
-                    'note' => "Stock returned while editing order item #{$item->order_item_id} (order #{$item->order_id}).",
-                ]);
-                StockLog::create([
-                    'product_id' => $newProduct->product_id,
-                    'user_id' => Auth::id(),
-                    'type' => 'OUT',
-                    'quantity' => (int) $validated['quantity'],
-                    'reason' => 'Sale correction',
-                    'note' => "Stock issued for updated order item #{$item->order_item_id} (order #{$nextOrderId}).",
-                ]);
+                if ($oldTracksStock) {
+                    $oldProduct->qty = (int) $oldProduct->qty + (int) $item->quantity;
+                    $oldProduct->save();
+                    StockLog::create([
+                        'product_id' => $oldProduct->product_id,
+                        'user_id' => Auth::id(),
+                        'type' => 'IN',
+                        'quantity' => (int) $item->quantity,
+                        'reason' => 'Sale correction',
+                        'note' => "Stock returned while editing order item #{$item->order_item_id} (order #{$item->order_id}).",
+                    ]);
+                }
+                if ($newTracksStock) {
+                    $newProduct->qty = (int) $newProduct->qty - (int) $validated['quantity'];
+                    $newProduct->save();
+                    StockLog::create([
+                        'product_id' => $newProduct->product_id,
+                        'user_id' => Auth::id(),
+                        'type' => 'OUT',
+                        'quantity' => (int) $validated['quantity'],
+                        'reason' => 'Sale correction',
+                        'note' => "Stock issued for updated order item #{$item->order_item_id} (order #{$nextOrderId}).",
+                    ]);
+                }
 
                 $unitCost = (int) $oldProduct->product_id === (int) $newProduct->product_id
                     ? (float) $item->unit_cost
@@ -212,7 +184,7 @@ class OrderItemController extends Controller
                 }
 
                 $product = Product::where('product_id', $item->product_id)->lockForUpdate()->first();
-                if ($product) {
+                if ($product && $product->isStockTracked()) {
                     $product->qty = (int) $product->qty + (int) $item->quantity;
                     $product->save();
                     StockLog::create([

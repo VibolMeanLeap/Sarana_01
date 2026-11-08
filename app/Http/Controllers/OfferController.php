@@ -10,22 +10,41 @@ use Illuminate\Validation\ValidationException;
 
 class OfferController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $offers = Offer::with('product')->latest('offer_id')->paginate(15);
         $today = now()->toDateString();
+        $offersQuery = Offer::with(['product', 'product.category'])
+            ->when($request->filled('product_id'), fn ($query) => $query->where('product_id', $request->input('product_id')))
+            ->when($request->filled('category_id'), fn ($query) => $query->whereHas('product', fn ($productQuery) => $productQuery->where('category_id', $request->input('category_id'))))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $term = trim((string) $request->input('search'));
+                $query->whereHas('product', fn ($productQuery) => $productQuery->where('product_name', 'like', "%{$term}%"));
+            });
+
+        if ($request->input('status') === 'active') {
+            $offersQuery->whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today);
+        } elseif ($request->input('status') === 'upcoming') {
+            $offersQuery->whereDate('start_date', '>', $today);
+        } elseif ($request->input('status') === 'expired') {
+            $offersQuery->whereDate('end_date', '<', $today);
+        }
+        if ($request->filled('date_from')) $offersQuery->whereDate('start_date', '>=', $request->input('date_from'));
+        if ($request->filled('date_to')) $offersQuery->whereDate('end_date', '<=', $request->input('date_to'));
+
+        $sortBy = in_array($request->input('sort_by'), ['start_date', 'end_date', 'discount', 'offer_id'], true) ? $request->input('sort_by') : 'start_date';
+        $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $offers = $offersQuery->orderBy($sortBy, $sortDirection)->paginate(15)->withQueryString();
 
         $offers->getCollection()->transform(function (Offer $offer) use ($today) {
             $start = Carbon::parse($offer->start_date)->toDateString();
             $end = Carbon::parse($offer->end_date)->toDateString();
-            $offer->display_status = $today < $start
-                ? 'Upcoming'
-                : ($today <= $end ? 'Active' : 'Expired');
-
+            $offer->display_status = $today < $start ? 'Upcoming' : ($today <= $end ? 'Active' : 'Expired');
             return $offer;
         });
 
-        return view('admin.Offer', compact('offers'));
+        $products = Product::orderBy('product_name')->get();
+        $categories = \App\Models\Category::orderBy('category_name')->get();
+        return view('admin.Offer', compact('offers', 'products', 'categories'));
     }
 
     public function create()

@@ -16,6 +16,9 @@
     </div>
 
     <div class="card-body">
+        <div class="d-flex justify-content-end mb-3">
+            @include('admin.partials.export-actions', ['exportType' => 'purchases'])
+        </div>
 
         {{-- Success Message --}}
         @if(session('success'))
@@ -36,25 +39,15 @@
         @endif
 
 
-        {{-- Search --}}
-        <form method="GET" class="row g-2 mb-3">
-
-            <div class="col-auto">
-                <input
-                    type="text"
-                    name="search"
-                    value="{{ request('search') }}"
-                    class="form-control form-control-sm"
-                    placeholder="Search product..."
-                >
-            </div>
-
-            <div class="col-auto">
-                <button class="btn btn-outline-secondary btn-sm">
-                    Filter
-                </button>
-            </div>
-
+        {{-- Search and operational filters --}}
+        <form method="GET" action="{{ route('purchase.index') }}" class="row g-2 mb-3 align-items-end">
+            <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Search</label><input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Purchase ID, product or supplier"></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Product</label><select name="product_id" class="form-select form-select-sm"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>{{ $product->product_name }}</option>@endforeach</select></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Supplier</label><select name="supplier_id" class="form-select form-select-sm"><option value="">All suppliers</option>@foreach($suppliers as $supplier)<option value="{{ $supplier->supplier_id }}" @selected(request('supplier_id') == $supplier->supplier_id)>{{ $supplier->name }}</option>@endforeach</select></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">From</label><input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm"></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">To</label><input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm"></div>
+            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Sort date</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest</option></select></div>
+            <div class="col-auto"><button class="btn btn-outline-secondary btn-sm" type="submit">Filter</button><a href="{{ route('purchase.index') }}" class="btn btn-outline-dark btn-sm">Reset</a></div>
         </form>
 
 

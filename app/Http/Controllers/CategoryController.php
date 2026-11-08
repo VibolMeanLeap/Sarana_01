@@ -9,19 +9,26 @@ use App\Models\Product;
 class CategoryController extends Controller
 {
     // 1. បង្ហាញបញ្ជីប្រភេទផលិតផលទាំងអស់
-public function index(Request $request)
-{
-    $search = $request->get('search');
+    public function index(Request $request)
+    {
+        $search = trim((string) $request->input('search', ''));
+        $sortColumns = ['category_id' => 'category_id', 'category_name' => 'category_name'];
+        $sortBy = $sortColumns[$request->input('sort_by')] ?? 'category_id';
+        $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
-    $categories = Category::when($search, function ($query, $search) {
-            $query->where('category_name', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
-        })
-        ->paginate(5)
-        ->withQueryString();
+        $categories = Category::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('category_name', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                });
+            })
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate(10)
+            ->withQueryString();
 
-    return view('admin.category', compact('categories'));
-}
+        return view('admin.category', compact('categories'));
+    }
 
     // 2. បង្ហាញ Form សម្រាប់បង្កើតប្រភេទផលិតផលថ្មី
     public function create()
@@ -32,11 +39,12 @@ public function index(Request $request)
     // 3. រក្សាទុកទិន្នន័យប្រភេទផលិតផលថ្មីចូល Database
     public function store(Request $request)
     {
-        $request->validate([
-            'category_name' => 'required|unique:category,category_name',
+        $validated = $request->validate([
+            'category_name' => ['required', 'string', 'min:2', 'max:255', 'unique:category,category_name'],
+            'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        Category::create($request->all());
+        Category::create($validated);
 
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
@@ -53,11 +61,12 @@ public function index(Request $request)
     {
         $category = Category::findOrFail($id);
 
-        $request->validate([
-            'category_name' => 'required|unique:category,category_name,' . $id . ',category_id',
+        $validated = $request->validate([
+            'category_name' => ['required', 'string', 'min:2', 'max:255', 'unique:category,category_name,'.$id.',category_id'],
+            'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $category->update($request->all());
+        $category->update($validated);
 
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }

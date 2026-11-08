@@ -216,7 +216,7 @@
 
                     <div class="prod-form-group">
                         <label for="supplier_id" class="prod-form-label">Supplier</label>
-                        <select name="supplier_id" id="supplier_id" class="prod-form-control">
+                        <select name="supplier_id" id="supplier_id" class="prod-form-control" data-optional>
                         <option value="">Select Supplier</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->supplier_id }}" @selected(old('supplier_id', $product->supplier_id) == $supplier->supplier_id)>
@@ -240,14 +240,19 @@
                 </div>
 
                 <div class="prod-form-group">
-                    <label for="qty" class="prod-form-label">Stock Quantity</label>
+                    <label for="qty" class="prod-form-label" id="qty-label">Stock Quantity</label>
                     <input type="number" min="0" name="qty" id="qty" class="prod-form-control" placeholder="0" value="{{ old('qty', $product->qty) }}" required>
                 </div>
 
                 <div class="prod-form-row">
                     <div class="prod-form-group">
                         <label for="product_type" class="prod-form-label">Product Type</label>
-                        <input type="text" name="product_type" id="product_type" class="prod-form-control" placeholder="e.g. Electronics" value="{{ old('product_type', $product->product_type) }}">
+                        <select name="product_type" id="product_type" class="prod-form-control" required>
+                            <option value="stock" @selected(old('product_type', in_array(strtolower((string) $product->product_type), ['non-stock', 'non stock', 'nonstock', 'service', 'digital', 'untracked'], true) ? 'non-stock' : 'stock') === 'stock')>Stock (inventory tracked)</option>
+                            <option value="non-stock" @selected(old('product_type', in_array(strtolower((string) $product->product_type), ['non-stock', 'non stock', 'nonstock', 'service', 'digital', 'untracked'], true) ? 'non-stock' : 'stock') === 'non-stock')>Non-stock (no inventory)</option>
+                        </select>
+                        <small class="text-muted d-block mt-1">Stock products reduce quantity when sold. Non-stock products such as services do not affect inventory.</small>
+                        @error('product_type')<small class="text-danger d-block">{{ $message }}</small>@enderror
                     </div>
 
                     <div class="prod-form-group">
@@ -266,12 +271,12 @@
                     <img src="{{ asset('images/' . $product->image) }}"alt="{{ $product->product_name }}"class="prod-current-image">
                     @endif
 
-                    <input type="file" name="image" id="image" class="prod-form-control"accept="image/*">
+                    <input type="file" name="image" id="image" class="prod-form-control"accept="image/*" data-optional>
                 </div>
 
                 <div class="prod-form-group">
                     <label for="description" class="prod-form-label">Description</label>
-                    <textarea name="description" id="description" class="prod-form-control" rows="4" placeholder="Enter description">{{ old('description', $product->description) }}</textarea>
+                    <textarea name="description" id="description" class="prod-form-control" rows="4" placeholder="Enter description" data-optional>{{ old('description', $product->description) }}</textarea>
                 </div>
 
                 <div class="prod-form-actions">
@@ -289,5 +294,27 @@
     </div>
 
 </div>
+
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const typeSelect = document.getElementById('product_type');
+    const quantityInput = document.getElementById('qty');
+    if (!typeSelect || !quantityInput) return;
+    const syncInventoryType = () => {
+        const nonStock = typeSelect.value === 'non-stock';
+        if (nonStock) quantityInput.value = '0';
+        quantityInput.readOnly = nonStock;
+        quantityInput.setAttribute('aria-readonly', nonStock ? 'true' : 'false');
+        quantityInput.classList.toggle('bg-light', nonStock);
+        const quantityLabel = document.getElementById('qty-label');
+        if (quantityLabel) quantityLabel.textContent = nonStock ? 'Inventory Quantity (not used)' : 'Stock Quantity';
+    };
+    typeSelect.addEventListener('change', syncInventoryType);
+    syncInventoryType();
+});
+</script>
+@endsection
 
 @endsection

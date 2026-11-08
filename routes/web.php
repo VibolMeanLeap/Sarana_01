@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountingCategoryController;
+use App\Http\Controllers\AdminExportController;
 use App\Http\Controllers\AuthContoller;
 use App\Http\Controllers\CashTransactionController;
 use App\Http\Controllers\CashierController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockLogController;
 use App\Http\Controllers\SupplierController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /* Staff sign-in (admin and cashier). */
@@ -75,13 +77,33 @@ Route::middleware(['auth', 'role:cashier'])->prefix('cashier')->name('cashier.')
 Route::middleware(['auth', 'administrator'])->group(function () {
     Route::get('/admin', [AuthContoller::class, 'dash'])->name('admin.dashboard');
 
-    // People and access
-    Route::get('/admin/user', [AuthContoller::class, 'index'])->name('auth.list');
-    Route::get('/admin/user/create', [AuthContoller::class, 'create'])->name('auth.create');
-    Route::post('/admin/user/store', [AuthContoller::class, 'store'])->name('auth.store');
-    Route::delete('/admin/user/{user_id}', [AuthContoller::class, 'delete'])->name('auth.delete');
-    Route::get('/admin/user/edit/{user_id}', [AuthContoller::class, 'edit'])->name('auth.edit');
-    Route::post('/admin/user/update/{user_id}', [AuthContoller::class, 'update'])->name('auth.update');
+    // Consistent CSV (Excel-compatible) and print-ready PDF exports for admin list tabs.
+    Route::get('/admin/exports/{type}/excel', [AdminExportController::class, 'excel'])
+        ->where('type', 'products|categories|suppliers|customers|customer-accounts|staff-accounts|accounting-categories|offers|orders|order-items|purchases|inventory|transactions|deliveries|reviews')
+        ->name('admin.exports.excel');
+    Route::get('/admin/exports/{type}/pdf', [AdminExportController::class, 'pdf'])
+        ->where('type', 'products|categories|suppliers|customers|customer-accounts|staff-accounts|accounting-categories|offers|orders|order-items|purchases|inventory|transactions|deliveries|reviews')
+        ->name('admin.exports.pdf');
+
+    // People and access. The /admin/user page is now customer-account management only.
+    Route::get('/admin/user', [CostumerController::class, 'accounts'])->name('auth.list');
+    Route::patch('/admin/user/{user_id}/status', [CostumerController::class, 'updateAccountStatus'])
+        ->whereNumber('user_id')->name('customer.accounts.status');
+
+    // Customer profiles and online account access live in the Customer Accounts page.
+    Route::get('/admin/user/{user_id}/edit', [CostumerController::class, 'editCustomerAccount'])
+        ->whereNumber('user_id')->name('customer.accounts.edit');
+    Route::put('/admin/user/{user_id}', [CostumerController::class, 'updateCustomerAccount'])
+        ->whereNumber('user_id')->name('customer.accounts.update');
+
+    // Legacy staff-account URLs now redirect to Settings. Cashier/Admin accounts
+    // can only be edited or deactivated from the dedicated Settings workspace.
+    Route::get('/admin/user/create', fn () => redirect()->to(route('setting.list').'#staff-accounts'))->name('auth.create');
+    Route::post('/admin/user/store', fn () => redirect()->to(route('setting.list').'#staff-accounts'))->name('auth.store');
+    Route::delete('/admin/user/{user_id}', fn () => redirect()->to(route('setting.list').'#staff-accounts'))->whereNumber('user_id')->name('auth.delete');
+    Route::get('/admin/user/edit/{user_id}', fn () => redirect()->to(route('setting.list').'#staff-accounts'))->whereNumber('user_id')->name('auth.edit');
+    Route::post('/admin/user/update/{user_id}', fn () => redirect()->to(route('setting.list').'#staff-accounts'))->whereNumber('user_id')->name('auth.update');
+
     Route::get('/admin/customer', [CostumerController::class, 'index'])->name('customer.list');
     Route::get('/admin/supplier', [SupplierController::class, 'index'])->name('supplier.list');
     Route::get('/admin/supplier/create', [SupplierController::class, 'create'])->name('supplier.create');
@@ -115,7 +137,10 @@ Route::middleware(['auth', 'administrator'])->group(function () {
         ->whereNumber('orderId')
         ->name('admin.orders.status');
 
-    Route::get('/admin/older_items', [OrderItemController::class, 'index'])->name('admin.older_items');
+    Route::get('/admin/older_items', function (Request $request) {
+        $params = $request->filled('order_id') ? ['search' => $request->input('order_id')] : [];
+        return redirect()->route('admin.orders.index', $params);
+    })->name('admin.older_items');
 
     // Keep create/store/edit/update/delete under /admin/orders and name them admin.orders.*.
     // Do not use Route::resource('orders', ...) here: that conflicts with the cashier /orders URL.
@@ -123,7 +148,9 @@ Route::middleware(['auth', 'administrator'])->group(function () {
         ->except(['index', 'show'])
         ->names('admin.orders');
 
-    Route::resource('order_items', OrderItemController::class)->except(['show']);
+    Route::get('/order_items/{id}/edit', [OrderItemController::class, 'edit'])->whereNumber('id')->name('order_items.edit');
+    Route::put('/order_items/{id}', [OrderItemController::class, 'update'])->whereNumber('id')->name('order_items.update');
+    Route::delete('/order_items/{id}', [OrderItemController::class, 'destroy'])->whereNumber('id')->name('order_items.destroy');
 
     // Purchasing and stock
     Route::get('/admin/purchases', [PurchaseController::class, 'index'])->name('purchase.index');
@@ -173,4 +200,10 @@ Route::middleware(['auth', 'administrator'])->group(function () {
     Route::post('/admin/meanleap/setting/update/{id}', [SettingController::class, 'update'])->name('setting.update');
     Route::post('/admin/meanleap/setting/delete/{id}', [SettingController::class, 'delete'])->name('setting.delete');
     Route::post('/admin/meanleap/setting/staff', [SettingController::class, 'storeStaffAccount'])->name('setting.staff.store');
+    Route::get('/admin/meanleap/setting/staff/{user_id}/edit', [SettingController::class, 'editStaffAccount'])
+        ->whereNumber('user_id')->name('setting.staff.edit');
+    Route::put('/admin/meanleap/setting/staff/{user_id}', [SettingController::class, 'updateStaffAccount'])
+        ->whereNumber('user_id')->name('setting.staff.update');
+    Route::delete('/admin/meanleap/setting/staff/{user_id}', [SettingController::class, 'deactivateStaffAccount'])
+        ->whereNumber('user_id')->name('setting.staff.deactivate');
 });

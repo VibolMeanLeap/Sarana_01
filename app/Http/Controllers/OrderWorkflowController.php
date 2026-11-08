@@ -84,6 +84,10 @@ class OrderWorkflowController extends Controller
                             throw new RuntimeException("Cannot restore stock: product #{$productId} no longer exists.");
                         }
 
+                        if (! $product->isStockTracked()) {
+                            continue;
+                        }
+
                         $product->qty = (int) $product->qty + $quantity;
                         $product->save();
 

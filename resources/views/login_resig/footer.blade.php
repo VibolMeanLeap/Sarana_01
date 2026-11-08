@@ -8,25 +8,7 @@
 <script src="{{ asset('../../assets/js/shared/jquery.cookie.js') }}" type="text/javascript"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    function setupPasswordToggle(toggleId, inputId, iconId) {
-        const toggleBtn = document.getElementById(toggleId);
-        const inputField = document.getElementById(inputId);
-        const iconEl = document.getElementById(iconId);
-
-        if (toggleBtn && inputField && iconEl) {
-            toggleBtn.addEventListener('click', function () {
-                const type = inputField.getAttribute('type') === 'password' ? 'text' : 'password';
-                inputField.setAttribute('type', type);
-                
-                iconEl.classList.toggle('mdi-eye-outline');
-                iconEl.classList.toggle('mdi-eye-off-outline');
-            });
-        }
-    }
-    setupPasswordToggle('toggle-password', 'password-input', 'toggle-icon');
-    setupPasswordToggle('toggle-confirm', 'confirm-input', 'toggle-confirm-icon');
-</script>
+<!-- Password visibility is handled once by the login form toggle. -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
     // Find all session toasts on the page
@@ -44,6 +26,8 @@
     });
     });
 </script>
+<script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
+<script src="{{ asset('assets/js/form-validation.js') }}"></script>
 </body>
 
 </html>

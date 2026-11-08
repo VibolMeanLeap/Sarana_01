@@ -163,7 +163,7 @@
                     <textarea
                         name="description"
                         class="cat-form-control"
-                        rows="4">{{ old('description', $category->description) }}</textarea>
+                        rows="4" data-optional>{{ old('description', $category->description) }}</textarea>
                 </div>
 
                 <div class="cat-form-actions">

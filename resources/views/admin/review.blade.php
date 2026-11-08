@@ -14,16 +14,25 @@
 </div>
 
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h5 class="mb-0">Customer Reviews</h5>
-        <a href="{{ route('reviews.create') }}" class="btn btn-cc btn-sm"><i class="bi bi-plus-lg me-1"></i>Add review</a>
-        <form method="GET" class="d-flex gap-2">
-            <select name="rating" class="form-select form-select-sm" onchange="this.form.submit()">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            @include('admin.partials.export-actions', ['exportType' => 'reviews'])
+            <a href="{{ route('reviews.create') }}" class="btn btn-cc btn-sm"><i class="bi bi-plus-lg me-1"></i>Add review</a>
+        </div>
+        <form method="GET" action="{{ route('reviews.index') }}" class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search customer, order, comment">
+            <select name="rating" class="form-select form-select-sm">
                 <option value="">All ratings</option>
                 @for($i = 5; $i >= 1; $i--)
                     <option value="{{ $i }}" @selected(request('rating') == $i)>{{ $i }} star</option>
                 @endfor
             </select>
+            <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm" aria-label="From date">
+            <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm" aria-label="To date">
+            <select name="sort_dir" class="form-select form-select-sm" aria-label="Sort by date"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select>
+            <button class="btn btn-outline-secondary btn-sm" type="submit">Filter</button>
+            <a href="{{ route('reviews.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
         </form>
     </div>
 
