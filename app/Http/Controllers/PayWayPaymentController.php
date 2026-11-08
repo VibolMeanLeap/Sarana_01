@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\OrderStatusHistory;
 use App\Services\PayWayService;
+use App\Services\TelegramOrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,12 +30,14 @@ class PayWayPaymentController extends Controller
     public function status(Payment $payment, PayWayService $payWay): JsonResponse
     {
         $this->ensureCustomerOwnsPayment($payment);
+        $verificationError = false;
 
         if ($payment->provider === 'aba_payway' && $payment->status === 'pending' && $payment->tran_id) {
             try {
                 $this->verifyAndSynchronize($payment, $payWay);
             } catch (Throwable $exception) {
                 // Keep the screen usable while ABA is temporarily unavailable.
+                $verificationError = true;
                 Log::notice('ABA PayWay polling check could not complete.', [
                     'payment_id' => $payment->id,
                     'message' => $exception->getMessage(),
@@ -42,14 +46,18 @@ class PayWayPaymentController extends Controller
         }
 
         $payment->refresh();
+        if ($payment->status === 'paid') {
+            $this->retryWebsiteTelegramNotification($payment);
+        }
         $order = $payment->order()->first();
 
         return response()->json([
             'status' => $payment->status,
             'order_status' => $order?->order_status ?? 'pending',
             'paid' => $payment->status === 'paid',
-            'order_url' => route('web.orders.show', $payment->order_id),
-            'success_url' => route('web.payments.success', $payment->id),
+            'verification_error' => $verificationError,
+            'order_url' => route('web.orders.show', $payment->order_id, false),
+            'success_url' => route('web.payments.success', $payment->id, false),
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
           ->header('Pragma', 'no-cache');
     }
@@ -79,6 +87,7 @@ class PayWayPaymentController extends Controller
                 ->with('error', 'This payment has not been verified yet.');
         }
 
+        $this->retryWebsiteTelegramNotification($payment);
         $payment->loadMissing(['order.customer', 'order.orderItems.product', 'order.orderType', 'order.paymentMethod']);
 
         return view('website.payments.success', compact('payment'));
@@ -104,11 +113,13 @@ class PayWayPaymentController extends Controller
     public function statusForStaff(Payment $payment, PayWayService $payWay): JsonResponse
     {
         $this->ensureStaffOwnsPosPayment($payment);
+        $verificationError = false;
 
         if ($payment->provider === 'aba_payway' && $payment->status === 'pending' && $payment->tran_id) {
             try {
                 $this->verifyAndSynchronize($payment, $payWay);
             } catch (Throwable $exception) {
+                $verificationError = true;
                 Log::notice('ABA POS payment polling check could not complete.', [
                     'payment_id' => $payment->id,
                     'message' => $exception->getMessage(),
@@ -131,10 +142,11 @@ class PayWayPaymentController extends Controller
         return response()->json([
             'status' => $payment->status,
             'paid' => $payment->status === 'paid',
+            'verification_error' => $verificationError,
             'message' => $statusMessages[$payment->status] ?? 'Payment status: '.$payment->status,
             'checked_at' => now()->toIso8601String(),
-            'order_url' => $this->staffOrdersUrl(),
-            'success_url' => route('pos.payments.success', $payment->id),
+            'order_url' => $this->staffOrdersUrl(false),
+            'success_url' => route('pos.payments.success', $payment->id, false),
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
           ->header('Pragma', 'no-cache');
     }
@@ -227,9 +239,10 @@ class PayWayPaymentController extends Controller
             }
 
             $synchronized = DB::transaction(function () use ($payment, $data) {
-                // Lock payment then order, matching the cancellation/status workflow lock order.
-                $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
-                $order = Order::query()->lockForUpdate()->findOrFail($lockedPayment->order_id);
+                // Lock order first, then payment. Fulfillment and cancellation use
+                // the same order-first lock order to reduce deadlock risk.
+                $order = Order::query()->where('order_id', $payment->order_id)->lockForUpdate()->firstOrFail();
+                $lockedPayment = Payment::query()->where('order_id', $order->order_id)->lockForUpdate()->findOrFail($payment->id);
 
                 if ($lockedPayment->status === 'paid') {
                     return true;
@@ -253,15 +266,38 @@ class PayWayPaymentController extends Controller
                     'bank_ref' => $data['bank_ref'] ?? $lockedPayment->bank_ref,
                 ]);
 
+                $previousStatus = (string) $order->order_status;
                 $order->is_paid = true;
                 $order->payment_status = 'Paid';
-                if ($order->order_status === 'pending') {
+
+                // Website orders and POS home-delivery orders remain pending until
+                // an authorised administrator confirms fulfilment. Other POS sales
+                // keep the existing automatic payment-confirmed behaviour.
+                $order->loadMissing('orderType');
+                $isPosDelivery = ($order->order_source ?? 'pos') === 'pos'
+                    && strtolower(trim((string) $order->orderType?->order_name)) === 'delivery';
+                if ($order->order_status === 'pending' && ($order->order_source ?? 'pos') !== 'website' && ! $isPosDelivery) {
                     $order->order_status = 'confirmed';
                 }
                 $order->save();
 
+                OrderStatusHistory::create([
+                    'order_id' => $order->order_id,
+                    'event_type' => 'payment_verified',
+                    'from_status' => $previousStatus,
+                    'to_status' => $order->order_status,
+                    'actor_type' => 'system',
+                    'actor_label' => 'ABA PayWay',
+                    'note' => 'Payment was verified by the server-side ABA Check Transaction request.',
+                    'created_at' => now(),
+                ]);
+
                 return true;
             }, 3);
+
+            if ($synchronized) {
+                $this->retryWebsiteTelegramNotification($payment->fresh());
+            }
 
             return $synchronized;
         }
@@ -277,6 +313,27 @@ class PayWayPaymentController extends Controller
         }
 
         return false;
+    }
+
+    private function retryWebsiteTelegramNotification(?Payment $payment): void
+    {
+        if (! $payment || $payment->status !== 'paid') {
+            return;
+        }
+
+        $order = Order::query()->with(['orderType', 'paymentMethod'])->find($payment->order_id);
+        if (! $order || ! $order->is_paid) {
+            return;
+        }
+
+        $isWebsiteOrder = ($order->order_source ?? '') === 'website';
+        $isPosDelivery = ($order->order_source ?? '') === 'pos'
+            && strtolower(trim((string) $order->orderType?->order_name)) === 'delivery';
+        if (! $isWebsiteOrder && ! $isPosDelivery) {
+            return;
+        }
+
+        app(TelegramOrderNotificationService::class)->notifyPaidWebsiteOrder($order);
     }
 
     private function ensureCustomerOwnsPayment(Payment $payment): void
@@ -297,9 +354,11 @@ class PayWayPaymentController extends Controller
         }
     }
 
-    private function staffOrdersUrl(): string
+    private function staffOrdersUrl(bool $absolute = true): string
     {
         $roleName = strtolower((string) auth()->user()?->role?->role_name);
-        return $roleName === 'cashier' ? route('cashier.orders') : route('admin.orders.index');
+        return $roleName === 'cashier'
+            ? route('cashier.orders', [], $absolute)
+            : route('admin.orders.index', [], $absolute);
     }
 }

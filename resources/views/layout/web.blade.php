@@ -625,7 +625,7 @@
     <!-- 1. Header Navbar -->
     <nav class="navbar navbar-expand-lg navbar-clean sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold fs-4 d-flex align-items-center text-dark" href="{{ route('web.home') }}">
+            <a class="navbar-brand fw-bold fs-4 d-flex align-items-center text-dark" href="{{ route('web.shop') }}">
                 @if($shopSettings?->logo && file_exists(public_path('uploads/'.$shopSettings->logo)))
                     <span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px"><img src="{{ asset('uploads/'.$shopSettings->logo) }}" alt="{{ $shopSettings->shop_name }} logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
                 @else
@@ -641,7 +641,7 @@
             <div class="collapse navbar-collapse" id="cleanNav">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="{{ route('web.shop') }}">Shop</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('web.home') }}#featured">Customer favourites</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('web.shop') }}#customer-reviews">Customer reviews</a></li>
                     @auth
                         @if(strtolower((string) Auth::user()->role?->role_name) === 'customer')
                             <li class="nav-item"><a class="nav-link" href="{{ route('web.account') }}">My orders</a></li>
@@ -733,7 +733,7 @@
                 <div class="col-6 col-md-3">
                     <h6 class="text-white fw-bold mb-3">Quick Links</h6>
                     <ul class="list-unstyled d-flex flex-column gap-2">
-                        <li><a href="/web/shop">Shop</a></li>
+                        <li><a href="{{ route('web.shop') }}">Shop</a></li>
                         <li><a href="#">About Us</a></li>
                         <li><a href="#">Subscriptions</a></li>
                     </ul>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AdminExportController extends Controller
@@ -18,12 +19,31 @@ class AdminExportController extends Controller
     {
         $this->validateFilters($request);
         $report = $this->buildReport($type, $request);
-        $filename = 'coffee-corner-'.$type.'-'.now()->format('Ymd-His').'.csv';
+        $shopSettings = app('shop.settings');
+        $shopName = trim((string) ($shopSettings?->shop_name ?? '')) ?: config('app.name', 'Store');
+        $storeFilePrefix = Str::slug($shopName) ?: 'store';
+        $filename = $storeFilePrefix.'-'.(Str::slug($type) ?: 'report').'-'.now()->format('Ymd-His').'.csv';
+        $generatedAt = now();
 
-        return response()->streamDownload(function () use ($report) {
+        return response()->streamDownload(function () use ($report, $shopSettings, $shopName, $generatedAt) {
             $handle = fopen('php://output', 'w');
             // UTF-8 BOM makes Khmer and other Unicode text display correctly in Excel.
             fwrite($handle, "\xEF\xBB\xBF");
+
+            // Put the current Store Profile above the tabular report data.
+            fputcsv($handle, [$this->safeCsvCell($shopName)]);
+            if (filled($shopSettings?->address)) {
+                fputcsv($handle, ['Address', $this->safeCsvCell($shopSettings->address)]);
+            }
+            if (filled($shopSettings?->tel)) {
+                fputcsv($handle, ['Telephone', $this->safeCsvCell($shopSettings->tel)]);
+            }
+            if (is_numeric($shopSettings?->exchange_rate) && (float) $shopSettings->exchange_rate > 0) {
+                fputcsv($handle, ['Exchange rate (USD/KHR)', number_format((float) $shopSettings->exchange_rate, 2, '.', '')]);
+            }
+            fputcsv($handle, ['Report', $this->safeCsvCell($report['title'])]);
+            fputcsv($handle, ['Generated at', $generatedAt->format('Y-m-d H:i:s')]);
+            fputcsv($handle, []);
             fputcsv($handle, $report['headers']);
 
             foreach ($report['rows'] as $row) {
@@ -49,6 +69,7 @@ class AdminExportController extends Controller
         return view('admin.exports.print', $report + [
             'generatedAt' => now(),
             'filterSummary' => $this->filterSummary($request),
+            'shopSettings' => app('shop.settings'),
         ]);
     }
 
@@ -213,8 +234,8 @@ class AdminExportController extends Controller
     {
         $query = DB::table('accounting_category as ac')
             ->leftJoin('in_and_exp_types as iet', 'iet.id_type', '=', 'ac.id_type')
+            ->where('ac.id_type', 2)
             ->select(['ac.id as Category_ID', 'ac.name as Category', 'iet.name as Type'])
-            ->when(in_array(strtolower((string) $request->input('type')), ['income', 'expense'], true), fn ($q) => $q->whereRaw('LOWER(iet.name) = ?', [strtolower($request->input('type'))]))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
                 $q->where('ac.name', 'like', "%{$term}%");
@@ -348,12 +369,12 @@ class AdminExportController extends Controller
     private function transactions(Request $request): array
     {
         $query = DB::table('cash_transactions as ct')
-            ->leftJoin('accounting_category as ac', 'ac.id', '=', 'ct.category_id')
+            ->join('accounting_category as ac', 'ac.id', '=', 'ct.category_id')
             ->leftJoin('in_and_exp_types as iet', 'iet.id_type', '=', 'ac.id_type')
+            ->where('ac.id_type', 2)
             ->leftJoin('users as u', 'u.user_id', '=', 'ct.user_id')
             ->select(['ct.id as Transaction_ID', 'ct.transaction_date as Transaction_Date', 'iet.name as Type', 'ac.name as Category', 'ct.amount as Amount', 'ct.order_id as Order_ID', 'ct.purchase_id as Purchase_ID', 'u.name as Recorded_By', 'ct.note as Note'])
             ->when($request->filled('category_id'), fn ($q) => $q->where('ct.category_id', $request->input('category_id')))
-            ->when(in_array(strtolower((string) $request->input('type')), ['income', 'expense'], true), fn ($q) => $q->whereRaw('LOWER(iet.name) = ?', [strtolower($request->input('type'))]))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
                 $q->where(fn ($w) => $w->where('ct.note', 'like', "%{$term}%")
@@ -364,7 +385,7 @@ class AdminExportController extends Controller
         $this->applyDateRange($query, 'ct.transaction_date', $request, ['from', 'date_from', 'start_date'], ['to', 'date_to', 'end_date']);
         $query->orderBy($this->sortColumn($request, ['transaction_date' => 'ct.transaction_date', 'id' => 'ct.id', 'amount' => 'ct.amount'], 'ct.transaction_date'), $this->sortDirection($request));
 
-        return $this->report('Income & Expenses', ['Transaction ID', 'Transaction Date', 'Type', 'Category', 'Amount (USD)', 'Order ID', 'Purchase ID', 'Recorded By', 'Note'], $query);
+        return $this->report('Operating Expenses', ['Transaction ID', 'Transaction Date', 'Type', 'Category', 'Amount (USD)', 'Order ID', 'Purchase ID', 'Recorded By', 'Note'], $query);
     }
 
     private function deliveries(Request $request): array
@@ -391,7 +412,7 @@ class AdminExportController extends Controller
         $query = DB::table('reviews as r')
             ->leftJoin('orders as o', 'o.order_id', '=', 'r.order_id')
             ->leftJoin('customer as c', 'c.customer_id', '=', 'r.customer_id')
-            ->select(['r.review_id as Review_ID', 'r.order_id as Order_ID', 'o.order_date as Order_Date', 'c.name as Customer', 'r.rating as Rating', 'r.comment as Comment'])
+            ->select(['r.review_id as Review_ID', 'r.order_id as Order_ID', 'o.order_date as Order_Date', 'c.name as Customer', 'r.rating as Rating', 'r.comment as Comment', 'r.is_approved as Published'])
             ->when($request->filled('rating'), fn ($q) => $q->where('r.rating', $request->input('rating')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
@@ -402,7 +423,7 @@ class AdminExportController extends Controller
         $this->applyDateRange($query, 'o.order_date', $request, ['start_date', 'date_from', 'from'], ['end_date', 'date_to', 'to']);
         $query->orderBy($this->sortColumn($request, ['order_date' => 'o.order_date', 'review_id' => 'r.review_id', 'rating' => 'r.rating'], 'o.order_date'), $this->sortDirection($request));
 
-        return $this->report('Customer Reviews', ['Review ID', 'Order ID', 'Order Date', 'Customer', 'Rating', 'Comment'], $query);
+        return $this->report('Customer Reviews', ['Review ID', 'Order ID', 'Order Date', 'Customer', 'Rating', 'Comment', 'Published'], $query);
     }
 
     private function productFilters(Builder $query, Request $request, string $alias): void

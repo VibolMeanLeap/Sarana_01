@@ -153,7 +153,7 @@
 <body>
 @php
     $roleName = strtolower((string) auth()->user()->role?->role_name);
-    $staffOrdersUrl = $roleName === 'cashier' ? route('cashier.orders') : route('admin.orders.index');
+    $staffOrdersUrl = $roleName === 'cashier' ? route('cashier.orders', [], false) : route('admin.orders.index', [], false);
     $qrImageSrc = $payment->qr_image
         ? (str_starts_with($payment->qr_image, 'data:image/') || str_starts_with($payment->qr_image, 'https://') || str_starts_with($payment->qr_image, 'http://') ? $payment->qr_image : 'data:image/png;base64,'.$payment->qr_image)
         : null;
@@ -234,7 +234,7 @@
 (function () {
     const target = document.getElementById('payment-status');
     const checkedAt = document.getElementById('payment-checked-at');
-    const statusUrl = @json(route('pos.payments.status', $payment->id));
+    const statusUrl = @json(route('pos.payments.status', $payment->id, false));
     let stopped = false;
     let timer = null;
 
@@ -250,13 +250,24 @@
         try {
             const response = await fetch(statusUrl + '?_=' + Date.now(), {
                 method: 'GET',
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'ngrok-skip-browser-warning': 'true'
+                },
                 cache: 'no-store',
                 credentials: 'same-origin'
             });
 
             if (!response.ok) {
-                throw new Error('Status endpoint returned HTTP ' + response.status);
+                throw new Error('HTTP ' + response.status);
+            }
+            if (response.redirected) {
+                throw new Error('The status request was redirected to a sign-in page.');
+            }
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.toLowerCase().includes('application/json')) {
+                throw new Error('The status endpoint returned a non-JSON response. Check APP_URL and the current browser hostname.');
             }
 
             const data = await response.json();
@@ -278,10 +289,14 @@
                 return;
             }
 
-            setStatus('info', data.message || 'Payment is still pending. Waiting for ABA confirmation…');
+            if (data.verification_error) {
+                setStatus('warning', 'ABA has not confirmed this payment yet. The server could not complete its latest verification attempt; it will retry automatically.');
+            } else {
+                setStatus('info', data.message || 'Payment is still pending. Waiting for ABA confirmation…');
+            }
         } catch (error) {
-            checkedAt.textContent = 'Could not reach the status checker · retrying automatically';
-            setStatus('warning', 'We could not refresh the payment status. Your order is still unpaid; checking again shortly…');
+            checkedAt.textContent = 'Status check failed (' + (error && error.message ? error.message : 'network error') + ') · retrying automatically';
+            setStatus('warning', 'We could not reach the payment status checker. The payment result is not yet known; we will retry automatically.');
         }
 
         if (!stopped) {

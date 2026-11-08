@@ -20,7 +20,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'payment_status' => ['nullable', 'in:paid,unpaid'],
-            'order_status' => ['nullable', 'in:pending,confirmed,preparing,ready,completed,cancelled'],
+            'order_status' => ['nullable', 'in:pending,confirmed,preparing,ready,out_for_delivery,completed,cancelled'],
             'source' => ['nullable', 'in:pos,website'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],

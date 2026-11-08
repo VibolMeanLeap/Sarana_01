@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
@@ -21,14 +22,28 @@ class ReportController extends Controller
     {
         $filters = $this->validatedFilters($request);
         $data = $this->buildDashboardData($filters);
-        $filename = 'coffee-corner-management-report-' . now()->format('Ymd-His') . '.csv';
+        $shopSettings = app('shop.settings');
+        $shopName = trim((string) ($shopSettings?->shop_name ?? '')) ?: config('app.name', 'Store');
+        $filename = (Str::slug($shopName) ?: 'store') . '-management-report-' . now()->format('Ymd-His') . '.csv';
+        $generatedAt = now();
 
-        return response()->streamDownload(function () use ($filters, $data) {
+        return response()->streamDownload(function () use ($filters, $data, $shopSettings, $shopName, $generatedAt) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['COFFEE CORNER AURA - MANAGEMENT REPORT']);
+            fputcsv($out, [$this->safeCsvValue($shopName)]);
+            if (filled($shopSettings?->address)) {
+                fputcsv($out, ['Address', $this->safeCsvValue($shopSettings->address)]);
+            }
+            if (filled($shopSettings?->tel)) {
+                fputcsv($out, ['Telephone', $this->safeCsvValue($shopSettings->tel)]);
+            }
+            if (is_numeric($shopSettings?->exchange_rate) && (float) $shopSettings->exchange_rate > 0) {
+                fputcsv($out, ['Exchange rate (USD/KHR)', number_format((float) $shopSettings->exchange_rate, 2, '.', '')]);
+            }
+            fputcsv($out, ['Report', 'Management Report']);
             fputcsv($out, ['Period', $filters['start_date'] . ' to ' . $filters['end_date']]);
             fputcsv($out, ['Order source', strtoupper($filters['source'])]);
+            fputcsv($out, ['Generated at', $generatedAt->format('Y-m-d H:i:s')]);
             fputcsv($out, []);
 
             fputcsv($out, ['FINANCIAL SUMMARY', 'Amount (USD)']);
@@ -59,7 +74,11 @@ class ReportController extends Controller
         $filters = $this->validatedFilters($request);
         $data = $this->buildDashboardData($filters);
 
-        return view('admin.reports.print', compact('filters', 'data'));
+        return view('admin.reports.print', [
+            'filters' => $filters,
+            'data' => $data,
+            'shopSettings' => app('shop.settings'),
+        ]);
     }
 
     private function validatedFilters(Request $request): array
@@ -86,8 +105,6 @@ class ReportController extends Controller
         $cancelledOrders = (int) (clone $this->ordersInPeriod($filters))->where('o.order_status', 'cancelled')->count();
         $customersInPeriod = (int) (clone $salesQuery)->whereNotNull('o.customer_id')->distinct()->count('o.customer_id');
 
-        $otherIncomeQuery = $this->manualTransactionsQuery($filters, 1);
-        $otherIncome = (float) (clone $otherIncomeQuery)->sum('ct.amount');
         $operatingExpenseQuery = $this->manualTransactionsQuery($filters, 2);
         $operatingExpenses = (float) (clone $operatingExpenseQuery)->sum('ct.amount');
 
@@ -100,8 +117,8 @@ class ReportController extends Controller
         $cogs = (float) (clone $cogsQuery)->selectRaw('COALESCE(SUM(COALESCE(oi.quantity,0) * COALESCE(oi.unit_cost,p.cost,0)),0) as total')->value('total');
 
         $grossProfit = $sales - $cogs;
-        $netProfit = $grossProfit + $otherIncome - $operatingExpenses;
-        $cashMovement = $sales + $otherIncome - $purchaseSpend - $operatingExpenses;
+        $netProfit = $grossProfit - $operatingExpenses;
+        $cashMovement = $sales - $purchaseSpend - $operatingExpenses;
 
         // Normalize the calculated date in a derived table, then group by its
         // plain column alias. This is compatible with MySQL ONLY_FULL_GROUP_BY.
@@ -188,7 +205,6 @@ class ReportController extends Controller
 
         $financial = [
             'Sales income (paid orders)' => $sales,
-            'Other income' => $otherIncome,
             'Inventory purchases (cash outflow)' => $purchaseSpend,
             'Operating expenses' => $operatingExpenses,
             'Cost of goods sold (COGS)' => $cogs,
@@ -221,13 +237,9 @@ class ReportController extends Controller
                 ->leftJoin('suppliers as s', 's.supplier_id', '=', 'pu.supplier_id')
                 ->select(['pu.purchase_id', 'pu.purchase_date', 'pu.quantity', 'pu.cost_price', 'p.product_name', 's.name as supplier_name'])
                 ->orderByDesc('pu.purchase_date')->limit(10)->get(),
-            'recent_transactions' => (clone $otherIncomeQuery)
+            'recent_transactions' => (clone $operatingExpenseQuery)
                 ->select(['ct.id', 'ct.transaction_date', 'ct.amount', 'ct.note', 'ac.name as category_name', 'ac.id_type'])
-                ->orderByDesc('ct.transaction_date')->limit(8)->get()
-                ->concat((clone $operatingExpenseQuery)
-                    ->select(['ct.id', 'ct.transaction_date', 'ct.amount', 'ct.note', 'ac.name as category_name', 'ac.id_type'])
-                    ->orderByDesc('ct.transaction_date')->limit(8)->get())
-                ->sortByDesc('transaction_date')->take(10)->values(),
+                ->orderByDesc('ct.transaction_date')->limit(10)->get(),
         ];
     }
 
@@ -298,9 +310,10 @@ class ReportController extends Controller
             ->orderBy('o.order_date');
 
         $transactions = DB::table('cash_transactions as ct')->join('accounting_category as ac', 'ac.id', '=', 'ct.category_id')
+            ->where('ac.id_type', 2)
             ->whereNull('ct.order_id')->whereNull('ct.purchase_id')
             ->whereBetween(DB::raw('DATE(ct.transaction_date)'), [$filters['start_date'], $filters['end_date']])
-            ->select(['ct.id', 'ct.transaction_date', 'ac.name as category_name', DB::raw("CASE WHEN ac.id_type = 1 THEN 'Income' ELSE 'Expense' END as transaction_type"), 'ct.amount', 'ct.note'])
+            ->select(['ct.id', 'ct.transaction_date', 'ac.name as category_name', DB::raw("'Expense' as transaction_type"), 'ct.amount', 'ct.note'])
             ->orderBy('ct.transaction_date');
 
         $payments = DB::table('payments as pay')->join('orders as o', 'o.order_id', '=', 'pay.order_id')
@@ -316,7 +329,7 @@ class ReportController extends Controller
         $reviews = DB::table('reviews as r')->join('orders as o', 'o.order_id', '=', 'r.order_id')
             ->leftJoin('customer as c', 'c.customer_id', '=', 'r.customer_id')
             ->whereBetween(DB::raw('DATE(o.order_date)'), [$filters['start_date'], $filters['end_date']])
-            ->select(['r.review_id', 'r.order_id', 'o.order_date', 'c.name as customer_name', 'r.rating', 'r.comment'])
+            ->select(['r.review_id', 'r.order_id', 'o.order_date', 'c.name as customer_name', 'r.rating', 'r.comment', 'r.is_approved'])
             ->orderBy('o.order_date');
 
         return [
@@ -326,8 +339,8 @@ class ReportController extends Controller
             ['title' => 'Current Inventory Snapshot (not date-filtered)', 'headers' => ['Product ID', 'Product', 'Category', 'Product Type', 'Quantity', 'Selling Price', 'Unit Cost', 'Stock Value', 'Status'], 'query' => $inventory],
             ['title' => 'Purchases', 'headers' => ['Purchase ID', 'Purchase Date', 'Product', 'Supplier', 'Quantity', 'Unit Cost', 'Total Cost'], 'query' => $purchases],
             ['title' => 'Deliveries', 'headers' => ['Delivery ID', 'Order ID', 'Order Date', 'Customer', 'Address', 'Cost', 'Status'], 'query' => $deliveries],
-            ['title' => 'Other Income and Operating Expenses', 'headers' => ['Transaction ID', 'Date', 'Category', 'Type', 'Amount', 'Note'], 'query' => $transactions],
-            ['title' => 'Customer Reviews', 'headers' => ['Review ID', 'Order ID', 'Order Date', 'Customer', 'Rating', 'Comment'], 'query' => $reviews],
+            ['title' => 'Operating Expenses', 'headers' => ['Transaction ID', 'Date', 'Category', 'Type', 'Amount', 'Note'], 'query' => $transactions],
+            ['title' => 'Customer Reviews', 'headers' => ['Review ID', 'Order ID', 'Order Date', 'Customer', 'Rating', 'Comment', 'Published'], 'query' => $reviews],
         ];
     }
 

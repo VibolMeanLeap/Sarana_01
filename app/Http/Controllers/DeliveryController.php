@@ -4,19 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Models\Delivery;
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
+use App\Services\OrderFulfillmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DeliveryController extends Controller
 {
-    private const STATUSES = ['pending', 'out_for_delivery', 'delivered', 'cancelled'];
+    private const STATUS_LABELS = [
+        'pending' => 'Awaiting confirmation',
+        'confirmed' => 'Order confirmed',
+        'preparing' => 'Preparing',
+        'ready' => 'Ready for dispatch',
+        'out_for_delivery' => 'Out for delivery',
+        'delivered' => 'Delivered',
+        'cancelled' => 'Cancelled',
+    ];
+
+    private const NEXT_DELIVERY_STATUS = [
+        'pending' => 'confirmed',
+        'confirmed' => 'preparing',
+        'preparing' => 'ready',
+        'ready' => 'out_for_delivery',
+        'out_for_delivery' => 'delivered',
+    ];
 
     public function index(Request $request)
     {
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
-            'status' => ['nullable', 'in:pending,out_for_delivery,delivered,cancelled'],
+            'status' => ['nullable', 'in:pending,confirmed,preparing,ready,out_for_delivery,delivered,cancelled'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
@@ -38,13 +56,13 @@ class DeliveryController extends Controller
                 });
             });
 
-        $summaryQuery = clone $query;
         $summary = [
-            'count' => (clone $summaryQuery)->count(),
-            'pending' => (clone $summaryQuery)->where('status', 'pending')->count(),
-            'on_way' => (clone $summaryQuery)->where('status', 'out_for_delivery')->count(),
-            'delivered' => (clone $summaryQuery)->where('status', 'delivered')->count(),
-            'fees' => (float) (clone $summaryQuery)->sum('cost'),
+            'count' => (clone $query)->count(),
+            'pending' => (clone $query)->where('status', 'pending')->count(),
+            'preparing' => (clone $query)->whereIn('status', ['preparing', 'ready'])->count(),
+            'on_way' => (clone $query)->where('status', 'out_for_delivery')->count(),
+            'delivered' => (clone $query)->where('status', 'delivered')->count(),
+            'fees' => (float) (clone $query)->sum('cost'),
         ];
 
         $direction = $validated['sort_dir'] ?? 'desc';
@@ -92,8 +110,34 @@ class DeliveryController extends Controller
                 throw ValidationException::withMessages(['order_id' => 'A delivery record already exists for this order.']);
             }
 
-            Delivery::create($validated + ['status' => 'pending']);
-        });
+            $status = match (strtolower((string) $order->order_status)) {
+                'confirmed' => 'confirmed',
+                'preparing' => 'preparing',
+                'ready' => 'ready',
+                'out_for_delivery' => 'out_for_delivery',
+                'completed' => 'delivered',
+                default => 'pending',
+            };
+
+            Delivery::create($validated + ['status' => $status]);
+
+            OrderStatusHistory::create([
+                'order_id' => $order->order_id,
+                'event_type' => 'delivery_created',
+                'from_status' => null,
+                'to_status' => $status,
+                'actor_type' => 'admin',
+                'actor_id' => auth()->id(),
+                'actor_label' => auth()->user()?->name,
+                'note' => 'Delivery record created from the administrator dashboard.',
+                'created_at' => now(),
+            ]);
+        }, 3);
+
+        $updatedOrder = Order::query()->with(['customer', 'orderType', 'delivery', 'orderItems.product'])->find($validated['order_id']);
+        if ($updatedOrder) {
+            app(\App\Services\TelegramOrderNotificationService::class)->refreshOrderMessage($updatedOrder);
+        }
 
         return redirect()->route('delivery.index')->with('success', 'Delivery created for the selected paid delivery order.');
     }
@@ -101,7 +145,17 @@ class DeliveryController extends Controller
     public function edit(Delivery $delivery)
     {
         $delivery->load(['order.customer', 'order.orderType']);
-        return view('admin.delivery.edit', compact('delivery'));
+        $current = strtolower((string) $delivery->status);
+        $allowedStatuses = [$current => self::STATUS_LABELS[$current] ?? ucfirst(str_replace('_', ' ', $current))];
+        if (isset(self::NEXT_DELIVERY_STATUS[$current])) {
+            $next = self::NEXT_DELIVERY_STATUS[$current];
+            $allowedStatuses[$next] = self::STATUS_LABELS[$next];
+        }
+        if (! in_array($current, ['delivered', 'cancelled'], true)) {
+            $allowedStatuses['cancelled'] = self::STATUS_LABELS['cancelled'];
+        }
+
+        return view('admin.delivery.edit', compact('delivery', 'allowedStatuses'));
     }
 
     public function update(Request $request, Delivery $delivery)
@@ -109,34 +163,112 @@ class DeliveryController extends Controller
         $validated = $request->validate([
             'address' => ['required', 'string', 'max:255'],
             'cost' => ['required', 'numeric', 'min:0', 'max:99999999'],
-            'status' => ['required', 'in:pending,out_for_delivery,delivered,cancelled'],
+            'status' => ['required', 'in:pending,confirmed,preparing,ready,out_for_delivery,delivered,cancelled'],
         ]);
 
-        $current = strtolower((string) $delivery->status);
-        $next = $validated['status'];
-        if (in_array($current, ['delivered', 'cancelled'], true) && $next !== $current) {
-            throw ValidationException::withMessages(['status' => 'Delivered and cancelled deliveries are final states and cannot be reopened.']);
-        }
-        $allowedTransitions = [
-            'pending' => ['pending', 'out_for_delivery', 'cancelled'],
-            'out_for_delivery' => ['out_for_delivery', 'delivered', 'cancelled'],
-        ];
-        if (isset($allowedTransitions[$current]) && ! in_array($next, $allowedTransitions[$current], true)) {
-            throw ValidationException::withMessages(['status' => 'This delivery status transition is not allowed.']);
+        DB::transaction(function () use ($delivery, $validated) {
+            // Always lock the order first, then the delivery row. Telegram and the
+            // shared fulfillment service use the same lock order to reduce deadlocks.
+            $order = Order::query()->with('orderType')->where('order_id', $delivery->order_id)->lockForUpdate()->firstOrFail();
+            $lockedDelivery = Delivery::query()->where('delivery_id', $delivery->delivery_id)->lockForUpdate()->firstOrFail();
+            $order->setRelation('delivery', $lockedDelivery);
+            $current = strtolower((string) $lockedDelivery->status);
+            $target = $validated['status'];
+
+            $lockedDelivery->address = $validated['address'];
+            $lockedDelivery->cost = $validated['cost'];
+
+            if ($target !== $current) {
+                $next = self::NEXT_DELIVERY_STATUS[$current] ?? null;
+                $isCancellation = $target === 'cancelled';
+                if (! $isCancellation && $target !== $next) {
+                    throw ValidationException::withMessages(['status' => 'Delivery must move forward one step at a time.']);
+                }
+                if ($isCancellation && in_array($current, ['delivered', 'cancelled'], true)) {
+                    throw ValidationException::withMessages(['status' => 'A delivered or cancelled order is final and cannot be changed.']);
+                }
+
+                if ($isCancellation) {
+                    $previousOrderStatus = (string) $order->order_status;
+                    $order->order_status = 'cancelled';
+                    $order->save();
+                    $lockedDelivery->status = 'cancelled';
+                    $lockedDelivery->save();
+
+                    OrderStatusHistory::create([
+                        'order_id' => $order->order_id,
+                        'event_type' => 'status_changed',
+                        'from_status' => $previousOrderStatus,
+                        'to_status' => 'cancelled',
+                        'actor_type' => 'admin',
+                        'actor_id' => auth()->id(),
+                        'actor_label' => auth()->user()?->name,
+                        'note' => 'Delivery cancelled by an administrator. Payment remains recorded; process any refund or adjustment separately.',
+                        'created_at' => now(),
+                    ]);
+                } else {
+                    $orderTarget = $target === 'delivered' ? 'completed' : $target;
+                    app(OrderFulfillmentService::class)->transitionLocked($order, $orderTarget, [
+                        'actor_type' => 'admin',
+                        'actor_id' => auth()->id(),
+                        'actor_label' => auth()->user()?->name,
+                        'note' => 'Delivery status updated from the administrator delivery register.',
+                    ]);
+                    // The fulfillment service owns the status change; keep updated address and fee.
+                    $lockedDelivery->refresh();
+                    $lockedDelivery->address = $validated['address'];
+                    $lockedDelivery->cost = $validated['cost'];
+                    $lockedDelivery->save();
+                }
+            } else {
+                $lockedDelivery->save();
+            }
+        }, 3);
+
+        $updatedOrder = Order::query()->with(['customer', 'orderType', 'delivery', 'orderItems.product'])->find($delivery->order_id);
+        if ($updatedOrder) {
+            app(\App\Services\TelegramOrderNotificationService::class)->refreshOrderMessage($updatedOrder);
         }
 
-        $delivery->update($validated);
         return redirect()->route('delivery.index')->with('success', 'Delivery details and fulfillment status updated.');
     }
 
-    /** Cancel a delivery without deleting its operational history. */
+    /** Cancel the delivery and order while preserving payment and operational history. */
     public function destroy(Delivery $delivery)
     {
-        if (in_array(strtolower((string) $delivery->status), ['delivered', 'cancelled'], true)) {
-            return back()->with('error', 'Delivered or already-cancelled delivery records are locked to preserve history.');
+        DB::transaction(function () use ($delivery) {
+            $order = Order::query()->where('order_id', $delivery->order_id)->lockForUpdate()->firstOrFail();
+            $lockedDelivery = Delivery::query()->where('delivery_id', $delivery->delivery_id)->lockForUpdate()->firstOrFail();
+            $current = strtolower((string) $lockedDelivery->status);
+
+            if (in_array($current, ['delivered', 'cancelled'], true) || $order->order_status === 'completed') {
+                throw ValidationException::withMessages(['delivery' => 'A completed or already-cancelled delivery is locked to preserve its history.']);
+            }
+
+            $previousStatus = (string) $order->order_status;
+            $order->order_status = 'cancelled';
+            $order->save();
+            $lockedDelivery->status = 'cancelled';
+            $lockedDelivery->save();
+
+            OrderStatusHistory::create([
+                'order_id' => $order->order_id,
+                'event_type' => 'status_changed',
+                'from_status' => $previousStatus,
+                'to_status' => 'cancelled',
+                'actor_type' => 'admin',
+                'actor_id' => auth()->id(),
+                'actor_label' => auth()->user()?->name,
+                'note' => 'Delivery cancelled by an administrator. Payment remains recorded; process any refund or adjustment separately.',
+                'created_at' => now(),
+            ]);
+        }, 3);
+
+        $updatedOrder = Order::query()->with(['customer', 'orderType', 'delivery', 'orderItems.product'])->find($delivery->order_id);
+        if ($updatedOrder) {
+            app(\App\Services\TelegramOrderNotificationService::class)->refreshOrderMessage($updatedOrder);
         }
 
-        $delivery->update(['status' => 'cancelled']);
-        return back()->with('success', 'Delivery cancelled. The delivery history has been preserved.');
+        return back()->with('success', 'Delivery and order cancelled. Payment and delivery history have been preserved.');
     }
 }

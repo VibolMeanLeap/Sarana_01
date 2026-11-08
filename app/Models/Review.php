@@ -13,9 +13,9 @@ class Review extends Model
     protected $primaryKey = 'review_id';
     public $timestamps = false;
 
-    protected $fillable = ['order_id', 'customer_id', 'rating', 'comment'];
+    protected $fillable = ['order_id', 'customer_id', 'rating', 'comment', 'is_approved'];
 
-    protected $casts = ['rating' => 'integer'];
+    protected $casts = ['rating' => 'integer', 'is_approved' => 'boolean'];
 
     public function order()
     {

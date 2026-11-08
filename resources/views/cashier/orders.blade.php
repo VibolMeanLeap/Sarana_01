@@ -24,19 +24,33 @@
                 <td class="fw-bold">${{ number_format((float)($order->final_price ?? $order->total_amount), 2) }}</td>
                 <td>{{ ucfirst(str_replace('_', ' ', $order->order_status ?? 'pending')) }}</td>
                 <td>
-                    @if(($order->order_status ?? 'pending') !== 'cancelled' && ($order->order_status ?? 'pending') !== 'completed')
-                        <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-flex gap-1">
-                            @csrf
-                            <select name="order_status" class="form-select form-select-sm" required style="min-width:125px">
-                                @if(!$order->is_paid)
-                                    <option value="cancelled">Cancel / release stock</option>
-                                @else
-                                    @php $next = ['pending' => 'confirmed', 'confirmed' => 'preparing', 'preparing' => 'ready', 'ready' => 'completed'][$order->order_status ?? 'pending'] ?? null; @endphp
-                                    @if($next)<option value="{{ $next }}">{{ ucfirst($next) }}</option>@endif
-                                @endif
-                            </select>
-                            <button class="btn btn-sm btn-outline-success" type="submit">Save</button>
-                        </form>
+                    @if(($order->order_source ?? 'pos') === 'website')
+                        <span class="small text-muted"><i class="bi bi-shield-lock me-1"></i>Administrator manages website orders</span>
+                    @elseif(($order->order_status ?? 'pending') !== 'cancelled' && ($order->order_status ?? 'pending') !== 'completed')
+                        @php
+                            $isDeliveryOrder = strtolower(trim((string) $order->orderType?->order_name)) === 'delivery';
+                            $hasDeliveryRecord = (int) ($order->delivery_count ?? 0) > 0;
+                            $next = $isDeliveryOrder
+                                ? ['pending' => 'confirmed', 'confirmed' => 'preparing', 'preparing' => 'ready', 'ready' => 'out_for_delivery', 'out_for_delivery' => 'completed'][$order->order_status ?? 'pending'] ?? null
+                                : ['pending' => 'confirmed', 'confirmed' => 'preparing', 'preparing' => 'ready', 'ready' => 'completed'][$order->order_status ?? 'pending'] ?? null;
+                        @endphp
+                        @if($isDeliveryOrder && $order->is_paid && !$hasDeliveryRecord)
+                            <span class="small text-muted"><i class="bi bi-truck me-1"></i>Waiting for administrator to assign delivery</span>
+                        @elseif(!$order->is_paid)
+                            <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-flex gap-1">
+                                @csrf
+                                <input type="hidden" name="order_status" value="cancelled">
+                                <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Cancel this unpaid order and return its reserved stock?')">Cancel / release stock</button>
+                            </form>
+                        @elseif($next && (!$isDeliveryOrder || $hasDeliveryRecord))
+                            <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-flex gap-1">
+                                @csrf
+                                <input type="hidden" name="order_status" value="{{ $next }}">
+                                <button class="btn btn-sm btn-outline-success" type="submit">{{ $next === 'out_for_delivery' ? 'Dispatch' : ($next === 'completed' && $isDeliveryOrder ? 'Mark delivered' : 'Mark '.str_replace('_', ' ', $next)) }}</button>
+                            </form>
+                        @else
+                            <span class="small text-muted">—</span>
+                        @endif
                     @else
                         <span class="small text-muted">—</span>
                     @endif

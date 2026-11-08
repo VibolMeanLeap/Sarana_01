@@ -103,4 +103,26 @@
     </div>
 </section>
 
+
+<section class="py-5" style="background:#f6faf7">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+            <div><div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.14em">Guest stories</div><h2 class="section-title mb-1">What customers say</h2><p class="text-muted mb-0">Verified feedback from completed and paid orders.</p></div>
+            @if(($reviewSummary?->total ?? 0) > 0)
+                <div class="text-end"><div class="d-flex align-items-center justify-content-end gap-2"><span class="display-6 fw-bold text-dark">{{ number_format((float)$reviewSummary->average, 1) }}</span><span class="text-warning fs-5">★★★★★</span></div><div class="small text-muted">{{ number_format((int)$reviewSummary->total) }} published reviews</div></div>
+            @endif
+        </div>
+        @if($approvedReviews->isNotEmpty())
+            <div class="row g-3">
+                @foreach($approvedReviews as $customerReview)
+                    @php($reviewerFirstName = \Illuminate\Support\Str::before(trim((string)($customerReview->customer?->name ?? 'Customer')), ' '))
+                    <div class="col-12 col-md-6 col-xl-4"><article class="h-100 bg-white border rounded-4 p-4 shadow-sm"><div class="text-warning mb-3" style="letter-spacing:2px">{{ str_repeat('★',(int)$customerReview->rating) }}{{ str_repeat('☆',5-(int)$customerReview->rating) }}</div><p class="mb-4" style="color:#46574c">{{ $customerReview->comment ?: 'Thank you for your rating.' }}</p><div class="d-flex align-items-center gap-2 mt-auto"><span class="rounded-circle d-inline-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;background:#eaf5ed;color:#176b4b">{{ strtoupper(substr($reviewerFirstName,0,1)) }}</span><div><div class="fw-bold">{{ $reviewerFirstName }}</div><div class="small text-muted">Verified customer</div></div></div></article></div>
+                @endforeach
+            </div>
+        @else
+            <div class="bg-white border rounded-4 p-4 text-center"><i class="bi bi-chat-square-heart text-success fs-2"></i><h3 class="h5 fw-bold mt-2">Your feedback matters</h3><p class="text-muted mb-0">After your order is completed, you can leave a rating and share your experience.</p></div>
+        @endif
+    </div>
+</section>
+
 @endsection

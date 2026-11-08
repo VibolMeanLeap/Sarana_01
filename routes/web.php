@@ -22,6 +22,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockLogController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,36 +31,55 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [AuthContoller::class, 'showLogin'])->name('showlogin');
 Route::post('/login/process', [AuthContoller::class, 'processlogin'])->name('process_login');
 Route::post('/logout', [AuthContoller::class, 'logout'])->name('process_logout');
+Route::get('/auth/google/{audience}', [GoogleAuthController::class, 'redirect'])
+    ->where('audience', 'staff|customer')->middleware('throttle:10,1')->name('google.redirect');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
+    ->middleware('throttle:20,1')->name('google.callback');
 
 /* Public coffee shop pages. The catalogue can be browsed without an account. */
-Route::get('/web', [CustomerOrderController::class, 'home'])->name('web.home');
-Route::get('/web/shop', [CustomerOrderController::class, 'shop'])->name('web.shop');
-Route::get('/web/product/{productId}', [CustomerOrderController::class, 'product'])->whereNumber('productId')->name('web.product.show');
-Route::get('/web/cart', [CustomerOrderController::class, 'cart'])->name('web.cart');
-Route::post('/web/cart/items/{productId}', [CustomerOrderController::class, 'addToCart'])->whereNumber('productId')->name('web.cart.add');
-Route::patch('/web/cart/items/{productId}', [CustomerOrderController::class, 'updateCart'])->whereNumber('productId')->name('web.cart.update');
-Route::delete('/web/cart/items/{productId}', [CustomerOrderController::class, 'removeFromCart'])->whereNumber('productId')->name('web.cart.remove');
+// Keep one public storefront landing page. The old /store URL is a permanent alias.
+Route::redirect('/store', '/store/shop', 301)->name('web.home');
+Route::get('/store/shop', [CustomerOrderController::class, 'shop'])->name('web.shop');
+Route::get('/store/product/{productId}', [CustomerOrderController::class, 'product'])->whereNumber('productId')->name('web.product.show');
+Route::get('/store/cart', [CustomerOrderController::class, 'cart'])->name('web.cart');
+Route::post('/store/cart/items/{productId}', [CustomerOrderController::class, 'addToCart'])->whereNumber('productId')->name('web.cart.add');
+Route::patch('/store/cart/items/{productId}', [CustomerOrderController::class, 'updateCart'])->whereNumber('productId')->name('web.cart.update');
+Route::delete('/store/cart/items/{productId}', [CustomerOrderController::class, 'removeFromCart'])->whereNumber('productId')->name('web.cart.remove');
 // ABA PayWay callback is public; status is re-verified server-to-server before an order is marked paid.
-Route::post('/web/payments/payway/callback', [PayWayPaymentController::class, 'callback'])->middleware('throttle:60,1')->name('web.payments.payway.callback');
-Route::get('/web/register', [CostumerController::class, 'webRegister'])->name('webRegister');
-Route::get('/web/login', [CostumerController::class, 'webLogin'])->name('webLogin');
-Route::post('/web/register/process', [CostumerController::class, 'register'])->name('register');
-Route::post('/web/login/process', [CostumerController::class, 'login'])->name('login');
-Route::post('/web/logout', [CostumerController::class, 'logout'])->name('logout');
+Route::post('/store/payments/payway/callback', [PayWayPaymentController::class, 'callback'])->middleware('throttle:60,1')->name('web.payments.payway.callback');
+// Temporary POST-only compatibility for QR payloads created with the previous /web callback URL.
+Route::post('/web/payments/payway/callback', [PayWayPaymentController::class, 'callback'])->middleware('throttle:60,1')->name('web.payments.payway.callback.legacy');
+// Telegram uses a public HTTPS webhook protected by its secret-token header and an admin ID allowlist.
+Route::post('/telegram/webhook', TelegramWebhookController::class)->middleware('throttle:120,1')->name('telegram.webhook');
+Route::get('/store/register', [CostumerController::class, 'webRegister'])->name('webRegister');
+Route::get('/store/login', [CostumerController::class, 'webLogin'])->name('webLogin');
+Route::post('/store/register/process', [CostumerController::class, 'register'])->name('register');
+Route::post('/store/login/process', [CostumerController::class, 'login'])->name('login');
+Route::post('/store/logout', [CostumerController::class, 'logout'])->name('logout');
 
 /* Customer account pages. Customers cannot enter staff tools. */
 Route::middleware(['auth', 'role:customer'])->group(function () {
-    Route::get('/web/account', [CostumerController::class, 'account'])->name('web.account');
-    Route::get('/web/checkout', [CustomerOrderController::class, 'checkoutPage'])->name('web.checkout');
-    Route::post('/web/checkout', [CustomerOrderController::class, 'placeOrder'])->name('web.checkout.place');
-    Route::get('/web/orders/{orderId}', [CustomerOrderController::class, 'showOrder'])->whereNumber('orderId')->name('web.orders.show');
-    Route::get('/web/orders/{orderId}/status', [CustomerOrderController::class, 'orderStatus'])->whereNumber('orderId')->name('web.orders.status');
-    Route::post('/web/orders/{orderId}/cancel', [CustomerOrderController::class, 'cancelOrder'])->whereNumber('orderId')->name('web.orders.cancel');
-    Route::post('/web/orders/{orderId}/payway/retry', [CustomerOrderController::class, 'retryPayWay'])->whereNumber('orderId')->name('web.orders.payway.retry');
-    Route::get('/web/payments/{payment}', [PayWayPaymentController::class, 'show'])->whereNumber('payment')->name('web.payments.show');
-    Route::get('/web/payments/{payment}/status', [PayWayPaymentController::class, 'status'])->whereNumber('payment')->name('web.payments.status');
-    Route::get('/web/payments/{payment}/success', [PayWayPaymentController::class, 'success'])->whereNumber('payment')->name('web.payments.success');
+    Route::get('/store/account', [CostumerController::class, 'account'])->name('web.account');
+    Route::get('/store/checkout', [CustomerOrderController::class, 'checkoutPage'])->name('web.checkout');
+    Route::post('/store/checkout', [CustomerOrderController::class, 'placeOrder'])->name('web.checkout.place');
+    Route::get('/store/orders/{orderId}', [CustomerOrderController::class, 'showOrder'])->whereNumber('orderId')->name('web.orders.show');
+    Route::get('/store/orders/{orderId}/status', [CustomerOrderController::class, 'orderStatus'])->whereNumber('orderId')->name('web.orders.status');
+    Route::post('/store/orders/{orderId}/review', [ReviewController::class, 'storeFromCustomer'])->whereNumber('orderId')->name('web.orders.review');
+    Route::post('/store/orders/{orderId}/cancel', [CustomerOrderController::class, 'cancelOrder'])->whereNumber('orderId')->name('web.orders.cancel');
+    Route::post('/store/orders/{orderId}/payway/retry', [CustomerOrderController::class, 'retryPayWay'])->whereNumber('orderId')->name('web.orders.payway.retry');
+    Route::get('/store/payments/{payment}', [PayWayPaymentController::class, 'show'])->whereNumber('payment')->name('web.payments.show');
+    Route::get('/store/payments/{payment}/status', [PayWayPaymentController::class, 'status'])->whereNumber('payment')->name('web.payments.status');
+    Route::get('/store/payments/{payment}/success', [PayWayPaymentController::class, 'success'])->whereNumber('payment')->name('web.payments.success');
 });
+
+
+// Legacy storefront bookmarks redirect to the canonical /store/shop storefront.
+Route::get('/web', fn () => redirect()->route('web.shop', [], 301));
+Route::get('/web/{legacyPath}', function (string $legacyPath) {
+    $target = '/store/'.ltrim($legacyPath, '/');
+    $query = request()->getQueryString();
+    return redirect($target.($query ? '?'.$query : ''), 301);
+})->where('legacyPath', '.*');
 
 /* POS is available to admins and cashiers only. */
 Route::middleware(['auth', 'role:admin,cashier'])->group(function () {
@@ -195,6 +216,7 @@ Route::middleware(['auth', 'administrator'])->group(function () {
     Route::get('/admin/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::get('/admin/reviews/create', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/admin/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::patch('/admin/reviews/{review}/approval', [ReviewController::class, 'setApproval'])->name('reviews.approval');
     Route::get('/admin/reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
     Route::get('/admin/reviews/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
     Route::put('/admin/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');

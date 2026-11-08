@@ -8,9 +8,8 @@
     <div>
         <div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">People & relationships</div>
         <h1>Customer accounts</h1>
-        <p>Manage website customer sign-ins and control whether a customer can access their online account. Walk-in customer records remain in the Customer directory.</p>
+        <p>Manage website customer sign-ins and control whether a customer can access their online account. Walk-in customer records remain available to existing orders and reports.</p>
     </div>
-    <a href="{{ route('customer.list') }}" class="btn btn-cc-light"><i class="bi bi-people me-2"></i>Customer directory</a>
 </div>
 
 <div class="row g-3 mb-4">

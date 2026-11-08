@@ -30,6 +30,7 @@ class Order extends Model
         'order_date',
         'order_status',
         'order_source',
+        'order_channel',
         'customer_note',
     ];
 
@@ -75,6 +76,18 @@ class Order extends Model
     public function delivery()
     {
         return $this->hasOne(Delivery::class, 'order_id', 'order_id');
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(OrderStatusHistory::class, 'order_id', 'order_id')
+            ->orderBy('created_at')
+            ->orderBy('history_id');
+    }
+
+    public function telegramNotification()
+    {
+        return $this->hasOne(TelegramOrderNotification::class, 'order_id', 'order_id');
     }
 
     public function review()

@@ -7,6 +7,7 @@ use App\Models\CashTransaction;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CashTransactionController extends Controller
 {
@@ -16,7 +17,6 @@ class CashTransactionController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'category_id' => ['nullable', 'integer', 'exists:accounting_category,id'],
-            'type' => ['nullable', 'in:income,expense'],
             'search' => ['nullable', 'string', 'max:120'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'integer', 'in:15,25,50,100'],
@@ -25,8 +25,7 @@ class CashTransactionController extends Controller
         $fromDate = $filters['from'] ?? null;
         $toDate = $filters['to'] ?? null;
 
-        // Sales income comes only from successfully paid orders. It is deliberately
-        // separate from manual cash transactions so sales are never counted twice.
+        // Revenue is calculated from verified paid orders only.
         $paidOrders = Order::query()->where('is_paid', 1);
         if ($fromDate) $paidOrders->whereDate('order_date', '>=', $fromDate);
         if ($toDate) $paidOrders->whereDate('order_date', '<=', $toDate);
@@ -40,49 +39,34 @@ class CashTransactionController extends Controller
         if ($toDate) $cogsQuery->whereDate('orders.order_date', '<=', $toDate);
         $totalCogs = (float) $cogsQuery->sum(DB::raw('COALESCE(order_items.unit_cost, product.cost, 0) * COALESCE(order_items.quantity, 0)'));
 
-        // Summary calculations use the date range only. Category/type/search filters
-        // below affect the ledger, not the headline financial comparison.
-        $datedTransactions = CashTransaction::query()->where(function ($query) {
-            $query->whereHas('category', fn ($category) => $category->whereIn('id_type', [1, 2]))
-                ->orWhereNull('category_id');
-        });
-        if ($fromDate) $datedTransactions->whereDate('transaction_date', '>=', $fromDate);
-        if ($toDate) $datedTransactions->whereDate('transaction_date', '<=', $toDate);
+        $datedExpenses = CashTransaction::query()
+            ->whereHas('category', fn ($category) => $category->where('id_type', 2))
+            ->when($fromDate, fn ($query) => $query->whereDate('transaction_date', '>=', $fromDate))
+            ->when($toDate, fn ($query) => $query->whereDate('transaction_date', '<=', $toDate));
 
-        $otherIncome = (float) (clone $datedTransactions)
-            ->whereNull('purchase_id')->whereNull('order_id')
-            ->whereHas('category', fn ($query) => $query->where('id_type', 1))
-            ->sum('amount');
-
-        $inventoryPurchases = (float) (clone $datedTransactions)
+        // Purchase-linked expenses are cash outflows for inventory. Manual expenses
+        // are operating costs. Inventory cost is recognized in profit through COGS.
+        $inventoryPurchases = (float) (clone $datedExpenses)
             ->whereNotNull('purchase_id')
-            ->whereHas('category', fn ($query) => $query->where('id_type', 2))
             ->sum('amount');
 
-        $totalExpense = (float) (clone $datedTransactions)
+        $totalExpense = (float) (clone $datedExpenses)
             ->whereNull('purchase_id')
-            ->whereHas('category', fn ($query) => $query->where('id_type', 2))
             ->sum('amount');
 
         $grossProfit = $totalSales - $totalCogs;
-        // Purchase cash outflows are inventory assets. They are shown in the cash
-        // comparison, but not deducted again from profit; sold inventory is already
-        // recognized through COGS.
-        $netProfit = $grossProfit + $otherIncome - $totalExpense;
-        $cashInflow = $totalSales + $otherIncome;
+        $netProfit = $grossProfit - $totalExpense;
+        $cashInflow = $totalSales;
         $cashOutflow = $inventoryPurchases + $totalExpense;
         $netCashFlow = $cashInflow - $cashOutflow;
 
         $ledgerQuery = CashTransaction::with(['category', 'user', 'purchase'])
+            ->whereHas('category', fn ($category) => $category->where('id_type', 2))
             ->when($fromDate, fn ($query) => $query->whereDate('transaction_date', '>=', $fromDate))
             ->when($toDate, fn ($query) => $query->whereDate('transaction_date', '<=', $toDate));
 
         if (! empty($filters['category_id'])) {
             $ledgerQuery->where('category_id', $filters['category_id']);
-        }
-        if (! empty($filters['type'])) {
-            $typeId = $filters['type'] === 'income' ? 1 : 2;
-            $ledgerQuery->whereHas('category', fn ($query) => $query->where('id_type', $typeId));
         }
         if (! empty($filters['search'])) {
             $term = trim($filters['search']);
@@ -96,10 +80,9 @@ class CashTransactionController extends Controller
         $transactions = $ledgerQuery->orderBy('transaction_date', $sortDirection)
             ->orderByDesc('id')->paginate($perPage)->withQueryString();
 
-        $categories = AccountingCategory::with('type')->orderBy('name')->get();
+        $categories = AccountingCategory::with('type')->where('id_type', 2)->orderBy('name')->get();
         $summary = [
             'sales' => $totalSales,
-            'other_income' => $otherIncome,
             'inventory_purchases' => $inventoryPurchases,
             'operating_expenses' => $totalExpense,
             'cogs' => $totalCogs,
@@ -115,7 +98,7 @@ class CashTransactionController extends Controller
 
     public function create()
     {
-        $categories = AccountingCategory::with('type')->orderBy('name')->get();
+        $categories = AccountingCategory::with('type')->where('id_type', 2)->orderBy('name')->get();
         return view('admin.expense_income_create', compact('categories'));
     }
 
@@ -125,7 +108,10 @@ class CashTransactionController extends Controller
         if ($transaction->purchase_id !== null) {
             return redirect()->route('expense_income.index')->with('error', 'Purchase-linked expense records are managed from the Purchases tab.');
         }
-        $categories = AccountingCategory::with('type')->orderBy('name')->get();
+        if ((int) $transaction->category?->id_type !== 2) {
+            return redirect()->route('expense_income.index')->with('error', 'Only expense transactions can be edited here.');
+        }
+        $categories = AccountingCategory::with('type')->where('id_type', 2)->orderBy('name')->get();
         return view('admin.expense_income_edit', compact('transaction', 'categories'));
     }
 
@@ -139,13 +125,13 @@ class CashTransactionController extends Controller
         ]);
 
         $category = AccountingCategory::findOrFail($validated['category_id']);
-        if ((int) $category->id_type === 2 && $request->filled('purchase_id')) {
-            return back()->withInput()->withErrors(['purchase_id' => 'Purchase expenses must be created through the Purchases module.']);
+        if ((int) $category->id_type !== 2) {
+            throw ValidationException::withMessages(['category_id' => 'Only expense categories can be recorded here. Sales income is calculated automatically from paid orders.']);
         }
 
         $validated['user_id'] = auth()->id();
         CashTransaction::create($validated);
-        return redirect()->route('expense_income.index')->with('success', 'Transaction recorded successfully.');
+        return redirect()->route('expense_income.index')->with('success', 'Expense recorded successfully.');
     }
 
     public function update(Request $request, $id)
@@ -154,6 +140,9 @@ class CashTransactionController extends Controller
         if ($transaction->purchase_id !== null) {
             return redirect()->route('expense_income.index')->with('error', 'Purchase-linked expense records are managed from the Purchases tab.');
         }
+        if ((int) $transaction->category?->id_type !== 2) {
+            return redirect()->route('expense_income.index')->with('error', 'Historical income records are read-only and are not part of the expense ledger.');
+        }
 
         $validated = $request->validate([
             'category_id' => 'required|exists:accounting_category,id',
@@ -161,8 +150,13 @@ class CashTransactionController extends Controller
             'transaction_date' => 'required|date',
             'note' => 'nullable|string|max:2000',
         ]);
+        $category = AccountingCategory::findOrFail($validated['category_id']);
+        if ((int) $category->id_type !== 2) {
+            throw ValidationException::withMessages(['category_id' => 'Only expense categories can be selected.']);
+        }
+
         $transaction->update($validated);
-        return redirect()->route('expense_income.index')->with('success', 'Transaction updated successfully.');
+        return redirect()->route('expense_income.index')->with('success', 'Expense updated successfully.');
     }
 
     public function destroy($id)
@@ -171,7 +165,10 @@ class CashTransactionController extends Controller
         if ($transaction->purchase_id !== null) {
             return redirect()->route('expense_income.index')->with('error', 'Purchase-linked expense records cannot be deleted here. Manage the purchase from the Purchases tab.');
         }
+        if ((int) $transaction->category?->id_type !== 2) {
+            return redirect()->route('expense_income.index')->with('error', 'Only expense transactions can be managed here.');
+        }
         $transaction->delete();
-        return redirect()->route('expense_income.index')->with('success', 'Transaction deleted successfully.');
+        return redirect()->route('expense_income.index')->with('success', 'Expense deleted successfully.');
     }
 }

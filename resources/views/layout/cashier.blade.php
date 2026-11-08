@@ -40,7 +40,7 @@
         <a href="{{ route('cashier.dashboard') }}" class="{{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}"><i class="bi bi-grid me-1"></i>Overview</a>
         <a href="{{ route('pos.dashboard') }}" class="{{ request()->routeIs('pos.dashboard') ? 'active' : '' }}"><i class="bi bi-shop-window me-1"></i>POS</a>
         <a href="{{ route('cashier.orders') }}" class="{{ request()->routeIs('cashier.orders') ? 'active' : '' }}"><i class="bi bi-receipt me-1"></i>My orders</a>
-        <a href="{{ route('web.home') }}" target="_blank" rel="noopener"><i class="bi bi-globe me-1"></i>Public shop</a>
+        <a href="{{ route('web.shop') }}" target="_blank" rel="noopener"><i class="bi bi-globe me-1"></i>Public shop</a>
     </nav>
     <div class="d-flex align-items-center gap-3">
         <span class="small text-muted"><i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name }}</span>

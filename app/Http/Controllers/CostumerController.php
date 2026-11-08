@@ -278,7 +278,7 @@ class CostumerController extends Controller
     {
         $customer = Costumer::query()->where('user_id', Auth::id())->first();
         $orders = $customer
-            ? $customer->orders()->with(['orderType', 'paymentMethod', 'delivery', 'payments'])
+            ? $customer->orders()->with(['orderType', 'paymentMethod', 'delivery', 'payments', 'review'])
                 ->orderByDesc('order_date')->paginate(10)->withQueryString()
             : Order::query()->whereRaw('1 = 0')->paginate(10);
 

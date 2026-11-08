@@ -1,14 +1,21 @@
 <!doctype html>
 <html lang="en">
+@php
+    $storeName = trim((string) ($shopSettings?->shop_name ?? '')) ?: config('app.name', 'Store');
+    $storeLogo = filled($shopSettings?->logo) ? asset('uploads/' . ltrim((string) $shopSettings->logo, '/')) : null;
+    $storeAddress = trim((string) ($shopSettings?->address ?? ''));
+    $storePhone = trim((string) ($shopSettings?->tel ?? ''));
+    $storeExchangeRate = is_numeric($shopSettings?->exchange_rate) ? (float) $shopSettings->exchange_rate : null;
+@endphp
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title }} Report - Coffee Corner Aura</title>
+    <title>{{ $title }} Report - {{ $storeName }}</title>
     <style>
         :root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f6f4;color:#24332b;font:13px/1.45 Arial,Helvetica,sans-serif}
         .report-shell{max-width:1180px;margin:28px auto;padding:34px;background:#fff;border:1px solid #e1e9e3;border-radius:16px;box-shadow:0 8px 30px rgba(27,55,38,.07)}
         .report-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;border-bottom:2px solid #176b4b;padding-bottom:20px;margin-bottom:18px}
-        .brand{font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#176b4b;font-size:11px}.report-title{font-size:27px;line-height:1.15;margin:8px 0 5px}.muted{color:#718077}.report-meta{text-align:right;color:#718077;font-size:11px;white-space:nowrap}
+        .store-identity{display:flex;align-items:center;gap:14px;min-width:0}.store-logo{width:64px;height:64px;object-fit:contain;border-radius:10px;flex:0 0 auto}.brand{font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#176b4b;font-size:13px}.store-contact{color:#718077;font-size:11px;margin-top:3px}.report-title{font-size:27px;line-height:1.15;margin:8px 0 5px}.muted{color:#718077}.report-meta{text-align:right;color:#718077;font-size:11px;white-space:nowrap}
         .report-summary{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 18px}.summary-chip{background:#f0f6f2;border:1px solid #e0ebe3;padding:8px 12px;border-radius:9px;font-size:11px}
         .table-wrap{overflow:visible}table{width:100%;border-collapse:collapse;font-size:11px}thead{display:table-header-group}th{background:#edf4ef;color:#375044;text-align:left;text-transform:uppercase;letter-spacing:.04em;font-size:9px;padding:10px 9px;border-bottom:1px solid #d9e5dc;white-space:nowrap}td{padding:8px 9px;border-bottom:1px solid #edf1ee;vertical-align:top;overflow-wrap:anywhere}tbody tr:nth-child(even){background:#fafcfb}.empty{text-align:center;color:#7a887f;padding:28px}
         .report-foot{margin-top:18px;padding-top:12px;border-top:1px solid #e6ece8;color:#829087;font-size:10px;display:flex;justify-content:space-between;gap:10px}
@@ -24,8 +31,21 @@
     </div>
     <main class="report-shell">
         <header class="report-head">
-            <div><div class="brand">Coffee Corner Aura · Management Report</div><h1 class="report-title">{{ $title }}</h1><div class="muted">{{ $totalRows }} record(s) · {{ $filterSummary }}</div></div>
-            <div class="report-meta">Generated<br><strong>{{ $generatedAt->format('d M Y, h:i A') }}</strong><br>Currency: USD unless stated</div>
+            <div class="store-identity">
+                @if($storeLogo)
+                    <img class="store-logo" src="{{ $storeLogo }}" alt="{{ $storeName }} logo">
+                @endif
+                <div>
+                    <div class="brand">{{ $storeName }}</div>
+                    @if($storeAddress)<div class="store-contact">{{ $storeAddress }}</div>@endif
+                    @if($storePhone)<div class="store-contact">Tel: {{ $storePhone }}</div>@endif
+                    <h1 class="report-title">{{ $title }}</h1>
+                    <div class="muted">{{ $totalRows }} record(s) · {{ $filterSummary }}</div>
+                </div>
+            </div>
+            <div class="report-meta">Generated<br><strong>{{ $generatedAt->format('d M Y, h:i A') }}</strong><br>Currency: USD unless stated
+                @if($storeExchangeRate && $storeExchangeRate > 0)<br>1 USD = {{ number_format($storeExchangeRate, 2) }} KHR @endif
+            </div>
         </header>
         <div class="report-summary"><div class="summary-chip"><strong>{{ number_format($totalRows) }}</strong> records included</div><div class="summary-chip">Filtered results only · Full matching dataset (not just the current page)</div></div>
         <div class="table-wrap">
@@ -40,7 +60,7 @@
                 </tbody>
             </table>
         </div>
-        <footer class="report-foot"><span>Coffee Corner Aura · Confidential business report</span><span>Generated {{ $generatedAt->format('Y-m-d H:i:s') }}</span></footer>
+        <footer class="report-foot"><span>{{ $storeName }} · Confidential business report</span><span>Generated {{ $generatedAt->format('Y-m-d H:i:s') }}</span></footer>
     </main>
     <script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),350)});</script>
 </body>

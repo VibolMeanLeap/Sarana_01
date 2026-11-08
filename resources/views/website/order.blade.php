@@ -3,7 +3,9 @@
 @section('content')
 @php
     $state = strtolower((string)($order->order_status ?: 'pending'));
-    $isPickup = strtolower((string)$order->orderType?->order_name) === 'takeaway';
+    $orderTypeName = strtolower((string)$order->orderType?->order_name);
+    $isPickup = $orderTypeName === 'takeaway';
+    $isDelivery = $orderTypeName === 'delivery';
     $deliveryFee = (float)($order->delivery?->cost ?? 0);
     $itemSubtotal = (float)$order->orderItems->sum(fn($item) => (float)$item->price * (int)$item->quantity);
     $isPendingPayment = !$order->is_paid && $state === 'pending';
@@ -11,7 +13,7 @@
     $paymentCanContinue = $latestPayment && $latestPayment->status === 'pending' && (!$latestPayment->expires_at || $latestPayment->expires_at->isFuture());
 @endphp
 <style>
-    .order-track-page{background:#f7faf7;padding:42px 0 70px;min-height:70vh}.order-track-card{background:#fff;border:1px solid #e6eee7;border-radius:22px;box-shadow:0 12px 34px rgba(24,56,38,.045)}.order-track-title{font-weight:850;letter-spacing:-.045em;color:#183326}.order-step{position:relative;padding-left:27px;padding-bottom:22px;border-left:2px solid #dfe9e1;margin-left:10px}.order-step:last-child{border-left-color:transparent;padding-bottom:0}.order-step:before{content:'';position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:#d0ddd3;border:3px solid #fff;box-shadow:0 0 0 1px #cbd9ce}.order-step.done:before{background:#198754;box-shadow:0 0 0 1px #198754}.order-step strong{display:block;font-size:.9rem;color:#203a2b}.order-step small{color:#7b897e}.order-total{font-size:1.7rem;font-weight:900;color:#167549}.order-item-row{padding:13px 0;border-bottom:1px solid #edf2ee}.order-item-row:last-child{border-bottom:0}
+    .order-track-page{background:#f7faf7;padding:42px 0 70px;min-height:70vh}.order-track-card{background:#fff;border:1px solid #e6eee7;border-radius:22px;box-shadow:0 12px 34px rgba(24,56,38,.045)}.order-track-title{font-weight:850;letter-spacing:-.045em;color:#183326}.order-step{position:relative;padding-left:27px;padding-bottom:22px;border-left:2px solid #dfe9e1;margin-left:10px}.order-step:last-child{border-left-color:transparent;padding-bottom:0}.order-step:before{content:'';position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:#d0ddd3;border:3px solid #fff;box-shadow:0 0 0 1px #cbd9ce}.order-step.done:before{background:#198754;box-shadow:0 0 0 1px #198754}.order-step strong{display:block;font-size:.9rem;color:#203a2b}.order-step small{color:#7b897e}.order-total{font-size:1.7rem;font-weight:900;color:#167549}.order-item-row{padding:13px 0;border-bottom:1px solid #edf2ee}.order-item-row:last-child{border-bottom:0}.review-rating{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:9px 12px;border:1px solid #dce8df;border-radius:12px;cursor:pointer;font-weight:800;color:#6c7b70}.review-rating input{position:absolute;opacity:0;inset:0;cursor:pointer}.review-rating:has(input:checked){background:#fff7e3;border-color:#e2b95b;color:#9b6a0a;box-shadow:0 0 0 2px rgba(226,185,91,.14)}.review-stars{color:#d99f2c;letter-spacing:2px}
 </style>
 <section class="order-track-page">
     <div class="container" style="max-width:1000px">
@@ -23,20 +25,35 @@
                 <div class="order-track-card p-3 p-md-4 mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 fw-bold mb-0">Order progress</h2><span class="badge rounded-pill {{ $order->is_paid ? 'text-bg-success' : ($state==='cancelled' ? 'text-bg-danger' : 'text-bg-warning') }}">{{ ucfirst(str_replace('_',' ',$state)) }}</span></div>
                     @if($state === 'cancelled')
-                        <div class="alert alert-secondary mb-0"><i class="bi bi-x-circle me-2"></i>This order has been cancelled. Any reserved stock has been returned to the shop.</div>
+                        <div class="alert alert-secondary mb-0"><i class="bi bi-x-circle me-2"></i>This order has been cancelled. @if($order->is_paid)The payment remains recorded; please contact the shop about any refund or adjustment.@elseAny reserved stock has been returned to the shop.@endif</div>
                     @else
-                        @php($steps = ['confirmed' => 'Order confirmed', 'preparing' => 'Being prepared', 'ready' => $isPickup ? 'Ready for pickup' : 'Ready for dispatch', 'completed' => $isPickup ? 'Collected' : 'Delivered'])
-                        @if(!$order->is_paid)<div class="alert alert-warning small"><i class="bi bi-hourglass-split me-2"></i>Your order is waiting for verified payment. We will begin preparing it after payment is confirmed.</div>@endif
+                        @php($stepOrder = $isDelivery ? ['pending','confirmed','preparing','ready','out_for_delivery','completed'] : ['pending','confirmed','preparing','ready','completed'])
+                        @php($steps = $isDelivery ? ['confirmed'=>'Order confirmed','preparing'=>'Being prepared','ready'=>'Ready for dispatch','out_for_delivery'=>'Out for delivery','completed'=>'Delivered'] : ['confirmed'=>'Order confirmed','preparing'=>'Being prepared','ready'=>$isPickup ? 'Ready for pickup' : 'Ready for collection','completed'=>$isPickup ? 'Collected' : 'Completed'])
+                        @if(!$order->is_paid)<div class="alert alert-warning small"><i class="bi bi-hourglass-split me-2"></i>Your order is waiting for verified payment. It will be sent to the shop administrator after ABA confirms payment.</div>
+                        @elseif($state === 'pending')<div class="alert alert-info small"><i class="bi bi-bell me-2"></i>Payment verified. Your order is waiting for an administrator to confirm it.</div>@endif
                         <div class="mt-3">
+                            @php($currentIndex = array_search($state, $stepOrder, true))
                             @foreach($steps as $stepKey => $stepLabel)
-                                @php($stepOrder = ['pending','confirmed','preparing','ready','completed'])
-                                @php($currentIndex = array_search($state, $stepOrder, true))
                                 @php($thisIndex = array_search($stepKey, $stepOrder, true))
-                                <div class="order-step {{ $order->is_paid && $currentIndex !== false && $thisIndex <= $currentIndex ? 'done' : '' }}"><strong>{{ $stepLabel }}</strong><small>{{ $stepKey === 'confirmed' ? 'Payment has been accepted by the shop.' : ($stepKey === 'preparing' ? 'Our team is working on your order.' : ($stepKey === 'ready' ? 'We will update this when it is ready.' : 'Thank you for ordering with us.')) }}</small></div>
+                                @php($stepDescription = match ($stepKey) { 'confirmed' => 'The shop administrator accepted your order.', 'preparing' => 'The shop team is preparing your items.', 'ready' => $isDelivery ? 'Your order is packed and ready for dispatch.' : 'Your order is ready for collection.', 'out_for_delivery' => 'Your order is on its way to the delivery address.', default => 'The order handoff has been completed.' })
+                                <div class="order-step {{ $order->is_paid && $currentIndex !== false && $thisIndex <= $currentIndex ? 'done' : '' }}"><strong>{{ $stepLabel }}</strong><small>{{ $stepDescription }}</small></div>
                             @endforeach
                         </div>
                     @endif
                 </div>
+                @if($order->statusHistory->isNotEmpty())
+                    <div class="order-track-card p-3 p-md-4 mb-4">
+                        <h2 class="h5 fw-bold mb-3">Order activity</h2>
+                        <div class="d-grid gap-3">
+                            @foreach($order->statusHistory->sortByDesc('created_at') as $event)
+                                <div class="d-flex gap-3">
+                                    <span class="rounded-circle bg-light text-success d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px"><i class="bi bi-clock-history"></i></span>
+                                    <div class="min-w-0"><strong class="d-block small">{{ $event->event_type === 'payment_verified' ? 'Payment verified' : ($event->event_type === 'telegram_notified' ? 'Shop notified' : ($event->to_status ? 'Status: '.str_replace('_',' ',ucfirst($event->to_status)) : str_replace('_',' ',ucfirst($event->event_type)))) }}</strong><span class="small text-muted">{{ $event->actor_label ?: ucfirst(str_replace('_',' ',$event->actor_type ?: 'system')) }} · {{ optional($event->created_at)->format('d M Y, h:i A') }}</span>@if($event->note)<div class="small text-muted mt-1">{{ $event->note }}</div>@endif</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
                 <div class="order-track-card p-3 p-md-4">
                     <h2 class="h5 fw-bold mb-3">Items in your order</h2>
                     @foreach($order->orderItems as $item)
@@ -68,7 +85,34 @@
                         <a href="{{ route('web.account') }}" class="btn btn-outline-secondary rounded-pill py-2">My account & order history</a>
                     </div>
                 </aside>
-                <div class="small text-muted px-2"><i class="bi bi-info-circle text-success me-1"></i>Order updates appear here automatically when the shop team advances your order.</div>
+                @if($order->is_paid && $state === 'completed')
+                    <section class="order-track-card p-3 p-md-4 mt-4" id="review">
+                        <div class="d-flex align-items-start justify-content-between gap-3 mb-3"><div><div class="small fw-bold text-success text-uppercase mb-1" style="letter-spacing:.12em">Customer feedback</div><h2 class="h5 fw-bold mb-1">How was your order?</h2><p class="small text-muted mb-0">Your feedback helps us improve the store experience.</p></div><i class="bi bi-chat-square-heart text-success fs-2"></i></div>
+                        @if($order->review)
+                            <div class="rounded-4 p-3" style="background:#f6faf7;border:1px solid #e5eee7">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2"><div class="review-stars fs-5">{{ str_repeat('★', (int)$order->review->rating) }}{{ str_repeat('☆', 5 - (int)$order->review->rating) }}</div><span class="badge rounded-pill {{ $order->review->is_approved ? 'text-bg-success' : 'text-bg-warning' }}">{{ $order->review->is_approved ? 'Published' : 'Awaiting store approval' }}</span></div>
+                                <div class="small text-muted">Your submitted review</div><p class="mb-0 mt-1">{{ $order->review->comment ?: 'You submitted a rating without a written comment.' }}</p>
+                            </div>
+                        @else
+                            @error('review')<div class="alert alert-danger py-2">{{ $message }}</div>@enderror
+                            <form method="POST" action="{{ route('web.orders.review', $order->order_id) }}">@csrf
+                                <label class="form-label fw-semibold">Select your rating <span class="text-danger">*</span></label>
+                                <div class="d-flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Order rating">
+                                    @for($rating = 5; $rating >= 1; $rating--)
+                                        <label class="review-rating"><input type="radio" name="rating" value="{{ $rating }}" required><span>{{ $rating }} ★</span></label>
+                                    @endfor
+                                </div>
+                                @error('rating')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                                <label class="form-label fw-semibold" for="reviewComment">Comment <span class="small text-muted fw-normal">(optional)</span></label>
+                                <textarea class="form-control mb-3" id="reviewComment" name="comment" rows="3" maxlength="2000" placeholder="Tell us what you liked or what we could improve...">{{ old('comment') }}</textarea>
+                                @error('comment')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                                <button type="submit" class="btn btn-success rounded-pill px-4"><i class="bi bi-send me-2"></i>Submit review</button>
+                                <div class="small text-muted mt-2">Reviews are checked by our team before appearing publicly.</div>
+                            </form>
+                        @endif
+                    </section>
+                @endif
+                <div class="small text-muted px-2 mt-3"><i class="bi bi-info-circle text-success me-1"></i>Order updates appear here automatically when the shop team advances your order.</div>
             </div>
         </div>
     </div>
@@ -78,6 +122,7 @@
     const statusUrl = @json(route('web.orders.status', $order->order_id));
     const currentStatus = @json($state);
     const currentPaid = @json((bool)$order->is_paid);
+    const currentDeliveryStatus = @json($order->delivery?->status);
     let checking = false;
     window.setInterval(async () => {
         if (checking || document.visibilityState !== 'visible') return;
@@ -86,7 +131,7 @@
             const response = await fetch(statusUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
             if (!response.ok) return;
             const data = await response.json();
-            if (data.order_status !== currentStatus || Boolean(data.paid) !== currentPaid) window.location.reload();
+            if (data.order_status !== currentStatus || Boolean(data.paid) !== currentPaid || (data.delivery_status ?? null) !== currentDeliveryStatus) window.location.reload();
         } catch (error) {
             // Keep order details usable when the connection is temporarily unavailable.
         } finally {

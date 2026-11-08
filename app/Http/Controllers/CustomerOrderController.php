@@ -8,10 +8,12 @@ use App\Models\Delivery;
 use App\Models\Offer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderStatusHistory;
 use App\Models\OrderType;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Settings;
 use App\Models\StockLog;
 use App\Services\PayWayService;
@@ -29,21 +31,8 @@ class CustomerOrderController extends Controller
 
     public function home()
     {
-        $products = Product::query()
-            ->with('category')
-            ->where('status', 'Active')
-            ->where(fn ($query) => $query->where('qty', '>', 0)->orWhereRaw(self::NON_STOCK_SQL))
-            ->orderByDesc('product_id')
-            ->limit(8)
-            ->get();
-
-        $offersByProduct = Offer::query()
-            ->activeNow()
-            ->whereIn('product_id', $products->pluck('product_id'))
-            ->get()
-            ->keyBy('product_id');
-
-        return view('website.main', compact('products', 'offersByProduct'));
+        // Backward-compatible controller fallback: the single storefront is /store/shop.
+        return redirect()->route('web.shop', [], 301);
     }
 
     public function shop(Request $request)
@@ -101,7 +90,25 @@ class CustomerOrderController extends Controller
 
         $offersByProduct = $offers->keyBy('product_id');
 
-        return view('website.shop', compact('products', 'offers', 'offersByProduct', 'categories', 'filters'));
+        // The single storefront page also displays approved reviews, so no homepage route is needed.
+        $approvedReviews = Review::query()
+            ->with('customer')
+            ->where('is_approved', true)
+            ->whereHas('order', fn ($query) => $query->where('is_paid', true)->where('order_status', 'completed'))
+            ->orderByDesc('review_id')
+            ->limit(6)
+            ->get();
+
+        $reviewSummary = Review::query()
+            ->where('is_approved', true)
+            ->whereHas('order', fn ($query) => $query->where('is_paid', true)->where('order_status', 'completed'))
+            ->selectRaw('COUNT(*) as total, COALESCE(AVG(rating), 0) as average')
+            ->first();
+
+        return view('website.shop', compact(
+            'products', 'offers', 'offersByProduct', 'categories', 'filters',
+            'approvedReviews', 'reviewSummary'
+        ));
     }
 
     public function product(int $productId)
@@ -344,6 +351,18 @@ class CustomerOrderController extends Controller
                     'customer_note' => $validated['customer_note'] ?? null,
                 ]);
 
+                OrderStatusHistory::create([
+                    'order_id' => $order->order_id,
+                    'event_type' => 'order_created',
+                    'from_status' => null,
+                    'to_status' => 'pending',
+                    'actor_type' => 'customer',
+                    'actor_id' => auth()->id(),
+                    'actor_label' => $customer->name,
+                    'note' => 'Website order created. Fulfillment is waiting for verified payment.',
+                    'created_at' => now(),
+                ]);
+
                 foreach ($cart as $productId => $quantity) {
                     $product = $products->get((int) $productId);
                     $offer = $activeOffers->get((int) $productId);
@@ -396,7 +415,7 @@ class CustomerOrderController extends Controller
     public function showOrder(int $orderId)
     {
         $order = $this->ownedOrder($orderId)->with([
-            'orderItems.product', 'orderType', 'paymentMethod', 'delivery', 'payments',
+            'orderItems.product', 'orderType', 'paymentMethod', 'delivery', 'payments', 'statusHistory', 'review',
         ])->firstOrFail();
         $payment = $order->payments->sortByDesc('id')->first();
 
@@ -410,6 +429,7 @@ class CustomerOrderController extends Controller
         return response()->json([
             'order_id' => $order->order_id,
             'order_status' => $order->order_status,
+            'delivery_status' => $order->delivery()->value('status'),
             'payment_status' => $order->payment_status,
             'paid' => (bool) $order->is_paid,
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
@@ -465,8 +485,23 @@ class CustomerOrderController extends Controller
             }
 
             $order->payments()->whereIn('status', ['pending', 'failed', 'declined', 'expired'])->update(['status' => 'cancelled']);
+            $previousStatus = (string) $order->order_status;
             $order->order_status = 'cancelled';
             $order->save();
+            if ($order->delivery) {
+                $order->delivery()->update(['status' => 'cancelled']);
+            }
+            OrderStatusHistory::create([
+                'order_id' => $order->order_id,
+                'event_type' => 'status_changed',
+                'from_status' => $previousStatus,
+                'to_status' => 'cancelled',
+                'actor_type' => 'customer',
+                'actor_id' => auth()->id(),
+                'actor_label' => auth()->user()?->name,
+                'note' => 'Customer cancelled an unpaid website order; reserved stock was returned.',
+                'created_at' => now(),
+            ]);
         }, 3);
 
         return redirect()->route('web.orders.show', $orderId)->with('success', 'Your unpaid order was cancelled and reserved stock was returned.');

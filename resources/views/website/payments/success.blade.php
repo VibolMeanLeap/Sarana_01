@@ -17,7 +17,7 @@
                 <div class="paid-check"><i class="bi bi-check-lg"></i></div>
                 <div class="text-uppercase small fw-bold mb-2" style="letter-spacing:1.5px;color:#c8e9d2">ABA PayWay · Payment verified</div>
                 <h1>Payment successful!</h1>
-                <p>Your payment has been confirmed. Your order is now safely recorded.</p>
+                <p>Your payment has been verified by ABA. Your order is awaiting the shop's confirmation.</p>
             </div>
             <div class="paid-body">
                 <div class="text-center pb-4 border-bottom">
@@ -38,9 +38,9 @@
                     @if($order->delivery)<div class="paid-line"><span>Delivery address</span><strong>{{ $order->delivery->address }}</strong></div>@endif
                     <div class="paid-line"><span>Payment method</span><strong>{{ $order->paymentMethod->payment_name ?? 'ABA PayWay KHQR' }}</strong></div>
                     <div class="paid-line"><span>Payment reference</span><strong>{{ $payment->apv ?: $payment->bank_ref ?: $payment->tran_id }}</strong></div>
-                    <div class="paid-line"><span>Order status</span><strong class="text-success">{{ ucfirst(str_replace('_', ' ', $order->order_status ?? 'confirmed')) }}</strong></div>
+                    <div class="paid-line"><span>Order status</span><strong class="text-success">{{ ucfirst(str_replace('_', ' ', $order->order_status ?? 'pending')) }}</strong></div>
                 </div>
-                <div class="alert alert-success border-0 rounded-3 small"><i class="bi bi-shield-check me-2"></i>Verified directly with ABA PayWay. You can safely close this page or continue tracking your order.</div>
+                <div class="alert alert-success border-0 rounded-3 small"><i class="bi bi-shield-check me-2"></i>Verified directly with ABA PayWay. @if(($order->order_status ?? 'pending') === 'pending')Your paid order is waiting for an administrator to confirm it. You can track each update from your order page.@elseYou can safely close this page or continue tracking your order.@endif</div>
                 <div class="paid-actions mt-4">
                     <a href="{{ route('web.orders.show', $order->order_id) }}" class="btn btn-success flex-grow-1"><i class="bi bi-box-seam me-2"></i>Track my order</a>
                     <a href="{{ route('web.shop') }}" class="btn btn-outline-secondary"><i class="bi bi-cup-hot me-2"></i>Continue shopping</a>

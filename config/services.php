@@ -46,6 +46,23 @@ return [
         'delivery_fee' => (float) env('WEB_DELIVERY_FEE', 0),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        // Must exactly match an Authorized redirect URI in Google Cloud Console.
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'group_chat_id' => env('TELEGRAM_GROUP_CHAT_ID'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        'admin_ids' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TELEGRAM_ADMIN_IDS', ''))
+        ))),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -12,7 +12,7 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->input('search', ''));
-        $sortColumns = ['supplier_id' => 'supplier_id', 'name' => 'name'];
+        $sortColumns = ['supplier_id' => 'supplier_id', 'name' => 'name', 'address' => 'address'];
         $sortBy = $sortColumns[$request->input('sort_by')] ?? 'supplier_id';
         $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
@@ -21,15 +21,26 @@ class SupplierController extends Controller
                 $builder->where(function ($nested) use ($search) {
                     $nested->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('address', 'like', "%{$search}%");
                 });
             })
             ->orderBy($sortBy, $sortDirection);
 
         $supp_key = $query->paginate(10)->withQueryString();
         $totalSupplier = Supplier::count();
+        $suppliersWithEmail = Supplier::whereNotNull('email')->where('email', '<>', '')->count();
+        $suppliersWithPhone = Supplier::whereNotNull('phone')->where('phone', '<>', '')->count();
+        $supplierLocations = Supplier::whereNotNull('address')->where('address', '<>', '')
+            ->distinct()->count('address');
 
-        return view('admin.supplier', compact('supp_key', 'totalSupplier'));
+        return view('admin.supplier', compact(
+            'supp_key',
+            'totalSupplier',
+            'suppliersWithEmail',
+            'suppliersWithPhone',
+            'supplierLocations'
+        ));
     }
 
     public function create()

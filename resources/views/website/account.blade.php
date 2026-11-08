@@ -17,7 +17,7 @@
         </div>
         <div class="account-card p-3 p-lg-4">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3"><div><h2 class="h4 fw-bold mb-1">My order history</h2><p class="small text-muted mb-0">Open an order to view items, payment status and progress.</p></div><span class="badge text-bg-light rounded-pill">{{ $orders->total() }} total</span></div>
-            <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Order</th><th>Fulfilment</th><th>Order status</th><th>Payment</th><th>Total</th><th>Date</th><th></th></tr></thead><tbody>
+            <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Order</th><th>Fulfilment</th><th>Order status</th><th>Payment</th><th>Total</th><th>Date</th><th>Review</th><th></th></tr></thead><tbody>
                 @forelse($orders as $order)
                     @php($orderState = strtolower((string)($order->order_status ?: 'pending')))
                     <tr class="account-order-row">
@@ -27,10 +27,20 @@
                         <td><span class="badge account-pill {{ $order->is_paid ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $order->is_paid ? 'Paid' : 'Unpaid' }}</span></td>
                         <td class="fw-bold">${{ number_format((float)$order->final_price, 2) }}</td>
                         <td class="text-muted small">{{ optional($order->order_date)->format('d M Y, h:i A') }}</td>
+                        <td class="text-nowrap">
+                            @if($order->review)
+                                <span class="small fw-semibold text-success">{{ $order->review->rating }}/5 ★</span>
+                                <span class="d-block small {{ $order->review->is_approved ? 'text-success' : 'text-muted' }}">{{ $order->review->is_approved ? 'Published' : 'Pending approval' }}</span>
+                            @elseif($order->is_paid && $orderState === 'completed')
+                                <a href="{{ route('web.orders.show', $order->order_id) }}#review" class="small fw-bold text-success text-decoration-none">Leave review</a>
+                            @else
+                                <span class="small text-muted">After completion</span>
+                            @endif
+                        </td>
                         <td><a href="{{ route('web.orders.show', $order->order_id) }}" class="btn btn-sm btn-outline-success rounded-pill">Details</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center py-5"><i class="bi bi-bag-heart display-6 text-success"></i><h3 class="h6 fw-bold mt-3">No orders yet</h3><p class="small text-muted mb-3">Your next coffee favourite is waiting.</p><a href="{{ route('web.shop') }}" class="btn btn-success rounded-pill px-4">Start shopping</a></td></tr>
+                    <tr><td colspan="8" class="text-center py-5"><i class="bi bi-bag-heart display-6 text-success"></i><h3 class="h6 fw-bold mt-3">No orders yet</h3><p class="small text-muted mb-3">Your next coffee favourite is waiting.</p><a href="{{ route('web.shop') }}" class="btn btn-success rounded-pill px-4">Start shopping</a></td></tr>
                 @endforelse
             </tbody></table></div>
             @if($orders->hasPages())<div class="pt-3">{{ $orders->links() }}</div>@endif

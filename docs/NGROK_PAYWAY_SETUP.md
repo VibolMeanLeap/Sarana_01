@@ -43,7 +43,7 @@ APP_URL=https://your-assigned-domain.ngrok-free.dev
 PAYWAY_BASE_URL=https://checkout-sandbox.payway.com.kh
 PAYWAY_MERCHANT_ID=YOUR_ABA_SANDBOX_MERCHANT_ID
 PAYWAY_API_KEY=YOUR_ABA_SANDBOX_API_KEY
-PAYWAY_CALLBACK_URL=https://your-assigned-domain.ngrok-free.dev/web/payments/payway/callback
+PAYWAY_CALLBACK_URL=https://your-assigned-domain.ngrok-free.dev/store/payments/payway/callback
 PAYWAY_CURRENCY=USD
 PAYWAY_PAYMENT_OPTION=abapay_khqr
 PAYWAY_LIFETIME=15
@@ -65,7 +65,7 @@ php artisan optimize:clear
 Then create a small ABA sandbox KHQR payment from the POS or website. The callback endpoint is:
 
 ```text
-POST https://your-assigned-domain.ngrok-free.dev/web/payments/payway/callback
+POST https://your-assigned-domain.ngrok-free.dev/store/payments/payway/callback
 ```
 
 Do not manually enter that endpoint in phpMyAdmin or a browser address bar. ABA calls it as an HTTP POST. The app still calls ABA's Check Transaction API from the server before marking an order paid.
@@ -77,7 +77,7 @@ Do not close the Laravel server or ngrok while testing. If you stop the tunnel, 
 ## Troubleshooting
 
 - **QR request fails with wrong domain / code 6:** the PayWay documentation says non-whitelisted domains/IP addresses can receive `6: wrong domain`. Ask ABA PayWay support which sandbox source IP/domain must be allowlisted for your merchant account.
-- **QR is created but callback is not received:** check that the ngrok terminal is running, the Laravel server is running, the callback path is exactly `/web/payments/payway/callback`, and `PAYWAY_CALLBACK_URL` matches the current HTTPS ngrok domain.
+- **QR is created but callback is not received:** check that the ngrok terminal is running, the Laravel server is running, the callback path is exactly `/store/payments/payway/callback`, and `PAYWAY_CALLBACK_URL` matches the current HTTPS ngrok domain.
 - **Application still sends localhost:** check spelling in `.env`, make sure there are no duplicate `PAYWAY_CALLBACK_URL` lines, run `php artisan optimize:clear`, and retry.
 - **Using XAMPP:** forward port 80 if Apache serves the app there. Do not use `ngrok http 8000` unless Laravel is actually listening on port 8000.
 

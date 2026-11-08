@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingCategory;
 use Illuminate\Http\Request;
 
@@ -12,22 +11,28 @@ class AccountingCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'id_type' => 'required|exists:in_and_exp_types,id_type',
         ]);
 
-        AccountingCategory::create($validated);
+        AccountingCategory::create([
+            'name' => trim($validated['name']),
+            'id_type' => 2,
+        ]);
 
-        return back()->with('success', 'Category added.');
+        return back()->with('success', 'Expense category added.');
     }
 
     public function destroy(AccountingCategory $category)
     {
+        if ((int) $category->id_type !== 2) {
+            return back()->with('error', 'Only expense categories can be removed from this workspace.');
+        }
+
         if ($category->transactions()->exists()) {
             return back()->with('error', 'This category is already used by finance transactions. Keep it to preserve the accounting history.');
         }
 
         $category->delete();
 
-        return back()->with('success', 'Category deleted.');
+        return back()->with('success', 'Expense category deleted.');
     }
 }

@@ -4,7 +4,7 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <div>
         <div class="small text-muted text-uppercase fw-semibold mb-1">Finance / Edit entry</div>
-        <h1 class="h3 fw-bold mb-1">Update transaction #{{ $transaction->id }}</h1>
+        <h1 class="h3 fw-bold mb-1">Update expense #{{ $transaction->id }}</h1>
         <p class="text-muted mb-0">Review the details and save your changes.</p>
     </div>
     <a href="{{ route('expense_income.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to finance</a>
@@ -15,10 +15,10 @@
             @csrf
             @method('PUT')
             <div class="mb-3">
-                <label class="form-label fw-semibold">Accounting category</label>
+                <label class="form-label fw-semibold">Expense category</label>
                 <select name="category_id" class="form-select" required>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected(old('category_id', $transaction->category_id) == $category->id)>{{ $category->name }} · {{ $category->type->name ?? ($category->id_type == 1 ? 'Income' : 'Expense') }}</option>
+                        <option value="{{ $category->id }}" @selected(old('category_id', $transaction->category_id) == $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
                 @error('category_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror

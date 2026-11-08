@@ -34,6 +34,7 @@ class CashierController extends Controller
     {
         $cashierId = (int) auth()->id();
         $query = Order::with(['customer', 'orderType', 'paymentMethod', 'orderItems'])
+            ->withCount('delivery')
             ->where(function ($builder) use ($cashierId) {
                 $builder->where('order_source', 'website')
                     ->orWhere(function ($pos) use ($cashierId) {

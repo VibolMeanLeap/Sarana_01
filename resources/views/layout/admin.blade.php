@@ -55,14 +55,13 @@
             <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i class="bi bi-receipt"></i>Orders</a>
             <a href="{{ route('purchase.index') }}" class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i class="bi bi-cart-check"></i>Purchases</a>
             <a href="{{ route('inventory.index') }}" class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i>Inventory & stock</a>
-            <a href="{{ route('expense_income.index') }}" class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i>Income & expenses</a>
+            <a href="{{ route('expense_income.index') }}" class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i>Sales & expenses</a>
             <a href="{{ route('reports.index') }}" class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i>Reports & analytics</a>
             <a href="{{ route('delivery.index') }}" class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i class="bi bi-truck"></i>Delivery</a>
             <a href="{{ route('reviews.index') }}" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i class="bi bi-star"></i>Reviews</a>
         </nav>
         <div class="nav-label">People & settings</div>
         <nav class="app-nav">
-            <a href="{{ route('customer.list') }}" class="{{ request()->is('admin/customer*') ? 'active' : '' }}"><i class="bi bi-people"></i>Customer directory</a>
             <a href="{{ route('supplier.list') }}" class="{{ request()->is('admin/supplier*') ? 'active' : '' }}"><i class="bi bi-truck-front"></i>Suppliers</a>
             <a href="{{ route('auth.list') }}" class="{{ request()->is('admin/user*') ? 'active' : '' }}"><i class="bi bi-person-vcard"></i>Customer accounts</a>
             <a href="{{ route('setting.list') }}" class="{{ request()->is('admin/meanleap/setting*') ? 'active' : '' }}"><i class="bi bi-sliders"></i>Settings & staff management</a>

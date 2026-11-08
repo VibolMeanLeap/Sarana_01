@@ -23,7 +23,7 @@
 <section class="product-detail-shell">
     <div class="container">
         <nav aria-label="breadcrumb" class="mb-3">
-            <ol class="breadcrumb small mb-0"><li class="breadcrumb-item"><a href="{{ route('web.home') }}" class="text-success text-decoration-none">Home</a></li><li class="breadcrumb-item"><a href="{{ route('web.shop') }}" class="text-success text-decoration-none">Shop</a></li><li class="breadcrumb-item active" aria-current="page">{{ $product->product_name }}</li></ol>
+            <ol class="breadcrumb small mb-0"><li class="breadcrumb-item"><a href="{{ route('web.shop') }}" class="text-success text-decoration-none">Shop</a></li><li class="breadcrumb-item active" aria-current="page">{{ $product->product_name }}</li></ol>
         </nav>
         @include('admin.message.message')
         <article class="product-detail-card">

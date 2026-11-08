@@ -4,8 +4,8 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <div>
         <div class="small text-muted text-uppercase fw-semibold mb-1">Finance / New entry</div>
-        <h1 class="h3 fw-bold mb-1">Record a transaction</h1>
-        <p class="text-muted mb-0">Add an operating expense or other income entry.</p>
+        <h1 class="h3 fw-bold mb-1">Record an expense</h1>
+        <p class="text-muted mb-0">Record an operating expense. Sales revenue is calculated automatically from paid orders.</p>
     </div>
     <a href="{{ route('expense_income.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to finance</a>
 </div>
@@ -14,11 +14,11 @@
         <form action="{{ route('expense_income.store') }}" method="POST">
             @csrf
             <div class="mb-3">
-                <label class="form-label fw-semibold">Accounting category</label>
+                <label class="form-label fw-semibold">Expense category</label>
                 <select name="category_id" class="form-select" required>
                     <option value="">Choose a category</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }} · {{ $category->type->name ?? ($category->id_type == 1 ? 'Income' : 'Expense') }}</option>
+                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
                 @error('category_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
@@ -42,7 +42,7 @@
             </div>
             <div class="d-flex justify-content-end gap-2">
                 <a href="{{ route('expense_income.index') }}" class="btn btn-light">Cancel</a>
-                <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Save transaction</button>
+                <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Save expense</button>
             </div>
         </form>
     </div>

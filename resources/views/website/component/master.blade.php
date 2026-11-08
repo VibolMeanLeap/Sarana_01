@@ -146,7 +146,7 @@
 
     <!-- Top Simple Brand Bar -->
     <header class="py-4 text-center">
-        <a href="{{ route('web.home') }}" class="text-decoration-none fw-bold fs-3 text-dark d-inline-flex align-items-center">
+        <a href="{{ route('web.shop') }}" class="text-decoration-none fw-bold fs-3 text-dark d-inline-flex align-items-center">
             @if($shopSettings?->logo && file_exists(public_path('uploads/'.$shopSettings->logo)))
                 <span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px"><img src="{{ asset('uploads/'.$shopSettings->logo) }}" alt="{{ $shopSettings->shop_name }} logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
             @else

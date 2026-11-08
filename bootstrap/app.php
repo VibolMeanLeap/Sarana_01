@@ -19,13 +19,23 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
         ]);
 
-        // ABA calls this endpoint server-to-server without a browser CSRF token.
-        // The callback still triggers an authoritative server-to-server status check.
+        // ABA sends server-to-server callbacks without a browser CSRF token.
+        // Keep the old endpoint temporarily for QR codes issued before the /store migration.
         $middleware->validateCsrfTokens(except: [
+            'store/payments/payway/callback',
             'web/payments/payway/callback',
+            'telegram/webhook',
         ]);
 
-        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('web/*') ? route('webLogin') : route('showlogin'));
+        // Website URLs now live under /store. JSON polling requests should receive
+        // 401 JSON responses (Accept: application/json), not an HTML login redirect.
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('store', 'store/*', 'web', 'web/*')) {
+                return route('webLogin');
+            }
+
+            return route('showlogin');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Keep Laravel's standard exception handling for the demo environment.

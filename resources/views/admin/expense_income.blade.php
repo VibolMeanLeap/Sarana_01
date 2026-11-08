@@ -1,6 +1,6 @@
 @extends('layout.admin')
 
-@section('page_title', 'Income & Expenses')
+@section('page_title', 'Sales & Expenses')
 @section('topbar_title', 'Financial overview')
 
 @push('styles')
@@ -176,7 +176,7 @@
 
     .finance-filter {
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: minmax(180px, 1.5fr) repeat(5, minmax(105px, 1fr)) auto auto;
         gap: 9px;
         padding: 14px 18px;
         border-bottom: 1px solid #edf2ee
@@ -271,13 +271,13 @@
     <div class="finance-head">
         <div>
             <div class="finance-kicker"><i class="bi bi-graph-up-arrow me-1"></i>Store performance</div>
-            <h1 class="finance-title">Income & Expenses</h1>
-            <p class="finance-subtitle">Compare paid sales income with purchases and operating costs without double-counting inventory.</p>
+            <h1 class="finance-title">Sales & Expenses</h1>
+            <p class="finance-subtitle">Track verified sales revenue, supplier purchases and day-to-day operating expenses in one place.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
             @include('admin.partials.export-actions', ['exportType' => 'transactions'])
             <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal"><i class="bi bi-tags me-1"></i>Categories</button>
-            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTransactionModal"><i class="bi bi-plus-lg me-1"></i>New transaction</button>
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTransactionModal"><i class="bi bi-plus-lg me-1"></i>New expense</button>
         </div>
     </div>
 
@@ -286,19 +286,24 @@
 
     <div class="finance-grid">
         <div class="finance-card income">
-            <div class="label"><i class="bi bi-cup-hot me-1"></i>Sales income</div>
+            <div class="label"><i class="bi bi-cup-hot me-1"></i>Sales revenue</div>
             <div class="value">${{ number_format($summary['sales'], 2) }}</div>
-            <div class="hint">Paid POS + website orders only</div>
+            <div class="hint">Verified paid POS and website orders</div>
         </div>
         <div class="finance-card expense">
             <div class="label"><i class="bi bi-box-seam me-1"></i>Inventory purchases</div>
             <div class="value">${{ number_format($summary['inventory_purchases'], 2) }}</div>
-            <div class="hint">Stock purchased from suppliers</div>
+            <div class="hint">Supplier stock purchases · cash outflow</div>
         </div>
         <div class="finance-card expense">
             <div class="label"><i class="bi bi-receipt me-1"></i>Operating expenses</div>
             <div class="value">${{ number_format($summary['operating_expenses'], 2) }}</div>
-            <div class="hint">Rent, supplies, maintenance and other costs</div>
+            <div class="hint">Rent, utilities, supplies and maintenance</div>
+        </div>
+        <div class="finance-card {{ $summary['net_profit'] >= 0 ? 'profit' : 'expense' }}">
+            <div class="label"><i class="bi bi-wallet2 me-1"></i>Net profit / loss</div>
+            <div class="value">${{ number_format($summary['net_profit'], 2) }}</div>
+            <div class="hint">Gross profit minus operating expenses</div>
         </div>
     </div>
 
@@ -314,7 +319,7 @@
                     <div class="finance-track">
                         <div class="finance-fill in" style="width:{{ min(100, ($summary['cash_inflow'] / $maxCash) * 100) }}%"></div>
                     </div>
-                    <div class="small text-muted mt-2">Sales ${{ number_format($summary['sales'], 2) }} + other income ${{ number_format($summary['other_income'], 2) }}</div>
+                    <div class="small text-muted mt-2">Paid sales revenue only</div>
                 </div>
                 <div class="finance-compare-block">
                     <div class="finance-compare-label"><span class="text-danger">Money spent</span><strong>${{ number_format($summary['cash_outflow'], 2) }}</strong></div>
@@ -345,15 +350,15 @@
             <div class="value">${{ number_format($summary['gross_profit'], 2) }}</div>
             <div class="hint">Sales income minus sold-item cost</div>
         </div>
-        <div class="finance-card {{ $summary['net_profit'] >= 0 ? 'profit' : 'expense' }}">
-            <div class="label">Net profit / loss</div>
-            <div class="value">${{ number_format($summary['net_profit'], 2) }}</div>
-            <div class="hint">Gross profit + other income − operating costs</div>
+        <div class="finance-card neutral">
+            <div class="label">Cash outflow</div>
+            <div class="value">${{ number_format($summary['cash_outflow'], 2) }}</div>
+            <div class="hint">Inventory purchases + operating expenses</div>
         </div>
         <div class="finance-card neutral">
             <div class="label">Profit margin</div>
             <div class="value">{{ $summary['sales'] > 0 ? number_format(($summary['net_profit'] / $summary['sales']) * 100, 1).'%' : '—' }}</div>
-            <div class="hint">Net profit compared with sales income</div>
+            <div class="hint">Net profit as a share of sales revenue</div>
         </div>
     </div>
     <div class="alert alert-info border-0 small mb-0"><i class="bi bi-info-circle me-1"></i><strong>Accounting note:</strong> Inventory purchases are shown as cash outflow, but are not subtracted again from net profit. Their cost is recognized as Cost of Goods Sold when the stock is sold, preventing double-counting.</div>
@@ -361,20 +366,15 @@
     <section class="finance-panel">
         <div class="finance-panel-head">
             <div>
-                <h2><i class="bi bi-journal-text me-2 text-success"></i>Income & expense transactions</h2>
-                <div class="small text-muted mt-1">Sales income is summarized from paid orders above; this ledger lists other income and expenses.</div>
+                <h2><i class="bi bi-journal-text me-2 text-success"></i>Expense ledger</h2>
+                <div class="small text-muted mt-1">Manual operating expenses and purchase-linked expenses. Paid sales revenue is summarized above.</div>
             </div>
             <span class="badge text-bg-light">{{ number_format($transactions->total()) }} records</span>
         </div>
         <form method="GET" action="{{ route('expense_income.index') }}" class="finance-filter">
             <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search note or ID" aria-label="Search transactions">
-            <select name="type" class="form-select">
-                <option value="">Income & expenses</option>
-                <option value="income" @selected(request('type')==='income' )>Income only</option>
-                <option value="expense" @selected(request('type')==='expense' )>Expenses only</option>
-            </select>
             <select name="category_id" class="form-select">
-                <option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(request('category_id')==$category->id)>{{ $category->name }} · {{ $category->type->name ?? ($category->id_type == 1 ? 'Income' : 'Expense') }}</option>@endforeach
+                <option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(request('category_id')==$category->id)>{{ $category->name }}</option>@endforeach
             </select>
             <input type="date" name="from" value="{{ request('from') }}" class="form-control" aria-label="From date">
             <input type="date" name="to" value="{{ request('to') }}" class="form-control" aria-label="To date">
@@ -407,28 +407,27 @@
                 </thead>
                 <tbody>
                     @forelse($transactions as $transaction)
-                    @php($isIncome = (int) ($transaction->category?->id_type ?? 2) === 1)
-                    <tr>
+                                        <tr>
                         <td>#{{ $transaction->id }}</td>
                         <td>{{ $transaction->transaction_date ? \Carbon\Carbon::parse($transaction->transaction_date)->format('d M Y') : '—' }}</td>
-                        <td><span class="badge {{ $isIncome ? 'text-bg-success' : 'text-bg-danger' }}">{{ $isIncome ? 'Income' : 'Expense' }}</span></td>
+                        <td><span class="badge text-bg-danger">Expense</span></td>
                         <td>{{ $transaction->category?->name ?? 'Uncategorised' }}</td>
                         <td>{{ $transaction->purchase_id ? 'Purchase #'.$transaction->purchase_id : ($transaction->order_id ? 'Order #'.$transaction->order_id : 'Manual') }}</td>
                         <td>{{ $transaction->note ?: '—' }}</td>
                         <td>{{ $transaction->user?->name ?: '—' }}</td>
-                        <td class="text-end fw-bold {{ $isIncome ? 'text-success' : 'text-danger' }}">{{ $isIncome ? '+' : '−' }}${{ number_format((float) $transaction->amount, 2) }}</td>
+                        <td class="text-end fw-bold text-danger">−${{ number_format((float) $transaction->amount, 2) }}</td>
                         <td class="text-end text-nowrap">
                             @if($transaction->purchase_id)
                             <span class="small text-muted">Managed in Purchases</span>
                             @else
                             <a href="{{ route('expense_income.edit', $transaction->id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <form action="{{ route('expense_income.destroy', $transaction->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this transaction?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger">Delete</button></form>
+                            <form action="{{ route('expense_income.destroy', $transaction->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this expense record?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger">Delete</button></form>
                             @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-5">No transactions match these filters.</td>
+                        <td colspan="9" class="text-center text-muted py-5">No expenses match these filters.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -444,17 +443,17 @@
     <div class="modal-dialog modal-dialog-centered">
         <form action="{{ route('expense_income.store') }}" method="POST" class="modal-content">@csrf
             <div class="modal-header">
-                <h5 class="modal-title" id="addTransactionTitle">New manual transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="addTransactionTitle">Record operating expense</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3"><label class="form-label">Category <span class="text-danger">*</span></label><select name="category_id" class="form-select" required>
-                        <option value="">Choose a category</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }} ({{ $category->type->name ?? ($category->id_type == 1 ? 'Income' : 'Expense') }})</option>@endforeach
+                <div class="mb-3"><label class="form-label">Expense category <span class="text-danger">*</span></label><select name="category_id" class="form-select" required>
+                        <option value="">Choose a category</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach
                     </select>@error('category_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                 <div class="mb-3"><label class="form-label">Amount (USD) <span class="text-danger">*</span></label><input type="number" name="amount" min="0.01" step="0.01" class="form-control" required>@error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                 <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="datetime-local" name="transaction_date" value="{{ now()->format('Y-m-d\TH:i') }}" class="form-control" required>@error('transaction_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                <div class="mb-0"><label class="form-label">Note</label><textarea name="note" rows="2" class="form-control" placeholder="e.g. Electricity, rent, catering income"></textarea></div>
+                <div class="mb-0"><label class="form-label">Note</label><textarea name="note" rows="2" class="form-control" placeholder="e.g. Electricity, rent, supplies or maintenance"></textarea></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Save transaction</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Save expense</button></div>
         </form>
     </div>
 </div>
@@ -466,16 +465,12 @@
                 <h5 class="modal-title" id="addCategoryTitle">Accounting categories</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <ul class="list-group mb-3">@forelse($categories as $category)<li class="list-group-item d-flex justify-content-between align-items-center"><span>{{ $category->name }} <span class="badge {{ (int)$category->id_type === 1 ? 'text-bg-success' : 'text-bg-danger' }}">{{ $category->type->name ?? ($category->id_type == 1 ? 'Income' : 'Expense') }}</span></span>
+                <ul class="list-group mb-3">@forelse($categories as $category)<li class="list-group-item d-flex justify-content-between align-items-center"><span>{{ $category->name }} <span class="badge text-bg-danger">Expense</span></span>
                         <form action="{{ route('accounting-category.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Delete this category?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
                     </li>@empty<li class="list-group-item text-muted">No categories yet.</li>@endforelse</ul>
                 <form action="{{ route('accounting-category.store') }}" method="POST" class="row g-2">@csrf
-                    <div class="col-6"><input type="text" name="name" class="form-control" placeholder="Category name" required></div>
-                    <div class="col-4"><select name="id_type" class="form-select" required>
-                            <option value="1">Income</option>
-                            <option value="2">Expense</option>
-                        </select></div>
-                    <div class="col-2"><button type="submit" class="btn btn-success w-100">Add</button></div>
+                    <div class="col-9"><input type="text" name="name" class="form-control" placeholder="New expense category" maxlength="255" required></div>
+                    <div class="col-3"><button type="submit" class="btn btn-success w-100">Add</button></div>
                 </form>
             </div>
         </div>
