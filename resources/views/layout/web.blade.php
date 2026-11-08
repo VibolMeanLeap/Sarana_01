@@ -640,20 +640,13 @@
 
             <div class="collapse navbar-collapse" id="cleanNav">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/web/shop">Shop</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#new-arrivals">New Arrivals</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#best-sellers">Best Sellers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"
-                            onclick="event.preventDefault(); if(confirm('Do you want to logout?')) { document.getElementById('logout-form').submit(); }">
-                            Sign Out <i class="dropdown-item-icon ti-power-off"></i>
-                        </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                            @csrf
-                        </form>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('web.shop') }}">Shop</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('web.home') }}#featured">Customer favourites</a></li>
+                    @auth
+                        @if(strtolower((string) Auth::user()->role?->role_name) === 'customer')
+                            <li class="nav-item"><a class="nav-link" href="{{ route('web.account') }}">My orders</a></li>
+                        @endif
+                    @endauth
                 </ul>
 
                 <div class="d-flex align-items-center gap-3">
@@ -701,8 +694,8 @@
                             {{-- ករណីមិនទាន់បាន Login --}}
                             <li class="text-center py-2">
                                 <p class="small text-muted mb-3">Welcome! Please login to manage your account.</p>
-                                <a href="{{ url('web/login') }}" class="btn btn-success w-100 rounded-2 mb-2">Log In</a>
-                                <a href="{{ url('web/register') }}" class="btn btn-outline-secondary w-100 rounded-2">Register</a>
+                                <a href="{{ route('webLogin') }}" class="btn btn-success w-100 rounded-2 mb-2">Log In</a>
+                                <a href="{{ route('webRegister') }}" class="btn btn-outline-secondary w-100 rounded-2">Register</a>
                             </li>
                             @endauth
                         </ul>

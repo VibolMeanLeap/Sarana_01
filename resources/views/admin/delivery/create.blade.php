@@ -1,41 +1,19 @@
 @extends('layout.admin')
-
+@section('page_title','Create delivery')
+@section('topbar_title','New delivery')
 @section('content')
-<div class="card">
-    <div class="card-header"><h5 class="mb-0">New Delivery</h5></div>
-    <div class="card-body">
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form action="{{ route('delivery.store') }}" method="POST">
-            @csrf
-            <div class="mb-3">
-                <label class="form-label">Order</label>
-                <select name="order_id" class="form-select" required>
-                    <option value="">-- Select order --</option>
-                    @foreach($orders as $o)
-                        <option value="{{ $o->order_id }}">#{{ $o->order_id }} - {{ $o->customer->name ?? 'Walk-in' }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Delivery Address</label>
-                <textarea name="address" class="form-control" rows="2" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Delivery Cost</label>
-                <input type="number" step="0.01" name="cost" class="form-control" value="0" required>
-            </div>
-            <button class="btn btn-primary">Create Delivery</button>
-            <a href="{{ route('delivery.index') }}" class="btn btn-secondary">Cancel</a>
+<div class="page-heading"><div><div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Order fulfillment</div><h1>Create delivery</h1><p>Assign a paid website or POS delivery order to fulfillment.</p></div><a href="{{ route('delivery.index') }}" class="btn btn-cc-light"><i class="bi bi-arrow-left me-1"></i>Back to deliveries</a></div>
+<div class="row g-4">
+    <div class="col-12 col-xl-8"><div class="card"><div class="card-body p-4">
+        @if($errors->any())<div class="alert alert-danger"><strong>Please check the form.</strong><ul class="mb-0 mt-1">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+        <form action="{{ route('delivery.store') }}" method="POST" novalidate>@csrf
+            <div class="mb-3"><label class="form-label fw-semibold">Eligible order <span class="text-danger">*</span></label><select name="order_id" class="form-select @error('order_id') is-invalid @enderror" required><option value="">Select paid delivery order</option>@foreach($orders as $order)<option value="{{ $order->order_id }}" @selected(old('order_id')==$order->order_id)>#{{ $order->order_id }} · {{ $order->customer?->name ?? 'Walk-in' }} · ${{ number_format($order->final_price,2) }} · {{ $order->order_date?->format('d M Y H:i') }}</option>@endforeach</select>@error('order_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+@if($orders->isEmpty())<div class="form-text text-warning">No eligible orders are available. The order must be paid, not cancelled, use Delivery order type and have no existing delivery record.</div>@endif</div>
+            <div class="mb-3"><label class="form-label fw-semibold">Delivery address <span class="text-danger">*</span></label><textarea name="address" rows="3" maxlength="255" class="form-control @error('address') is-invalid @enderror" placeholder="Street, building, district, city" required>{{ old('address') }}</textarea>@error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+            <div class="mb-4"><label class="form-label fw-semibold">Delivery fee (USD) <span class="text-danger">*</span></label><div class="input-group"><span class="input-group-text">$</span><input type="number" name="cost" min="0" max="99999999" step="0.01" value="{{ old('cost','0.00') }}" class="form-control @error('cost') is-invalid @enderror" required>@error('cost')<div class="invalid-feedback">{{ $message }}</div>@enderror</div><div class="form-text">This is the delivery fee recorded against the order. Add a separate cash transaction if it represents an actual expense to your business.</div></div>
+            <div class="d-flex justify-content-end gap-2"><a href="{{ route('delivery.index') }}" class="btn btn-light border">Cancel</a><button type="submit" class="btn btn-cc" @disabled($orders->isEmpty())><i class="bi bi-check2-circle me-1"></i>Create delivery</button></div>
         </form>
-    </div>
+    </div></div></div>
+    <div class="col-12 col-xl-4"><div class="card h-100"><div class="card-body p-4"><span class="d-inline-flex rounded-3 p-3 mb-3" style="background:#e9f4ee;color:#176b4b"><i class="bi bi-shield-check fs-4"></i></span><h2 class="h5 fw-bold">Delivery workflow</h2><div class="d-flex gap-3 mb-3"><span class="badge text-bg-warning align-self-start">1</span><div><div class="fw-semibold">Pending</div><div class="small text-muted">Delivery record created and waiting for dispatch.</div></div></div><div class="d-flex gap-3 mb-3"><span class="badge text-bg-primary align-self-start">2</span><div><div class="fw-semibold">Out for delivery</div><div class="small text-muted">Order handed to the delivery person.</div></div></div><div class="d-flex gap-3"><span class="badge text-bg-success align-self-start">3</span><div><div class="fw-semibold">Delivered</div><div class="small text-muted">Final status. Completed delivery records are locked from reopening.</div></div></div><hr><p class="small text-muted mb-0">Cancellation preserves the delivery record for reporting and audit history.</p></div></div></div>
 </div>
 @endsection

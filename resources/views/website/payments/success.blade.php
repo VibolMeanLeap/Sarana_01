@@ -27,10 +27,15 @@
                 </div>
                 <div class="py-3">
                     <div class="text-uppercase fw-bold text-muted small mb-2" style="letter-spacing:1px">Order summary</div>
+                    @php($itemSubtotal = (float)$order->orderItems->sum(fn($item) => (float)$item->price * (int)$item->quantity))
                     @foreach($order->orderItems as $item)
-                        <div class="paid-item"><span>{{ $item->product->product_name ?? 'Product' }} × {{ $item->quantity }}</span><strong>${{ number_format((float)$item->price * (int)$item->quantity, 2) }}</strong></div>
+                        <div class="paid-item"><span>{{ $item->product->product_name ?? 'Product' }} × {{ $item->quantity }}</span><strong>{{ $symbol }}{{ number_format((float)$item->price * (int)$item->quantity, $currency === 'KHR' ? 0 : 2) }}</strong></div>
                     @endforeach
-                    <div class="paid-line"><span>Fulfilment</span><strong>{{ $order->orderType->order_name ?? 'Store order' }}</strong></div>
+                    <div class="paid-line"><span>Items subtotal</span><strong>{{ $symbol }}{{ number_format($itemSubtotal, $currency === 'KHR' ? 0 : 2) }}</strong></div>
+                    @if($order->delivery)<div class="paid-line"><span>Delivery fee</span><strong>{{ $symbol }}{{ number_format((float)$order->delivery->cost, $currency === 'KHR' ? 0 : 2) }}</strong></div>@endif
+                    <div class="paid-line"><span>Order total</span><strong>{{ $symbol }}{{ number_format((float)$order->final_price, $currency === 'KHR' ? 0 : 2) }}</strong></div>
+                    <div class="paid-line"><span>Fulfilment</span><strong>{{ strtolower((string)$order->orderType?->order_name)==='takeaway' ? 'Store pickup' : ($order->orderType->order_name ?? 'Store order') }}</strong></div>
+                    @if($order->delivery)<div class="paid-line"><span>Delivery address</span><strong>{{ $order->delivery->address }}</strong></div>@endif
                     <div class="paid-line"><span>Payment method</span><strong>{{ $order->paymentMethod->payment_name ?? 'ABA PayWay KHQR' }}</strong></div>
                     <div class="paid-line"><span>Payment reference</span><strong>{{ $payment->apv ?: $payment->bank_ref ?: $payment->tran_id }}</strong></div>
                     <div class="paid-line"><span>Order status</span><strong class="text-success">{{ ucfirst(str_replace('_', ' ', $order->order_status ?? 'confirmed')) }}</strong></div>

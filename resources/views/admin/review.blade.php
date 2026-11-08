@@ -1,85 +1,31 @@
 @extends('layout.admin')
-
+@section('page_title','Customer reviews')
+@section('topbar_title','Customer feedback')
 @section('content')
-<div class="card mb-3">
-    <div class="card-body d-flex align-items-center gap-2">
-        <h5 class="mb-0">Average Rating:</h5>
-        <span class="fs-4 text-warning">
-            @for($i = 1; $i <= 5; $i++)
-                <i class="bi bi-star{{ $i <= round($avgRating) ? '-fill' : '' }}"></i>
-            @endfor
-        </span>
-        <span class="text-muted">({{ $avgRating }} / 5)</span>
-    </div>
+<div class="page-heading"><div><div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Customer experience</div><h1>Reviews</h1><p>Monitor customer satisfaction and moderate feedback linked to paid orders.</p></div><a href="{{ route('reviews.create') }}" class="btn btn-cc"><i class="bi bi-plus-lg me-1"></i> Record feedback</a></div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Matching reviews</div><div class="fs-3 fw-bold">{{ number_format($stats['count']) }}</div><div class="small text-muted">For selected filters</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Average rating</div><div class="d-flex align-items-center gap-2"><span class="fs-2 fw-bold">{{ number_format($stats['average'],1) }}</span><span class="text-warning">@for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i <= round($stats['average']) ? '-fill' : '' }}"></i>@endfor</span></div><div class="small text-muted">Out of 5 stars</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">5-star reviews</div><div class="fs-3 fw-bold text-success">{{ number_format($stats['five_star']) }}</div><div class="small text-muted">Excellent feedback</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Low ratings (1–2)</div><div class="fs-3 fw-bold text-danger">{{ number_format($stats['low_ratings']) }}</div><div class="small text-muted">May need follow-up</div></div></div></div>
 </div>
-
-<div class="card">
-    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <h5 class="mb-0">Customer Reviews</h5>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            @include('admin.partials.export-actions', ['exportType' => 'reviews'])
-            <a href="{{ route('reviews.create') }}" class="btn btn-cc btn-sm"><i class="bi bi-plus-lg me-1"></i>Add review</a>
-        </div>
-        <form method="GET" action="{{ route('reviews.index') }}" class="d-flex flex-wrap gap-2 align-items-center">
-            <input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search customer, order, comment">
-            <select name="rating" class="form-select form-select-sm">
-                <option value="">All ratings</option>
-                @for($i = 5; $i >= 1; $i--)
-                    <option value="{{ $i }}" @selected(request('rating') == $i)>{{ $i }} star</option>
-                @endfor
-            </select>
-            <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm" aria-label="From date">
-            <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm" aria-label="To date">
-            <select name="sort_dir" class="form-select form-select-sm" aria-label="Sort by date"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select>
-            <button class="btn btn-outline-secondary btn-sm" type="submit">Filter</button>
-            <a href="{{ route('reviews.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
-        </form>
-    </div>
-
-    <div class="card-body">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Rating</th>
-                    <th>Comment</th>
-                    <th>Order date</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($reviews as $r)
-                    <tr>
-                        <td>{{ $r->review_id }}</td>
-                        <td>#{{ $r->order_id }}</td>
-                        <td>{{ $r->customer->name ?? '-' }}</td>
-                        <td>
-                            @for($i = 1; $i <= 5; $i++)
-                                <i class="bi bi-star{{ $i <= $r->rating ? '-fill' : '' }} text-warning"></i>
-                            @endfor
-                        </td>
-                        <td>{{ $r->comment }}</td>
-                        <td>{{ optional($r->order?->order_date)->format('Y-m-d H:i') ?? '—' }}</td>
-                        <td class="text-end">
-                            <form action="{{ route('reviews.destroy', $r->review_id) }}" method="POST" onsubmit="return confirm('Remove this review?')">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="text-center text-muted">No reviews yet.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        {{ $reviews->links() }}
-    </div>
-</div>
+<div class="card mb-4"><div class="card-body"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="h6 fw-bold mb-0">Rating distribution</h2><span class="small text-muted">Based on matching reviews</span></div>
+@foreach($distribution as $rating=>$count)<div class="d-flex align-items-center gap-3 mb-2"><div class="small fw-semibold text-nowrap" style="width:48px">{{ $rating }} <i class="bi bi-star-fill text-warning"></i></div><div class="progress flex-grow-1" style="height:9px;background:#edf1ee"><div class="progress-bar" role="progressbar" style="width:{{ $stats['count'] ? ($count/$stats['count']*100) : 0 }}%;background:#d6a33c" aria-valuenow="{{ $count }}" aria-valuemin="0" aria-valuemax="{{ max(1,$stats['count']) }}"></div></div><div class="small text-muted text-end" style="width:34px">{{ $count }}</div></div>@endforeach
+</div></div>
+<div class="card"><div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h2 class="h5 fw-bold mb-1">Customer feedback register</h2><div class="small text-muted">Reviews are attached to the customer on the paid order, preventing mismatched records.</div></div>@include('admin.partials.export-actions',['exportType'=>'reviews'])</div><div class="card-body">
+    <form method="GET" action="{{ route('reviews.index') }}" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-lg-3"><label class="form-label small fw-semibold">Search</label><input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Customer, order or comment"></div>
+        <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Rating</label><select name="rating" class="form-select form-select-sm"><option value="">All ratings</option>@for($i=5;$i>=1;$i--)<option value="{{ $i }}" @selected(request('rating')==$i)>{{ $i }} star{{ $i===1?'':'s' }}</option>@endfor</select></div>
+        <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">From</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
+        <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">To</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
+        <div class="col-6 col-lg-1"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir','desc')==='desc')>Newest</option><option value="asc" @selected(request('sort_dir')==='asc')>Oldest</option></select></div>
+        <div class="col-6 col-lg-1"><label class="form-label small fw-semibold">Rows</label><select name="per_page" class="form-select form-select-sm">@foreach([10,15,25,50,100] as $size)<option value="{{ $size }}" @selected((string)request('per_page',15)===(string)$size)>{{ $size }}</option>@endforeach</select></div>
+        <div class="col-12 col-lg-1 d-flex gap-1"><button class="btn btn-cc btn-sm flex-grow-1">Apply</button><a href="{{ route('reviews.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+    </form>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Review</th><th>Customer</th><th>Order</th><th>Rating</th><th>Comment</th><th>Date</th><th class="text-end">Actions</th></tr></thead><tbody>
+        @forelse($reviews as $review)<tr><td class="fw-bold">#{{ $review->review_id }}</td><td><div class="fw-semibold">{{ $review->customer?->name ?? 'Unknown customer' }}</div><div class="small text-muted">{{ $review->customer?->phone ?? '—' }}</div></td><td><a href="{{ route('admin.orders.index',['search'=>$review->order_id]) }}" class="text-success text-decoration-none fw-semibold">#{{ $review->order_id }}</a></td><td class="text-nowrap"><span class="text-warning">{{ str_repeat('★',(int)$review->rating) }}{{ str_repeat('☆',5-(int)$review->rating) }}</span><span class="small text-muted ms-1">{{ $review->rating }}/5</span></td><td style="min-width:220px;max-width:360px"><span class="d-inline-block text-truncate" style="max-width:340px" title="{{ $review->comment }}">{{ $review->comment ?: 'No written comment' }}</span></td><td class="text-nowrap">{{ $review->order?->order_date?->format('d M Y') ?? '—' }}</td><td class="text-end text-nowrap"><a href="{{ route('reviews.show',$review->review_id) }}" class="btn btn-sm btn-outline-secondary" title="View"><i class="bi bi-eye"></i></a><a href="{{ route('reviews.edit',$review->review_id) }}" class="btn btn-sm btn-outline-primary" title="Moderate"><i class="bi bi-pencil"></i></a><form action="{{ route('reviews.destroy',$review->review_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this review?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button></form></td></tr>
+        @empty<tr><td colspan="7" class="text-center py-5"><i class="bi bi-chat-square-heart fs-1 d-block text-muted mb-2"></i><div class="fw-semibold">No reviews found</div><div class="small text-muted">Try another rating or date range.</div></td></tr>@endforelse
+    </tbody></table></div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3"><div class="small text-muted">Showing {{ $reviews->firstItem() ?? 0 }}–{{ $reviews->lastItem() ?? 0 }} of {{ $reviews->total() }} reviews</div>{{ $reviews->onEachSide(1)->links() }}</div>
+</div></div>
 @endsection

@@ -41,6 +41,11 @@ return [
         'qr_image_template' => env('PAYWAY_QR_IMAGE_TEMPLATE', 'template3_color'),
     ],
 
+    'ecommerce' => [
+        // Set this in .env when the shop charges for home delivery. Defaults to free delivery.
+        'delivery_fee' => (float) env('WEB_DELIVERY_FEE', 0),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -25,15 +25,15 @@
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center justify-content-center gap-2">
                 <i class="bi bi-truck text-success fs-5"></i>
-                <span>Free Express Shipping Over $35</span>
+                <span>Pickup or home delivery</span>
             </div>
             <div class="col-md-4 d-flex align-items-center justify-content-center gap-2">
                 <i class="bi bi-shield-check text-success fs-5"></i>
-                <span>100% Organic & Freshly Roasted</span>
+                <span>Freshly prepared to order</span>
             </div>
             <div class="col-md-4 d-flex align-items-center justify-content-center gap-2">
                 <i class="bi bi-headset text-success fs-5"></i>
-                <span>24/7 Dedicated Support</span>
+                <span>Secure ABA KHQR checkout</span>
             </div>
         </div>
     </div>
@@ -77,7 +77,7 @@
                                 <i class="bi bi-cup-hot text-success" style="font-size:3.5rem"></i>
                             @endif
                         </div>
-                        <div class="product-title">{{ $product->product_name }}</div>
+                        <div class="product-title"><a class="text-decoration-none text-reset" href="{{ route('web.product.show', $product->product_id) }}">{{ $product->product_name }}</a></div>
                         <p class="small text-muted mb-3">{{ \Illuminate\Support\Str::limit($product->description, 68) }}</p>
                         <div class="product-price mt-auto">
                             @if($activeOffer)
@@ -87,10 +87,13 @@
                                 ${{ number_format((float) $product->price, 2) }}
                             @endif
                         </div>
-                        <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" class="mt-2">
-                            @csrf
-                            <button class="btn btn-green w-100" type="submit"><i class="bi bi-bag-plus me-2"></i>Add to cart</button>
-                        </form>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="{{ route('web.product.show', $product->product_id) }}" class="btn btn-outline-success rounded-pill" aria-label="View {{ $product->product_name }}"><i class="bi bi-eye"></i></a>
+                            <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" class="flex-grow-1">
+                                @csrf
+                                <button class="btn btn-green w-100" type="submit"><i class="bi bi-bag-plus me-2"></i>Add to cart</button>
+                            </form>
+                        </div>
                     </article>
                 </div>
             @empty

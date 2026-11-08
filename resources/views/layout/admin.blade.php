@@ -56,6 +56,7 @@
             <a href="{{ route('purchase.index') }}" class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i class="bi bi-cart-check"></i>Purchases</a>
             <a href="{{ route('inventory.index') }}" class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i>Inventory & stock</a>
             <a href="{{ route('expense_income.index') }}" class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i>Income & expenses</a>
+            <a href="{{ route('reports.index') }}" class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i>Reports & analytics</a>
             <a href="{{ route('delivery.index') }}" class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i class="bi bi-truck"></i>Delivery</a>
             <a href="{{ route('reviews.index') }}" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i class="bi bi-star"></i>Reviews</a>
         </nav>

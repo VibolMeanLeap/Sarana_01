@@ -108,10 +108,30 @@
 
         <section id="shop-menu" class="pt-5 mt-2">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <div><div class="shop-section-eyebrow mb-1">Made fresh for you</div><h2 class="h2 shop-section-title mb-1">Explore our menu</h2><p class="text-muted mb-0">Choose your favourites and add them to your cart.</p></div>
+                <div><div class="shop-section-eyebrow mb-1">Made fresh for you</div><h2 class="h2 shop-section-title mb-1">Explore our menu</h2><p class="text-muted mb-0">Search the menu, choose a category, and add your favourites.</p></div>
                 <a href="{{ route('web.cart') }}" class="btn btn-outline-success rounded-pill px-4"><i class="bi bi-bag me-2"></i>View cart</a>
             </div>
 
+            <form method="GET" action="{{ route('web.shop') }}" class="bg-white border rounded-4 p-3 p-lg-4 mb-4 shadow-sm">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-5">
+                        <label class="form-label small fw-bold text-muted" for="shopSearch">Search products</label>
+                        <div class="input-group"><span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span><input id="shopSearch" name="search" value="{{ request('search') }}" class="form-control border-start-0" placeholder="Coffee, matcha, snacks..."></div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <label class="form-label small fw-bold text-muted" for="shopCategory">Category</label>
+                        <select id="shopCategory" name="category_id" class="form-select"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected((string)request('category_id') === (string)$category->category_id)>{{ $category->category_name }}</option>@endforeach</select>
+                    </div>
+                    <div class="col-sm-6 col-lg-2">
+                        <label class="form-label small fw-bold text-muted" for="shopSort">Sort by</label>
+                        <select id="shopSort" name="sort" class="form-select"><option value="recommended" @selected(request('sort', 'recommended')==='recommended')>Recommended</option><option value="newest" @selected(request('sort')==='newest')>Newest</option><option value="price_low" @selected(request('sort')==='price_low')>Price: low to high</option><option value="price_high" @selected(request('sort')==='price_high')>Price: high to low</option><option value="name" @selected(request('sort')==='name')>Name A–Z</option></select>
+                    </div>
+                    <div class="col-lg-2 d-grid"><button class="btn btn-success rounded-pill" type="submit"><i class="bi bi-sliders me-1"></i>Apply filters</button></div>
+                </div>
+                @if(request()->filled('search') || request()->filled('category_id') || (request('sort') && request('sort')!=='recommended'))<div class="mt-2 text-end"><a href="{{ route('web.shop') }}" class="small text-muted text-decoration-none">Clear filters <i class="bi bi-x-circle ms-1"></i></a></div>@endif
+            </form>
+
+            <div class="small text-muted mb-3">Showing {{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }} of {{ $products->total() }} available products</div>
             <div class="row g-3 g-lg-4">
                 @forelse($products as $product)
                     @php $activeOffer = $offersByProduct->get($product->product_id); @endphp
@@ -127,7 +147,7 @@
                             </div>
                             <div class="p-3 p-lg-3 d-flex flex-column flex-grow-1">
                                 <div class="small text-success fw-semibold mb-1">{{ $product->category->category_name ?? 'Coffee Corner' }}</div>
-                                <h3 class="h6 shop-product-name mb-2">{{ $product->product_name }}</h3>
+                                <h3 class="h6 shop-product-name mb-2"><a class="text-decoration-none text-reset" href="{{ route('web.product.show', $product->product_id) }}">{{ $product->product_name }}</a></h3>
                                 <p class="small text-muted flex-grow-1 mb-3">{{ \Illuminate\Support\Str::limit($product->description, 76) }}</p>
                                 <div class="mb-3">
                                     @if($activeOffer)
@@ -136,14 +156,17 @@
                                     @else
                                         <div class="shop-price">${{ number_format((float)$product->price, 2) }}</div>
                                     @endif
-                                    <div class="small text-muted mt-1">{{ (int)$product->qty }} available</div>
+                                    <div class="small text-muted mt-1">{{ $product->isStockTracked() ? (int)$product->qty.' in stock' : 'Available · no stock limit' }}</div>
                                 </div>
-                                <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" class="mt-auto">@csrf<button class="shop-add-btn w-100" type="submit"><i class="bi bi-bag-plus me-1"></i>Add to cart</button></form>
+                                <div class="d-flex gap-2 mt-auto">
+                                    <a href="{{ route('web.product.show', $product->product_id) }}" class="btn btn-outline-success rounded-pill flex-shrink-0" aria-label="View {{ $product->product_name }}"><i class="bi bi-eye"></i></a>
+                                    <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" class="flex-grow-1">@csrf<button class="shop-add-btn w-100" type="submit"><i class="bi bi-bag-plus me-1"></i>Add to cart</button></form>
+                                </div>
                             </div>
                         </article>
                     </div>
                 @empty
-                    <div class="col-12"><div class="bg-white border rounded-4 text-center py-5"><i class="bi bi-cup-hot text-success fs-1"></i><h3 class="h5 fw-bold mt-3">The menu is getting ready</h3><p class="text-muted mb-0">No active products are available right now.</p></div></div>
+                    <div class="col-12"><div class="bg-white border rounded-4 text-center py-5"><i class="bi bi-search text-success fs-1"></i><h3 class="h5 fw-bold mt-3">No matching products</h3><p class="text-muted mb-3">Try another search or clear your filters.</p><a href="{{ route('web.shop') }}" class="btn btn-outline-success rounded-pill px-4">Clear filters</a></div></div>
                 @endforelse
             </div>
             <div class="mt-4 d-flex justify-content-center">{{ $products->links() }}</div>

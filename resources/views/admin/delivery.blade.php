@@ -1,89 +1,53 @@
 @extends('layout.admin')
-
+@section('page_title', 'Deliveries')
+@section('topbar_title', 'Delivery operations')
 @section('content')
+<div class="page-heading">
+    <div><div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Order fulfillment</div><h1>Deliveries</h1><p>Assign delivery orders, monitor dispatch progress and preserve fulfillment history.</p></div>
+    <a href="{{ route('delivery.create') }}" class="btn btn-cc"><i class="bi bi-plus-lg me-1"></i> Create delivery</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl"><div class="card h-100"><div class="card-body"><div class="small text-muted">Filtered deliveries</div><div class="fs-3 fw-bold">{{ number_format($summary['count']) }}</div><div class="small text-muted">All matching records</div></div></div></div>
+    <div class="col-6 col-xl"><div class="card h-100"><div class="card-body"><div class="small text-muted">Pending</div><div class="fs-3 fw-bold text-warning">{{ number_format($summary['pending']) }}</div><div class="small text-muted">Awaiting dispatch</div></div></div></div>
+    <div class="col-6 col-xl"><div class="card h-100"><div class="card-body"><div class="small text-muted">Out for delivery</div><div class="fs-3 fw-bold text-primary">{{ number_format($summary['on_way']) }}</div><div class="small text-muted">In transit</div></div></div></div>
+    <div class="col-6 col-xl"><div class="card h-100"><div class="card-body"><div class="small text-muted">Delivered</div><div class="fs-3 fw-bold text-success">{{ number_format($summary['delivered']) }}</div><div class="small text-muted">Completed handoffs</div></div></div></div>
+    <div class="col-12 col-xl"><div class="card h-100"><div class="card-body"><div class="small text-muted">Delivery fees recorded</div><div class="fs-3 fw-bold">${{ number_format($summary['fees'],2) }}</div><div class="small text-muted">Filtered period</div></div></div></div>
+</div>
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div><h5 class="mb-0">Deliveries</h5><div class="small text-muted">Search and export the current delivery records.</div></div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            @include('admin.partials.export-actions', ['exportType' => 'deliveries'])
-            <a href="{{ route('delivery.create') }}" class="btn btn-primary btn-sm">
-            <i class="fa fa-plus"></i> New Delivery
-            </a>
-        </div>
-    </div>
-
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h2 class="h5 fw-bold mb-1">Delivery register</h2><div class="small text-muted">Only paid orders with Delivery order type can be assigned.</div></div>@include('admin.partials.export-actions',['exportType'=>'deliveries'])</div>
     <div class="card-body">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-warning">{{ session('error') }}</div>
-        @endif
-
-        <form method="GET" action="{{ route('delivery.index') }}" class="row g-2 mb-3 align-items-end">
-            <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Search</label><input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Order, customer or address"></div>
-            <div class="col-auto">
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">All statuses</option>
-                    <option value="pending" @selected(request('status') == 'pending')>Pending</option>
-                    <option value="out_for_delivery" @selected(request('status') == 'out_for_delivery')>Out for delivery</option>
-                    <option value="delivered" @selected(request('status') == 'delivered')>Delivered</option>
-                    <option value="cancelled" @selected(request('status') == 'cancelled')>Cancelled</option>
-                </select>
-            </div>
-            <div class="col-auto"><label class="form-label small fw-semibold">From</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
-            <div class="col-auto"><label class="form-label small fw-semibold">To</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
-            <div class="col-auto"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest</option></select></div>
-            <input type="hidden" name="sort_by" value="order_date">
-            <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">Filter</button><a href="{{ route('delivery.index') }}" class="btn btn-outline-dark btn-sm">Reset</a></div>
+        <form method="GET" action="{{ route('delivery.index') }}" class="row g-2 align-items-end mb-3">
+            <div class="col-12 col-lg-3"><label class="form-label small fw-semibold">Search</label><input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Delivery, order, customer or address"></div>
+            <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Fulfillment status</label><select name="status" class="form-select form-select-sm"><option value="">All statuses</option>@foreach(['pending'=>'Pending','out_for_delivery'=>'Out for delivery','delivered'=>'Delivered','cancelled'=>'Cancelled'] as $value=>$label)<option value="{{ $value }}" @selected(request('status')===$value)>{{ $label }}</option>@endforeach</select></div>
+            <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">From</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
+            <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">To</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
+            <div class="col-6 col-lg-1"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir','desc')==='desc')>Newest</option><option value="asc" @selected(request('sort_dir')==='asc')>Oldest</option></select></div>
+            <div class="col-6 col-lg-1"><label class="form-label small fw-semibold">Rows</label><select name="per_page" class="form-select form-select-sm">@foreach([10,15,25,50,100] as $size)<option value="{{ $size }}" @selected((string)request('per_page',15)===(string)$size)>{{ $size }}</option>@endforeach</select></div>
+            <div class="col-12 col-lg-1 d-flex gap-1"><button class="btn btn-cc btn-sm flex-grow-1">Apply</button><a href="{{ route('delivery.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise"></i></a></div>
         </form>
-
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Address</th>
-                    <th>Cost</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
+        <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Delivery / Order</th><th>Customer</th><th>Destination</th><th>Order date</th><th class="text-end">Fee</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
             <tbody>
-                @forelse($deliveries as $d)
-                    <tr>
-                        <td>{{ $d->delivery_id }}</td>
-                        <td>#{{ $d->order_id }}</td>
-                        <td>{{ $d->order->customer->name ?? '-' }}</td>
-                        <td>{{ $d->address }}</td>
-                        <td>{{ number_format($d->cost, 2) }}</td>
-                        <td>
-                            @php
-                                $badge = match($d->status) {
-                                    'delivered' => 'success',
-                                    'out_for_delivery' => 'info',
-                                    'cancelled' => 'danger',
-                                    default => 'secondary',
-                                };
-                            @endphp
-                            <span class="badge bg-{{ $badge }}">{{ ucfirst(str_replace('_', ' ', $d->status)) }}</span>
-                        </td>
-                        <td class="text-end">
-                            <a href="{{ route('delivery.edit', $d->delivery_id) }}" class="btn btn-sm btn-outline-primary">Update</a>
-                            <form action="{{ route('delivery.destroy', $d->delivery_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this delivery?')">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="text-center text-muted">No deliveries yet.</td></tr>
-                @endforelse
+            @forelse($deliveries as $delivery)
+                @php($state = strtolower((string)$delivery->status))
+                @php($badge = ['delivered'=>'success','out_for_delivery'=>'primary','cancelled'=>'danger','pending'=>'warning'][$state] ?? 'secondary')
+                <tr>
+                    <td><div class="fw-bold">Delivery #{{ $delivery->delivery_id }}</div><a class="small text-success text-decoration-none" href="{{ route('admin.orders.index',['search'=>$delivery->order_id]) }}">Order #{{ $delivery->order_id }}</a></td>
+                    <td><div class="fw-semibold">{{ $delivery->order?->customer?->name ?? 'Walk-in customer' }}</div><div class="small text-muted">{{ $delivery->order?->customer?->phone ?? '—' }}</div></td>
+                    <td style="min-width:220px;max-width:320px"><span class="d-inline-block text-truncate" style="max-width:300px" title="{{ $delivery->address }}">{{ $delivery->address }}</span></td>
+                    <td class="text-nowrap">{{ $delivery->order?->order_date?->format('d M Y') ?? '—' }}</td>
+                    <td class="text-end fw-semibold">${{ number_format($delivery->cost,2) }}</td>
+                    <td><span class="badge rounded-pill text-bg-{{ $badge }}">{{ str($state)->replace('_',' ')->title() }}</span></td>
+                    <td class="text-end text-nowrap"><a href="{{ route('delivery.edit',$delivery->delivery_id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Update</a>
+                        @if(!in_array($state,['delivered','cancelled'],true))<form action="{{ route('delivery.destroy',$delivery->delivery_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Cancel delivery #{{ $delivery->delivery_id }}? The record will be preserved.')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" title="Cancel delivery"><i class="bi bi-x-circle"></i></button></form>@endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="7" class="text-center py-5"><i class="bi bi-truck fs-1 d-block text-muted mb-2"></i><div class="fw-semibold">No deliveries found</div><div class="small text-muted">Choose a paid delivery order to create the first record.</div></td></tr>
+            @endforelse
             </tbody>
-        </table>
-
-        {{ $deliveries->links() }}
+        </table></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3"><div class="small text-muted">Showing {{ $deliveries->firstItem() ?? 0 }}–{{ $deliveries->lastItem() ?? 0 }} of {{ $deliveries->total() }} deliveries</div>{{ $deliveries->onEachSide(1)->links() }}</div>
     </div>
 </div>
 @endsection

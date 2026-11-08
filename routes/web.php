@@ -18,6 +18,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockLogController;
 use App\Http\Controllers\SupplierController;
@@ -32,6 +33,7 @@ Route::post('/logout', [AuthContoller::class, 'logout'])->name('process_logout')
 /* Public coffee shop pages. The catalogue can be browsed without an account. */
 Route::get('/web', [CustomerOrderController::class, 'home'])->name('web.home');
 Route::get('/web/shop', [CustomerOrderController::class, 'shop'])->name('web.shop');
+Route::get('/web/product/{productId}', [CustomerOrderController::class, 'product'])->whereNumber('productId')->name('web.product.show');
 Route::get('/web/cart', [CustomerOrderController::class, 'cart'])->name('web.cart');
 Route::post('/web/cart/items/{productId}', [CustomerOrderController::class, 'addToCart'])->whereNumber('productId')->name('web.cart.add');
 Route::patch('/web/cart/items/{productId}', [CustomerOrderController::class, 'updateCart'])->whereNumber('productId')->name('web.cart.update');
@@ -51,6 +53,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::post('/web/checkout', [CustomerOrderController::class, 'placeOrder'])->name('web.checkout.place');
     Route::get('/web/orders/{orderId}', [CustomerOrderController::class, 'showOrder'])->whereNumber('orderId')->name('web.orders.show');
     Route::get('/web/orders/{orderId}/status', [CustomerOrderController::class, 'orderStatus'])->whereNumber('orderId')->name('web.orders.status');
+    Route::post('/web/orders/{orderId}/cancel', [CustomerOrderController::class, 'cancelOrder'])->whereNumber('orderId')->name('web.orders.cancel');
     Route::post('/web/orders/{orderId}/payway/retry', [CustomerOrderController::class, 'retryPayWay'])->whereNumber('orderId')->name('web.orders.payway.retry');
     Route::get('/web/payments/{payment}', [PayWayPaymentController::class, 'show'])->whereNumber('payment')->name('web.payments.show');
     Route::get('/web/payments/{payment}/status', [PayWayPaymentController::class, 'status'])->whereNumber('payment')->name('web.payments.status');
@@ -176,6 +179,11 @@ Route::middleware(['auth', 'administrator'])->group(function () {
     Route::delete('/admin/expense-income/{expense_income}', [CashTransactionController::class, 'destroy'])->name('expense_income.destroy');
     Route::post('/admin/accounting-category', [AccountingCategoryController::class, 'store'])->name('accounting-category.store');
     Route::delete('/admin/accounting-category/{category}', [AccountingCategoryController::class, 'destroy'])->name('accounting-category.destroy');
+
+    // Consolidated administrator reporting (all routes inherit auth + administrator middleware).
+    Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/admin/reports/export/csv', [ReportController::class, 'csv'])->name('reports.csv');
+    Route::get('/admin/reports/print', [ReportController::class, 'print'])->name('reports.print');
 
     // Store operations
     Route::get('/admin/delivery', [DeliveryController::class, 'index'])->name('delivery.index');

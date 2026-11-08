@@ -1,50 +1,16 @@
 @extends('layout.admin')
-
+@section('page_title','Update delivery')
+@section('topbar_title','Delivery fulfillment')
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-    <div>
-        <div class="small text-muted text-uppercase fw-semibold mb-1">Operations / Delivery</div>
-        <h1 class="h3 fw-bold mb-1">Update delivery #{{ $delivery->delivery_id }}</h1>
-        <p class="text-muted mb-0">Edit the address, delivery cost, or fulfillment status.</p>
-    </div>
-    <a href="{{ route('delivery.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to deliveries</a>
-</div>
-<div class="card border-0 shadow-sm" style="max-width:760px">
-    <div class="card-body p-4">
-        <div class="rounded-3 bg-light p-3 mb-4">
-            <div class="small text-muted">Related order</div>
-            <div class="fw-bold">Order #{{ $delivery->order_id }}</div>
-            <div class="small text-muted">{{ $delivery->order?->customer?->name ?? 'Walk-in customer' }}</div>
-        </div>
-        <form action="{{ route('delivery.update', $delivery->delivery_id) }}" method="POST">
-            @csrf
-            @method('PUT')
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Delivery address</label>
-                <textarea name="address" rows="3" class="form-control" maxlength="255" required>{{ old('address', $delivery->address) }}</textarea>
-                @error('address')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-            </div>
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Delivery cost (USD)</label>
-                    <input type="number" name="cost" step="0.01" min="0" class="form-control" value="{{ old('cost', $delivery->cost) }}" required>
-                    @error('cost')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Fulfillment status</label>
-                    <select name="status" class="form-select" required>
-                        @foreach(['pending' => 'Pending', 'out_for_delivery' => 'Out for delivery', 'delivered' => 'Delivered', 'cancelled' => 'Cancelled'] as $value => $label)
-                            <option value="{{ $value }}" @selected(old('status', strtolower($delivery->status)) === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    @error('status')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-            </div>
-            <div class="d-flex justify-content-end gap-2">
-                <a href="{{ route('delivery.index') }}" class="btn btn-light">Cancel</a>
-                <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Save delivery</button>
-            </div>
-        </form>
-    </div>
-</div>
+<div class="page-heading"><div><div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Order fulfillment</div><h1>Delivery #{{ $delivery->delivery_id }}</h1><p>Update the drop-off details and fulfillment status.</p></div><a href="{{ route('delivery.index') }}" class="btn btn-cc-light"><i class="bi bi-arrow-left me-1"></i>Back to deliveries</a></div>
+<div class="row g-4"><div class="col-12 col-xl-8"><div class="card"><div class="card-body p-4">
+    @if($errors->any())<div class="alert alert-danger"><strong>Unable to save changes.</strong><ul class="mb-0 mt-1">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+    <div class="rounded-3 p-3 mb-4" style="background:#f4f8f5"><div class="small text-muted">Related paid order</div><div class="h5 fw-bold mb-1">Order #{{ $delivery->order_id }}</div><div>{{ $delivery->order?->customer?->name ?? 'Walk-in customer' }} · {{ $delivery->order?->order_date?->format('d M Y H:i') ?? '—' }}</div></div>
+    <form action="{{ route('delivery.update',$delivery->delivery_id) }}" method="POST" novalidate>@csrf @method('PUT')
+        <div class="mb-3"><label class="form-label fw-semibold">Delivery address <span class="text-danger">*</span></label><textarea name="address" rows="3" maxlength="255" class="form-control @error('address') is-invalid @enderror" required>{{ old('address',$delivery->address) }}</textarea>@error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+        <div class="row g-3 mb-4"><div class="col-md-6"><label class="form-label fw-semibold">Delivery fee (USD)</label><div class="input-group"><span class="input-group-text">$</span><input type="number" name="cost" min="0" step="0.01" max="99999999" value="{{ old('cost',$delivery->cost) }}" class="form-control @error('cost') is-invalid @enderror" required>@error('cost')<div class="invalid-feedback">{{ $message }}</div>@enderror</div></div><div class="col-md-6"><label class="form-label fw-semibold">Fulfillment status</label><select name="status" class="form-select @error('status') is-invalid @enderror" required>@foreach(['pending'=>'Pending','out_for_delivery'=>'Out for delivery','delivered'=>'Delivered','cancelled'=>'Cancelled'] as $value=>$label)<option value="{{ $value }}" @selected(old('status',strtolower($delivery->status))===$value)>{{ $label }}</option>@endforeach</select>@error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror</div></div>
+        @if(in_array(strtolower($delivery->status),['delivered','cancelled'],true))<div class="alert alert-warning small">This delivery is in a final state. Its status cannot be reopened or changed.</div>@endif
+        <div class="d-flex justify-content-end gap-2"><a href="{{ route('delivery.index') }}" class="btn btn-light border">Cancel</a><button class="btn btn-cc"><i class="bi bi-check2-circle me-1"></i>Save changes</button></div>
+    </form>
+</div></div></div><div class="col-12 col-xl-4"><div class="card"><div class="card-body p-4"><h2 class="h6 fw-bold">Current status</h2><div class="fs-5 fw-bold text-capitalize">{{ str_replace('_',' ',$delivery->status) }}</div><p class="small text-muted mt-2 mb-0">Allowed flow: Pending → Out for delivery → Delivered. A delivery can be cancelled before completion.</p></div></div></div></div>
 @endsection

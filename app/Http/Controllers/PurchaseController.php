@@ -16,7 +16,18 @@ class PurchaseController extends Controller
 {
     public function index(Request $request)
     {
-        $search = trim((string) $request->input('search', ''));
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'product_id' => ['nullable', 'integer', 'exists:product,product_id'],
+            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,supplier_id'],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
+            'sort_by' => ['nullable', 'in:purchase_date,purchase_id,quantity,cost_price'],
+            'sort_dir' => ['nullable', 'in:asc,desc'],
+            'per_page' => ['nullable', 'in:10,15,25,50,100'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
         $query = Purchase::with(['supplier', 'product', 'user'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($nested) use ($search) {
@@ -25,19 +36,31 @@ class PurchaseController extends Controller
                         ->orWhereHas('supplier', fn ($supplierQuery) => $supplierQuery->where('name', 'like', "%{$search}%"));
                 });
             })
-            ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->input('product_id')))
-            ->when($request->filled('supplier_id'), fn ($q) => $q->where('supplier_id', $request->input('supplier_id')))
-            ->when($request->filled('date_from'), fn ($q) => $q->whereDate('purchase_date', '>=', $request->input('date_from')))
-            ->when($request->filled('date_to'), fn ($q) => $q->whereDate('purchase_date', '<=', $request->input('date_to')));
+            ->when(!empty($validated['product_id']), fn ($q) => $q->where('product_id', $validated['product_id']))
+            ->when(!empty($validated['supplier_id']), fn ($q) => $q->where('supplier_id', $validated['supplier_id']))
+            ->when(!empty($validated['date_from']), fn ($q) => $q->whereDate('purchase_date', '>=', $validated['date_from']))
+            ->when(!empty($validated['date_to']), fn ($q) => $q->whereDate('purchase_date', '<=', $validated['date_to']));
 
-        $sortBy = in_array($request->input('sort_by'), ['purchase_date', 'purchase_id', 'quantity', 'cost_price'], true) ? $request->input('sort_by') : 'purchase_date';
-        $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
-        $purchases = $query->orderBy($sortBy, $sortDirection)->orderByDesc('purchase_id')->paginate(15)->withQueryString();
+        $summaryQuery = clone $query;
+        $summary = [
+            'count' => (clone $summaryQuery)->count(),
+            'quantity' => (int) (clone $summaryQuery)->sum('quantity'),
+            'spend' => (float) (clone $summaryQuery)->selectRaw('COALESCE(SUM(COALESCE(quantity,0) * COALESCE(cost_price,0)),0) as aggregate')->value('aggregate'),
+        ];
+
+        $sortBy = $validated['sort_by'] ?? 'purchase_date';
+        $sortDirection = $validated['sort_dir'] ?? 'desc';
+        $perPage = (int) ($validated['per_page'] ?? 15);
+        $purchases = $query->orderBy($sortBy, $sortDirection)
+            ->orderByDesc('purchase_id')
+            ->paginate($perPage)
+            ->withQueryString();
 
         $suppliers = Supplier::orderBy('name')->get();
-        $products = Product::where('product_type', 'stock')->orderBy('product_name')->get();
+        $products = Product::whereRaw("LOWER(TRIM(COALESCE(product_type, 'stock'))) NOT IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')")
+            ->orderBy('product_name')->get();
 
-        return view('admin.purchase', compact('purchases', 'suppliers', 'products'));
+        return view('admin.purchase', compact('purchases', 'suppliers', 'products', 'summary'));
     }
 
     public function create()

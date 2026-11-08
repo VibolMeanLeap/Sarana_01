@@ -50,7 +50,8 @@ class PayWayPaymentController extends Controller
             'paid' => $payment->status === 'paid',
             'order_url' => route('web.orders.show', $payment->order_id),
             'success_url' => route('web.payments.success', $payment->id),
-        ]);
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+          ->header('Pragma', 'no-cache');
     }
 
 

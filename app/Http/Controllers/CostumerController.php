@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Costumer;
+use App\Models\Order;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -186,7 +187,7 @@ class CostumerController extends Controller
     public function webLogin()
     {
         if (Auth::check() && strtolower((string) Auth::user()->role?->role_name) === 'customer') {
-            return redirect()->route('web.shop');
+            return redirect()->intended(route('web.shop'));
         }
 
         return view('website.login.login');
@@ -195,7 +196,7 @@ class CostumerController extends Controller
     public function webRegister()
     {
         if (Auth::check() && strtolower((string) Auth::user()->role?->role_name) === 'customer') {
-            return redirect()->route('web.shop');
+            return redirect()->intended(route('web.shop'));
         }
 
         return view('website.register.register');
@@ -243,7 +244,7 @@ class CostumerController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('web.shop')->with('success', 'Your customer account is ready. Welcome to Coffee Corner!');
+        return redirect()->intended(route('web.shop'))->with('success', 'Your customer account is ready. Welcome to Coffee Corner!');
     }
 
     public function login(Request $request)
@@ -270,18 +271,18 @@ class CostumerController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
-        return redirect()->route('web.shop')->with('success', 'You are signed in. Welcome back!');
+        return redirect()->intended(route('web.shop'))->with('success', 'You are signed in. Welcome back!');
     }
 
     public function account()
     {
-        $customer = Costumer::with([
-            'orders.orderItems.product',
-            'orders.orderType',
-            'orders.paymentMethod',
-        ])->where('user_id', Auth::id())->first();
+        $customer = Costumer::query()->where('user_id', Auth::id())->first();
+        $orders = $customer
+            ? $customer->orders()->with(['orderType', 'paymentMethod', 'delivery', 'payments'])
+                ->orderByDesc('order_date')->paginate(10)->withQueryString()
+            : Order::query()->whereRaw('1 = 0')->paginate(10);
 
-        return view('website.account', compact('customer'));
+        return view('website.account', compact('customer', 'orders'));
     }
 
     public function logout(Request $request)
