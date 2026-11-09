@@ -97,8 +97,9 @@
                     <div class="delivery-fee-row mb-0"><span>Configured delivery fee</span><strong id="deliveryFeeLabel">${{ number_format((float)($deliveryFee ?? 0), 2) }}</strong></div>
                 </section>
 
-                <div class="mb-3"><label for="posCustomerNote" class="form-label fw-semibold">Order note <span class="text-muted fw-normal">(optional)</span></label><textarea class="form-control" name="customer_note" id="posCustomerNote" rows="2" maxlength="500" placeholder="Special instructions, landmark, or customer request"></textarea></div>
-                <div class="info-note"><i class="bi bi-shield-check me-1"></i>Stock is deducted only when the order is saved. Delivery orders are sent to the administrator Telegram group. Cash on Delivery is recorded as revenue only after delivery is marked completed and cash is collected.</div>
+                <div class="mb-3"><label for="posCustomerNote" class="form-label fw-semibold">Order note <span class="text-muted fw-normal">(optional)</span></label><textarea class="form-control" name="customer_note" id="posCustomerNote" rows="2" maxlength="500" data-optional placeholder="Special instructions, landmark, or customer request"></textarea></div>
+                <div id="codPaymentNotice" class="alert alert-warning small rounded-3 mt-3 mb-2" role="status" hidden><i class="bi bi-cash-coin me-2"></i><strong>Cash on Delivery:</strong> This sale will be saved as <strong>UNPAID</strong>. At the delivery handoff, the cashier or administrator must enter the amount received and confirm that cash was collected before the order becomes <strong>PAID</strong> and appears in revenue.</div>
+                <div class="info-note"><i class="bi bi-shield-check me-1"></i>Stock is deducted only when the order is saved. Delivery orders are sent to the administrator Telegram group. COD remains unpaid until cash is explicitly confirmed at the delivery handoff. Do not record the sale as paid when the order is first created.</div>
             </div>
             <div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-pos-outline" data-bs-dismiss="modal">Back to cart</button><button type="submit" class="btn btn-pos" id="confirmSaleBtn"><i class="bi bi-check2-circle me-1"></i>Save order</button></div>
         </form>
@@ -132,6 +133,7 @@
         const deliveryFeeRow = document.getElementById('deliveryFeePreviewRow');
         const deliveryFeeValue = document.getElementById('paymentPreviewDeliveryFee');
         const deliveryFee = Number(document.body.dataset.deliveryFee || 0);
+        const codPaymentNotice = document.getElementById('codPaymentNotice');
         const money = value => '$' + Number(value).toFixed(2);
         const exchangeRate = Number(document.body.dataset.exchangeRate || 4100);
         const moneyKhr = value => '៛' + Math.round(Number(value) * exchangeRate).toLocaleString('en-US');
@@ -198,6 +200,9 @@
         function syncCheckoutOptions() {
             const isDelivery = isDeliverySelected();
             deliveryFields.hidden = !isDelivery;
+            const selectedMethod = (paymentSelect?.selectedOptions[0]?.dataset.method || '').toLowerCase();
+            const isCod = ['cash on delivery', 'cash-on-delivery', 'cod'].includes(selectedMethod);
+            if (codPaymentNotice) codPaymentNotice.hidden = !(isDelivery && isCod);
             deliveryName.required = isDelivery && !customerSelect.value;
             deliveryPhone.required = isDelivery && !customerSelect.value;
             deliveryAddress.required = isDelivery;
@@ -265,6 +270,7 @@
         discountEl?.addEventListener('input', calculateTotals);
         orderTypeSelect?.addEventListener('change', syncCheckoutOptions);
         customerSelect?.addEventListener('change', syncCheckoutOptions);
+        paymentSelect?.addEventListener('change', syncCheckoutOptions);
         document.getElementById('cancelOrderBtn')?.addEventListener('click', () => { cart = []; renderCart(); });
         payButton?.addEventListener('click', () => { syncCheckoutOptions(); previewTotal.textContent = totalEl.textContent; });
 

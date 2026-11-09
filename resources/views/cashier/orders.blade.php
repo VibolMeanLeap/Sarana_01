@@ -2,9 +2,12 @@
 @section('page_title', 'Orders')
 @section('content')
 <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
-    <div><div class="eyebrow mb-2">Order processing</div><h1 class="h3 fw-bold mb-1">Order queue</h1><p class="text-muted mb-0">Your POS sales and incoming website orders. Unpaid orders can be cancelled to release reserved stock.</p></div>
+    <div><div class="eyebrow mb-2">Order processing</div><h1 class="h3 fw-bold mb-1">Order queue</h1><p class="text-muted mb-0">Your POS sales and incoming website orders. Cash-on-delivery orders stay unpaid until the driver confirms cash collection at handoff.</p></div>
     <a href="{{ route('pos.dashboard') }}" class="btn btn-green"><i class="bi bi-plus-lg me-1"></i>New sale</a>
 </div>
+@if($errors->any())
+    <div class="alert alert-danger"><strong>Unable to update order.</strong><ul class="mb-0 mt-1">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+@endif
 <section class="panel p-3 p-lg-4">
     <form method="GET" action="{{ route('cashier.orders') }}" class="row g-2 align-items-end mb-3">
         <div class="col-12 col-md-4"><label class="form-label small fw-semibold">Search order</label><input name="search" value="{{ request('search') }}" class="form-control" placeholder="Order number or payment status"></div>
@@ -20,7 +23,15 @@
                 <td>{{ $order->customer->name ?? 'Walk-in customer' }}</td>
                 <td>{{ $order->orderItems->sum('quantity') }}</td>
                 <td><span class="badge text-bg-light">{{ ucfirst($order->order_source ?? 'pos') }}</span><div class="small text-muted">{{ $order->orderType->order_name ?? '—' }}</div></td>
-                <td><span class="badge {{ $order->is_paid ? 'text-bg-success' : 'text-bg-warning' }}">{{ $order->payment_status ?: ($order->is_paid ? 'Paid' : 'Unpaid') }}</span></td>
+                <td>
+                    <span class="badge {{ $order->is_paid ? 'text-bg-success' : 'text-bg-warning' }}">{{ $order->payment_status ?: ($order->is_paid ? 'Paid' : 'Unpaid') }}</span>
+                    @if(in_array(strtolower(trim((string) $order->paymentMethod?->payment_name)), ['cash on delivery', 'cash-on-delivery', 'cod'], true))
+                        <div class="small {{ $order->is_paid ? 'text-success' : 'text-warning-emphasis' }} mt-1">{{ $order->is_paid ? 'Collected' : 'Collect $'.number_format((float)($order->final_price ?? $order->total_amount), 2).' at handoff' }}</div>
+                        @if($order->is_paid && $order->cod_collected_amount)<div class="small text-success">Received ${{ number_format((float) $order->cod_collected_amount, 2) }}</div>@endif
+                        @if($order->is_paid && $order->cod_collected_at)<div class="small text-muted">{{ $order->cod_collected_at->format('d M, h:i A') }}</div>@endif
+                        @if($order->is_paid && $order->cod_collection_note)<div class="small text-muted" title="{{ $order->cod_collection_note }}">{{ \Illuminate\Support\Str::limit($order->cod_collection_note, 60) }}</div>@endif
+                    @endif
+                </td>
                 <td class="fw-bold">${{ number_format((float)($order->final_price ?? $order->total_amount), 2) }}</td>
                 <td>{{ ucfirst(str_replace('_', ' ', $order->order_status ?? 'pending')) }}</td>
                 <td>
@@ -29,25 +40,45 @@
                     @elseif(($order->order_status ?? 'pending') !== 'cancelled' && ($order->order_status ?? 'pending') !== 'completed')
                         @php
                             $isDeliveryOrder = strtolower(trim((string) $order->orderType?->order_name)) === 'delivery';
+                            $paymentMethodName = strtolower(trim((string) $order->paymentMethod?->payment_name));
+                            $isCod = in_array($paymentMethodName, ['cash on delivery', 'cash-on-delivery', 'cod'], true);
                             $hasDeliveryRecord = (int) ($order->delivery_count ?? 0) > 0;
+                            $amountDue = (float) ($order->final_price ?? $order->total_amount ?? 0);
                             $next = $isDeliveryOrder
                                 ? ['pending' => 'confirmed', 'confirmed' => 'preparing', 'preparing' => 'ready', 'ready' => 'out_for_delivery', 'out_for_delivery' => 'completed'][$order->order_status ?? 'pending'] ?? null
                                 : ['pending' => 'confirmed', 'confirmed' => 'preparing', 'preparing' => 'ready', 'ready' => 'completed'][$order->order_status ?? 'pending'] ?? null;
                         @endphp
                         @if($isDeliveryOrder && $order->is_paid && !$hasDeliveryRecord)
                             <span class="small text-muted"><i class="bi bi-truck me-1"></i>Waiting for administrator to assign delivery</span>
-                        @elseif(!$order->is_paid)
+                        @elseif(!$order->is_paid && !$isCod)
                             <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-flex gap-1">
                                 @csrf
                                 <input type="hidden" name="order_status" value="cancelled">
                                 <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Cancel this unpaid order and return its reserved stock?')">Cancel / release stock</button>
                             </form>
                         @elseif($next && (!$isDeliveryOrder || $hasDeliveryRecord))
-                            <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-flex gap-1">
-                                @csrf
-                                <input type="hidden" name="order_status" value="{{ $next }}">
-                                <button class="btn btn-sm btn-outline-success" type="submit">{{ $next === 'out_for_delivery' ? 'Dispatch' : ($next === 'completed' && $isDeliveryOrder ? 'Mark delivered' : 'Mark '.str_replace('_', ' ', $next)) }}</button>
-                            </form>
+                            @if($isCod && !$order->is_paid && $next === 'completed')
+                                <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-grid gap-2" style="min-width:220px">
+                                    @csrf
+                                    <input type="hidden" name="order_status" value="completed">
+                                    <div class="rounded-3 border border-warning-subtle bg-warning-subtle p-2">
+                                        <div class="small fw-bold text-dark mb-1"><i class="bi bi-cash-coin me-1"></i>Collect at handoff</div>
+                                        <label class="form-label small mb-1" for="cod-amount-{{ $order->order_id }}">Cash received (USD)</label>
+                                        <input id="cod-amount-{{ $order->order_id }}" type="number" name="cod_collected_amount" min="0" max="99999999" step="0.01" value="{{ number_format($amountDue, 2, '.', '') }}" class="form-control form-control-sm" required>
+                                        <div class="small text-muted mt-1">Exact amount due: ${{ number_format($amountDue, 2) }}</div>
+                                        <label class="form-label small mt-2 mb-1" for="cod-note-{{ $order->order_id }}">Collection note (optional)</label>
+                                        <input id="cod-note-{{ $order->order_id }}" type="text" name="cod_collection_note" maxlength="500" class="form-control form-control-sm" data-optional placeholder="e.g. Received by driver">
+                                        <label class="form-check small mt-2 mb-0"><input class="form-check-input" type="checkbox" name="cod_collected_confirmed" value="1" required><span class="form-check-label fw-semibold">I confirm cash was received.</span></label>
+                                    </div>
+                                    <button class="btn btn-sm btn-success" type="submit"><i class="bi bi-check-circle me-1"></i>Confirm delivered & paid</button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('cashier.orders.status', $order->order_id) }}" class="d-flex gap-1">
+                                    @csrf
+                                    <input type="hidden" name="order_status" value="{{ $next }}">
+                                    <button class="btn btn-sm btn-outline-success" type="submit">{{ $next === 'out_for_delivery' ? 'Dispatch' : ($next === 'completed' && $isDeliveryOrder ? 'Mark delivered' : 'Mark '.str_replace('_', ' ', $next)) }}</button>
+                                </form>
+                            @endif
                         @else
                             <span class="small text-muted">—</span>
                         @endif

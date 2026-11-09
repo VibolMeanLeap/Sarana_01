@@ -33,7 +33,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold" for="customer_note">Order note <span class="text-muted fw-normal">(optional)</span></label>
-                        <textarea class="form-control checkout-control" id="customer_note" name="customer_note" rows="2" maxlength="500" placeholder="Door instructions or special requests">{{ old('customer_note') }}</textarea>
+                        <textarea class="form-control checkout-control" id="customer_note" name="customer_note" rows="2" maxlength="500" data-optional placeholder="Door instructions or special requests">{{ old('customer_note') }}</textarea>
                     </div>
                 </div>
                 <div class="checkout-card p-3 p-md-4">

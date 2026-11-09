@@ -13,7 +13,8 @@ class Settings extends Model
         'logo',
         'address',
         'tel',
-        'exchange_rate'
+        'exchange_rate',
+        'delivery_fee',
     ];
 
     public $timestamps = false;

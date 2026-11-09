@@ -30,11 +30,14 @@ class OrderWorkflowController extends Controller
     {
         $validated = $request->validate([
             'order_status' => 'required|in:confirmed,preparing,ready,out_for_delivery,completed,cancelled',
+            'cod_collected_confirmed' => ['nullable', 'boolean'],
+            'cod_collected_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'cod_collection_note' => ['nullable', 'string', 'max:500'],
         ]);
 
         $targetStatus = $validated['order_status'];
 
-        DB::transaction(function () use ($orderId, $targetStatus, $isAdmin): void {
+        DB::transaction(function () use ($orderId, $targetStatus, $isAdmin, $validated): void {
             $order = Order::query()
                 ->with(['orderType', 'delivery', 'paymentMethod'])
                 ->where('order_id', $orderId)
@@ -61,6 +64,9 @@ class OrderWorkflowController extends Controller
                 'actor_id' => auth()->id(),
                 'actor_label' => auth()->user()?->name,
                 'note' => 'Fulfillment status updated from the '.($isAdmin ? 'administrator' : 'cashier').' dashboard.',
+                'cod_collected_confirmed' => (bool) ($validated['cod_collected_confirmed'] ?? false),
+                'cod_collected_amount' => $validated['cod_collected_amount'] ?? null,
+                'cod_collection_note' => $validated['cod_collection_note'] ?? null,
             ];
 
             if ($targetStatus === 'cancelled') {
@@ -179,17 +185,68 @@ class OrderWorkflowController extends Controller
         }, 3);
 
         $updatedOrder = Order::query()
-            ->with(['customer', 'orderType', 'delivery', 'orderItems.product', 'paymentMethod'])
-            ->find($orderId);
-        if ($updatedOrder && (
+            ->with([
+                'customer',
+                'orderType',
+                'delivery',
+                'orderItems.product',
+                'paymentMethod',
+                'statusHistory',
+            ])
+            ->findOrFail($orderId);
+
+        $shouldRefreshTelegram = (
             ($updatedOrder->order_source ?? '') === 'website'
             || $updatedOrder->delivery
             || app(OrderFulfillmentService::class)->isDeliveryOrder($updatedOrder)
-        )) {
-            app(\App\Services\TelegramOrderNotificationService::class)->refreshOrderMessage($updatedOrder);
+        );
+
+        // Do not make the administrator wait for Telegram's remote editMessageText
+        // request. The database transaction is already committed; render and return
+        // the fresh delivery panel first, then refresh Telegram during termination.
+        if ($shouldRefreshTelegram) {
+            $telegramOrder = $updatedOrder;
+            app()->terminating(static function () use ($telegramOrder): void {
+                try {
+                    app(\App\Services\TelegramOrderNotificationService::class)
+                        ->refreshOrderMessage($telegramOrder);
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            });
+        }
+
+        $successMessage = 'Order #'.$orderId.' status updated to '.str_replace('_', ' ', $targetStatus).'.';
+
+        if ($request->expectsJson()) {
+            // POS-created delivery orders (including Cash on Delivery) and website
+            // delivery orders share the same inline management panel in Admin → Orders.
+            $hasDeliveryWorkflow = $isAdmin && app(OrderFulfillmentService::class)->isDeliveryOrder($updatedOrder);
+
+            $panelHtml = $hasDeliveryWorkflow
+                ? view('admin.partials.delivery-management', ['row' => $updatedOrder])->render()
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage,
+                'order_id' => (int) $updatedOrder->order_id,
+                'order_status' => (string) $updatedOrder->order_status,
+                'is_paid' => (bool) $updatedOrder->is_paid,
+                'payment_status' => (string) ($updatedOrder->payment_status ?: ($updatedOrder->is_paid ? 'Paid' : 'Unpaid')),
+                'delivery_status' => $updatedOrder->delivery?->status,
+                'delivery_panel_html' => $panelHtml,
+                'action_counts' => app(\App\Services\AdminActionCountService::class)->get(),
+                'summary' => [
+                    'total' => Order::count(),
+                    'pending' => Order::where('is_paid', 0)->where('order_status', '<>', 'cancelled')->count(),
+                    'completed' => Order::where('order_status', 'completed')->count(),
+                    'revenue_today' => (float) Order::where('is_paid', 1)->whereDate('order_date', today())->sum('final_price'),
+                ],
+            ]);
         }
 
         $destination = $isAdmin ? 'admin.orders.index' : 'cashier.orders';
-        return redirect()->route($destination)->with('success', 'Order #'.$orderId.' status updated to '.str_replace('_', ' ', $targetStatus).'.');
+        return redirect()->route($destination)->with('success', $successMessage);
     }
 }

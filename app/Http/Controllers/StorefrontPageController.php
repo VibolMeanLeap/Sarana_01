@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\StoreContactMessage;
+use App\Models\StoreContactReply;
 use App\Services\TelegramBotService;
+use App\Support\StoreDeliveryFee;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +31,7 @@ class StorefrontPageController extends Controller
 
     public function shipping(): View
     {
-        $deliveryFee = max(0, (float) config('services.ecommerce.delivery_fee', 0));
+        $deliveryFee = StoreDeliveryFee::current();
 
         return view('website.pages.info', [
             'pageKey' => 'shipping',
@@ -110,6 +112,16 @@ class StorefrontPageController extends Controller
             'status' => 'new',
         ]);
 
+        if ($customerUserId !== null) {
+            $shopName = (string) (app('shop.settings')->shop_name ?: 'the shop team');
+            StoreContactReply::create([
+                'contact_message_id' => $message->id,
+                'sender_type' => 'system',
+                'sender_user_id' => null,
+                'body' => 'Thank you for contacting '.$shopName.'. We have received your enquiry (Reference #'.$message->id.'). Our team will review it and reply in this inbox. You can return to My Account → Inbox to follow this conversation.',
+            ]);
+        }
+
         // The enquiry is saved first. Telegram is a notification channel, not the source of truth.
         if ($telegram->isConfigured()) {
             try {
@@ -134,8 +146,13 @@ class StorefrontPageController extends Controller
             }
         }
 
-        return redirect()->route('web.contact')
+        $redirect = redirect()->route('web.contact')
             ->with('contact_success', 'Thank you. Your message has been sent to our customer-service team.');
+        if ($customerUserId !== null) {
+            $redirect->with('contact_message_id', $message->id);
+        }
+
+        return $redirect;
     }
 
     private function infoPage(

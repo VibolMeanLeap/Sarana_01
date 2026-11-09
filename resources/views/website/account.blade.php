@@ -8,7 +8,10 @@
     <div class="container">
         <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
             <div><div class="small fw-bold text-success text-uppercase mb-2" style="letter-spacing:.14em">Your Coffee Corner profile</div><h1 class="display-6 account-title mb-1">Welcome, {{ $customer?->name ?? auth()->user()->name }}.</h1><p class="text-muted mb-0">Your orders, payment updates and collection details in one place.</p></div>
-            <a href="{{ route('web.shop') }}" class="btn btn-success rounded-pill px-4 py-2"><i class="bi bi-cup-hot me-2"></i>Browse menu</a>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('web.inbox') }}" class="btn btn-outline-success rounded-pill px-4 py-2"><i class="bi bi-inbox me-2"></i>My Inbox @if(($unreadStoreReplyCount ?? 0) > 0)<span class="badge text-bg-success ms-1">{{ $unreadStoreReplyCount }}</span>@endif</a>
+                <a href="{{ route('web.shop') }}" class="btn btn-success rounded-pill px-4 py-2"><i class="bi bi-cup-hot me-2"></i>Browse menu</a>
+            </div>
         </div>
         <div class="row g-3 mb-4">
             <div class="col-md-4"><div class="account-card p-4 h-100"><div class="small fw-bold text-muted text-uppercase mb-2">Customer name</div><div class="h5 fw-bold mb-0">{{ $customer?->name ?? auth()->user()->name }}</div></div></div>
@@ -20,11 +23,13 @@
             <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Order</th><th>Fulfilment</th><th>Order status</th><th>Payment</th><th>Total</th><th>Date</th><th>Review</th><th></th></tr></thead><tbody>
                 @forelse($orders as $order)
                     @php($orderState = strtolower((string)($order->order_status ?: 'pending')))
+                    @php($paymentName = strtolower(trim((string) $order->paymentMethod?->payment_name)))
+                    @php($orderIsCod = in_array($paymentName, ['cash on delivery', 'cash-on-delivery', 'cod'], true))
                     <tr class="account-order-row">
                         <td><a class="account-order-link" href="{{ route('web.orders.show', $order->order_id) }}">#{{ $order->order_id }}</a></td>
                         <td>{{ strtolower((string)$order->orderType?->order_name)==='takeaway' ? 'Pickup' : ($order->orderType->order_name ?? '—') }}</td>
                         <td><span class="badge account-pill {{ $orderState==='completed' ? 'text-bg-success' : ($orderState==='cancelled' ? 'text-bg-danger' : 'text-bg-warning') }}">{{ ucfirst(str_replace('_',' ',$orderState)) }}</span></td>
-                        <td><span class="badge account-pill {{ $order->is_paid ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $order->is_paid ? 'Paid' : 'Unpaid' }}</span></td>
+                        <td><span class="badge account-pill {{ $order->is_paid ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $order->is_paid ? 'Paid' : ($orderIsCod ? 'Due at delivery' : 'Unpaid') }}</span></td>
                         <td class="fw-bold">${{ number_format((float)$order->final_price, 2) }}</td>
                         <td class="text-muted small">{{ optional($order->order_date)->format('d M Y, h:i A') }}</td>
                         <td class="text-nowrap">

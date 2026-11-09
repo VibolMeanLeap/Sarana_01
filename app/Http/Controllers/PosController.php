@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\Settings;
 use App\Services\PayWayService;
 use App\Services\TelegramOrderNotificationService;
+use App\Support\StoreDeliveryFee;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,7 @@ class PosController extends Controller
             ->whereIn(DB::raw('LOWER(TRIM(payment_name))'), ['cash', 'khqr', 'cash on delivery', 'cash-on-delivery', 'cod'])
             ->orderBy('payment_method_id')
             ->get();
-        $deliveryFee = max(0, (float) config('services.ecommerce.delivery_fee', 0));
+        $deliveryFee = StoreDeliveryFee::current();
 
         return view('pos.dashboard', compact(
             'categories', 'products', 'customers', 'orderTypes', 'paymentMethods', 'deliveryFee'
@@ -111,7 +112,7 @@ class PosController extends Controller
             return back()->withInput()->with('error', 'ABA PayWay is not configured. Add your sandbox merchant ID and API key to the local .env file first.');
         }
 
-        $deliveryFee = $isDelivery ? max(0, (float) config('services.ecommerce.delivery_fee', 0)) : 0.0;
+        $deliveryFee = $isDelivery ? StoreDeliveryFee::current() : 0.0;
         $orderChannel = $validated['order_channel'] ?? 'walk_in';
 
         try {

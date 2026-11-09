@@ -1,0 +1,31 @@
+Coffee Corner Aura — COD Collection & Customer Inbox Patch
+Overlay ZIP: copy/merge these paths into the Laravel project root.
+
+app/Http/Controllers/AdminCustomerServiceController.php
+app/Http/Controllers/CustomerInboxController.php
+app/Http/Controllers/DeliveryController.php
+app/Http/Controllers/OrderWorkflowController.php
+app/Http/Controllers/StorefrontPageController.php
+app/Models/Order.php
+app/Models/StoreContactMessage.php
+app/Models/StoreContactReply.php
+app/Providers/AppServiceProvider.php
+app/Services/OrderFulfillmentService.php
+app/Services/TelegramOrderNotificationService.php
+routes/web.php
+resources/views/admin/customer-service/show.blade.php
+resources/views/admin/delivery.blade.php
+resources/views/admin/delivery/edit.blade.php
+resources/views/cashier/orders.blade.php
+resources/views/layout/pos.blade.php
+resources/views/layout/web.blade.php
+resources/views/website/account.blade.php
+resources/views/website/order.blade.php
+resources/views/website/pages/contact.blade.php
+resources/views/website/inbox/index.blade.php
+resources/views/website/inbox/show.blade.php
+database/09_cod_cash_collection.sql
+database/10_store_inbox_replies.sql
+COD_AND_CUSTOMER_INBOX_PATCH.md
+docs/PATCH_NOTES.md
+PATCH_FILES.txt

@@ -275,7 +275,11 @@ class TelegramOrderNotificationService
         $heading = $source === 'pos' ? 'NEW POS DELIVERY ORDER' : 'NEW PAID WEBSITE ORDER';
         $text = "☕ {$heading} #{$order->order_id}\n";
         if ($isCod && $order->is_paid) {
-            $text .= "Payment: PAID · Cash on Delivery collected at handoff\n";
+            $collectedAmount = (float) ($order->cod_collected_amount ?? $order->final_price);
+            $text .= 'Payment: PAID · Cash on Delivery collected $'.number_format($collectedAmount, 2)." at handoff\n";
+            if ($order->cod_collected_at) {
+                $text .= 'Collected at: '.$order->cod_collected_at->format('d M Y H:i')."\n";
+            }
         } elseif ($isCod) {
             $text .= 'Payment: CASH ON DELIVERY · Collect $'.number_format((float) $order->final_price, 2)." at handoff\n";
         } elseif ($paymentMethodName === 'cash') {

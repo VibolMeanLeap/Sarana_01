@@ -32,7 +32,9 @@
         </header>
 
         @if(session('contact_success'))
-            <div class="alert alert-success border-0 rounded-4 shadow-sm mb-4" role="status"><i class="bi bi-check-circle-fill me-2"></i>{{ session('contact_success') }}</div>
+            <div class="alert alert-success border-0 rounded-4 shadow-sm mb-4" role="status"><i class="bi bi-check-circle-fill me-2"></i>{{ session('contact_success') }}
+                @if(session('contact_message_id'))<a class="d-inline-block fw-bold ms-2" href="{{ route('web.inbox.show', session('contact_message_id')) }}">Open your conversation <i class="bi bi-arrow-right"></i></a>@endif
+            </div>
         @endif
         @if($errors->any())
             <div class="alert alert-danger rounded-4 mb-4"><strong>Please check the form.</strong><ul class="mb-0 mt-2">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
@@ -44,17 +46,22 @@
                     <div class="store-contact-kicker text-success mb-2">Send a message</div>
                     <h2 class="h3 store-contact-title mb-2">How can we help?</h2>
                     <p class="small text-muted mb-4">Fields marked with * are required. Please do not include payment passwords, PINs or other sensitive credentials.</p>
+                    @if(auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer')
+                        <div class="alert alert-success border-0 rounded-3 small"><i class="bi bi-inbox me-2"></i>Because you are signed in, the shop's acknowledgement and replies will appear in <a href="{{ route('web.inbox') }}" class="fw-bold">your account inbox</a>.</div>
+                    @else
+                        <div class="alert alert-light border rounded-3 small"><i class="bi bi-info-circle me-2 text-success"></i>To read replies in your Store Account inbox, please <a href="{{ route('webLogin') }}" class="fw-bold">sign in</a> before sending your enquiry. Guest enquiries are still delivered to the shop, but cannot be linked to an online inbox.</div>
+                    @endif
                     <form class="store-contact-form" method="POST" action="{{ route('web.contact.submit') }}" novalidate>
                         @csrf
                         <div class="store-honeypot" aria-hidden="true"><label for="website">Leave this field empty</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
                         <div class="row g-3">
                             <div class="col-md-6"><label class="store-contact-label" for="contact-name">Your name *</label><input class="form-control @error('name') is-invalid @enderror" id="contact-name" name="name" value="{{ old('name', auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? auth()->user()->name : '') }}" maxlength="100" autocomplete="name" required>@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
                             <div class="col-md-6"><label class="store-contact-label" for="contact-email">Email address *</label><input type="email" class="form-control @error('email') is-invalid @enderror" id="contact-email" name="email" value="{{ old('email', auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? auth()->user()->email : '') }}" maxlength="190" autocomplete="email" required>@error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                            <div class="col-md-6"><label class="store-contact-label" for="contact-phone">Phone number</label><input type="tel" class="form-control @error('phone') is-invalid @enderror" id="contact-phone" name="phone" value="{{ old('phone', auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? auth()->user()->phone : '') }}" maxlength="40" autocomplete="tel">@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                            <div class="col-md-6"><label class="store-contact-label" for="contact-order">Order number (optional)</label><input class="form-control @error('order_reference') is-invalid @enderror" id="contact-order" name="order_reference" value="{{ old('order_reference') }}" maxlength="40" placeholder="e.g. 1042">@error('order_reference')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                            <div class="col-md-6"><label class="store-contact-label" for="contact-phone">Phone number (optional)</label><input type="tel" class="form-control @error('phone') is-invalid @enderror" id="contact-phone" name="phone" data-optional value="{{ old('phone', auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? auth()->user()->phone : '') }}" maxlength="40" autocomplete="tel">@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                            <div class="col-md-6"><label class="store-contact-label" for="contact-order">Order number (optional)</label><input class="form-control @error('order_reference') is-invalid @enderror" id="contact-order" name="order_reference" data-optional value="{{ old('order_reference') }}" maxlength="40" placeholder="e.g. 1042">@error('order_reference')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
                             <div class="col-12"><label class="store-contact-label" for="contact-topic">What is this about? *</label><select class="form-select @error('topic') is-invalid @enderror" id="contact-topic" name="topic" required><option value="">Choose a topic</option>@foreach(['order'=>'Order enquiry','delivery'=>'Delivery & collection','payment'=>'Payment & refund','product'=>'Product information','feedback'=>'Feedback','other'=>'Something else'] as $value=>$label)<option value="{{ $value }}" @selected(old('topic')===$value)>{{ $label }}</option>@endforeach</select>@error('topic')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
                             <div class="col-12"><label class="store-contact-label" for="contact-message">Your message *</label><textarea class="form-control @error('message') is-invalid @enderror" id="contact-message" name="message" minlength="15" maxlength="3000" placeholder="Tell us how we can help..." required>{{ old('message') }}</textarea><div class="d-flex justify-content-between mt-2"><small class="text-muted">Please include useful details so we can help faster.</small><small class="text-muted"><span id="contact-count">{{ mb_strlen(old('message', '')) }}</span>/3000</small></div>@error('message')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                            <div class="col-12"><button type="submit" class="store-contact-submit w-100"><i class="bi bi-send-fill me-2"></i>Send enquiry</button><p class="small text-muted text-center mt-3 mb-0">Your message is stored securely for the shop team. Do not share bank PINs or passwords.</p></div>
+                            <div class="col-12"><button type="submit" class="store-contact-submit w-100"><i class="bi bi-send-fill me-2"></i>Send enquiry</button><p class="small text-muted text-center mt-3 mb-0">Your message is stored securely for the shop team. Signed-in customers can continue the conversation in My Account → Inbox. Do not share bank PINs or passwords.</p></div>
                         </div>
                     </form>
                 </div>
@@ -72,7 +79,7 @@
                     @endif
                     <div class="store-contact-method"><span class="store-contact-method-icon"><i class="bi bi-clock-history"></i></span><div><strong>Order updates</strong><span>Signed-in customers can follow order and delivery progress from My Orders.</span></div></div>
                     <div class="rounded-4 p-3 mt-4" style="background:#f1f7f2"><div class="fw-bold text-success small mb-1"><i class="bi bi-lightbulb me-1"></i>Helpful tip</div><p class="small text-muted mb-0">For an existing order, include its order number in your message so our team can find it quickly.</p></div>
-                    <a href="{{ auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? route('web.account') : route('webLogin') }}" class="btn btn-outline-success rounded-pill w-100 py-2 fw-bold mt-3"><i class="bi bi-receipt me-2"></i>Go to My Orders</a>
+                    <a href="{{ auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? route('web.inbox') : route('webLogin') }}" class="btn btn-outline-success rounded-pill w-100 py-2 fw-bold mt-3"><i class="bi bi-inbox me-2"></i>{{ auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? 'Open Customer Inbox' : 'Sign in to your account' }}</a>
                 </aside>
             </div>
         </div>

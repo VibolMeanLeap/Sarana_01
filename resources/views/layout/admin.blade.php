@@ -16,7 +16,7 @@
         h1,h2,h3,h4,h5,.brand-name{font-family:'Manrope','DM Sans',sans-serif}
         .app-shell{min-height:100vh}.d-grid.place-items-center{place-items:center}.sidebar{position:fixed;inset:0 auto 0 0;width:var(--cc-sidebar);background:#fff;border-right:1px solid var(--cc-line);padding:24px 16px;display:flex;flex-direction:column;z-index:1030;overflow-y:auto}
         .brand{display:flex;align-items:center;gap:12px;padding:2px 10px 26px;text-decoration:none;color:var(--cc-ink)}.brand-mark{width:42px;height:42px;border-radius:14px;background:var(--cc-green);display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 8px 18px #176b4b25}.brand-name{font-size:16px;font-weight:800;letter-spacing:-.4px}.brand-caption{font-size:11px;color:var(--cc-muted);margin-top:2px}
-        .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.15px;font-weight:700;color:#9aa49e;padding:15px 12px 7px}.app-nav{display:flex;flex-direction:column;gap:3px}.app-nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#59655e;font-weight:600;transition:.18s}.app-nav a i{font-size:17px;width:20px;text-align:center;color:#849088}.app-nav a:hover{background:#f4f7f5;color:var(--cc-green)}.app-nav a.active{background:var(--cc-green-soft);color:var(--cc-green)}.app-nav a.active i{color:var(--cc-green)}
+        .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.15px;font-weight:700;color:#9aa49e;padding:15px 12px 7px}.app-nav{display:flex;flex-direction:column;gap:3px}.app-nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#59655e;font-weight:600;transition:.18s}.app-nav a i{font-size:17px;width:20px;text-align:center;color:#849088}.app-nav a:hover{background:#f4f7f5;color:var(--cc-green)}.app-nav a.active{background:var(--cc-green-soft);color:var(--cc-green)}.app-nav a.active i{color:var(--cc-green)}.nav-action-count{margin-left:auto;min-width:21px;height:21px;padding:0 6px;border-radius:999px;background:#fff0e8;color:#b34d27;font-size:10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;line-height:1}.nav-action-count[hidden]{display:none!important}.orders-live-indicator{display:inline-flex;align-items:center;gap:7px;color:#718078;font-size:10px;font-weight:700}.orders-live-dot{width:7px;height:7px;border-radius:50%;background:#2c9b63;box-shadow:0 0 0 3px #2c9b631b;display:inline-block}.admin-live-notice-stack{position:fixed;top:88px;right:22px;z-index:2000;display:flex;flex-direction:column;gap:9px;width:min(360px,calc(100vw - 28px));pointer-events:none}.admin-live-notice{pointer-events:auto;background:#fff;border:1px solid #dfeae2;border-left:4px solid #258354;border-radius:13px;padding:13px 14px;box-shadow:0 12px 32px rgba(24,55,37,.16);display:flex;gap:11px;align-items:flex-start;animation:adminNoticeIn .2s ease-out}.admin-live-notice-icon{width:32px;height:32px;border-radius:10px;background:#eaf5ee;color:#1b754b;display:grid;place-items:center;flex:0 0 32px}.admin-live-notice strong{display:block;color:#23392d;font-size:12px}.admin-live-notice span{display:block;color:#7b887f;font-size:10px;margin-top:3px}.admin-live-notice a{font-size:10px;font-weight:800;color:#176b4b;text-decoration:none;display:inline-block;margin-top:6px}.admin-live-notice button{margin-left:auto;border:0;background:transparent;color:#96a198;padding:0 2px;font-size:16px}@keyframes adminNoticeIn{from{opacity:0;transform:translateY(-7px)}to{opacity:1;transform:translateY(0)}}
         .sidebar-bottom{margin-top:auto;padding:18px 10px 0}.sidebar-note{border-radius:13px;background:#f5f8f5;padding:13px;color:#657169;font-size:11px;line-height:1.55}.sidebar-note strong{display:block;color:var(--cc-ink);font-size:12px;margin-bottom:3px}
         .main-wrap{margin-left:var(--cc-sidebar);min-height:100vh}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--cc-line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;position:sticky;top:0;z-index:1020}.topbar-eyebrow{font-size:11px;color:var(--cc-muted);margin-bottom:2px}.topbar-title{font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.3px}.user-chip{display:flex;align-items:center;gap:10px}.avatar{width:36px;height:36px;border-radius:12px;background:var(--cc-green-soft);color:var(--cc-green);display:grid;place-items:center;font-weight:800}.user-name{font-size:12px;font-weight:700}.user-role{font-size:11px;color:var(--cc-muted)}.content-area{padding:30px 34px 42px;max-width:1600px;margin:0 auto}.page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:24px}.page-heading h1{font-size:25px;font-weight:800;letter-spacing:-.8px;margin:0}.page-heading p{color:var(--cc-muted);margin:6px 0 0}.btn-cc{background:var(--cc-green);border:1px solid var(--cc-green);color:#fff;font-weight:700;border-radius:10px;padding:10px 15px}.btn-cc:hover{background:var(--cc-green-dark);border-color:var(--cc-green-dark);color:#fff}.btn-cc-light{background:#fff;border:1px solid var(--cc-line);color:#425148;font-weight:700;border-radius:10px;padding:10px 14px}.btn-cc-light:hover{background:#f5f8f6;color:var(--cc-green)}
         .card{border:1px solid var(--cc-line);border-radius:15px;box-shadow:0 3px 12px rgba(25,55,38,.035)}.card-header{background:#fff;border-bottom:1px solid var(--cc-line);padding:17px 20px;border-radius:15px 15px 0 0!important}.card-body{padding:20px}.table{--bs-table-bg:transparent}.table thead th{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:#89948d;font-weight:700;border-bottom-color:var(--cc-line);white-space:nowrap}.table td{color:#4f5c54;border-bottom-color:#eef1ef;vertical-align:middle}.table tbody tr:last-child td{border-bottom:0}.form-control,.form-select{border-color:#dfe6e1;border-radius:9px;padding:9px 12px}.form-control:focus,.form-select:focus{border-color:#65a889;box-shadow:0 0 0 .2rem #176b4b15}.badge-soft-success{background:#e8f5ed;color:#20744d}.badge-soft-warning{background:#fff4df;color:#956516}.badge-soft-danger{background:#fdeceb;color:#b43b36}.text-muted{color:var(--cc-muted)!important}
@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
-<body>
+<body data-admin-updates-url="{{ route('admin.operations.updates') }}" data-admin-orders-url="{{ route('admin.orders.index') }}" data-last-website-order-id="{{ $adminLatestWebsiteOrderId ?? 0 }}">
 <div class="app-shell">
     <aside class="sidebar" id="appSidebar">
         <a href="{{ route('admin.dashboard') }}" class="brand">
@@ -52,14 +52,14 @@
         </nav>
         <div class="nav-label">Operations</div>
         <nav class="app-nav">
-            <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i class="bi bi-receipt"></i>Orders</a>
+            <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i class="bi bi-receipt"></i><span>Orders</span><span class="nav-action-count" data-action-count="orders" title="Orders waiting for review" @if(($adminActionCounts['orders'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['orders'] ?? 0) }}{{ ($adminActionCounts['orders'] ?? 0) > 99 ? '+' : '' }}</span></a>
             <a href="{{ route('purchase.index') }}" class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i class="bi bi-cart-check"></i>Purchases</a>
-            <a href="{{ route('inventory.index') }}" class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i>Inventory & stock</a>
+            <a href="{{ route('inventory.index') }}" class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i><span>Inventory & stock</span><span class="nav-action-count" data-action-count="inventory" title="Active stock-tracked products out of stock" @if(($adminActionCounts['inventory'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['inventory'] ?? 0) }}{{ ($adminActionCounts['inventory'] ?? 0) > 99 ? '+' : '' }}</span></a>
             <a href="{{ route('expense_income.index') }}" class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i>Sales & expenses</a>
             <a href="{{ route('reports.index') }}" class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i>Reports & analytics</a>
-            <a href="{{ route('delivery.index') }}" class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i class="bi bi-truck"></i>Delivery</a>
-            <a href="{{ route('reviews.index') }}" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i class="bi bi-star"></i>Reviews</a>
-            <a href="{{ route('admin.customer-service.index') }}" class="{{ request()->is('admin/customer-service*') ? 'active' : '' }}"><i class="bi bi-chat-square-text"></i>Customer enquiries</a>
+            <a href="{{ route('delivery.index') }}" class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i class="bi bi-truck"></i><span>Delivery</span><span class="nav-action-count" data-action-count="delivery" title="Active deliveries" @if(($adminActionCounts['delivery'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['delivery'] ?? 0) }}{{ ($adminActionCounts['delivery'] ?? 0) > 99 ? '+' : '' }}</span></a>
+            <a href="{{ route('reviews.index') }}" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i class="bi bi-star"></i><span>Reviews</span><span class="nav-action-count" data-action-count="reviews" title="Reviews awaiting approval" @if(($adminActionCounts['reviews'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['reviews'] ?? 0) }}{{ ($adminActionCounts['reviews'] ?? 0) > 99 ? '+' : '' }}</span></a>
+            <a href="{{ route('admin.customer-service.index') }}" class="{{ request()->is('admin/customer-service*') ? 'active' : '' }}"><i class="bi bi-chat-square-text"></i><span>Customer enquiries</span><span class="nav-action-count" data-action-count="enquiries" title="Unread customer enquiries or replies" @if(($adminActionCounts['enquiries'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['enquiries'] ?? 0) }}{{ ($adminActionCounts['enquiries'] ?? 0) > 99 ? '+' : '' }}</span></a>
         </nav>
         <div class="nav-label">People & settings</div>
         <nav class="app-nav">
@@ -112,6 +112,7 @@
         </footer>
     </div>
 </div>
+<div class="admin-live-notice-stack" id="adminLiveNoticeStack" aria-live="polite" aria-atomic="false"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>if (window.jQuery) { $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content } }); }</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -132,6 +133,91 @@
         button?.addEventListener('click', () => { sidebar?.classList.toggle('open'); backdrop?.classList.toggle('show'); });
         backdrop?.addEventListener('click', close);
     })();
+</script>
+<script>
+(() => {
+    const body = document.body;
+    const endpoint = body.dataset.adminUpdatesUrl;
+    if (!endpoint) return;
+
+    let sinceOrderId = Number(body.dataset.lastWebsiteOrderId || 0);
+    let polling = false;
+    const stack = document.getElementById('adminLiveNoticeStack');
+
+    window.CoffeeCornerAdminApplyCounts = (counts = {}) => {
+        Object.entries(counts).forEach(([key, value]) => {
+            const count = Math.max(0, Number(value || 0));
+            document.querySelectorAll(`[data-action-count="${key}"]`).forEach((badge) => {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.hidden = count < 1;
+                const link = badge.closest('a');
+                if (link) link.setAttribute('aria-label', `${key}: ${count} items need attention`);
+            });
+        });
+    };
+
+    const showOrderNotice = (order) => {
+        if (!stack) return;
+        const notice = document.createElement('div');
+        notice.className = 'admin-live-notice';
+
+        const icon = document.createElement('div');
+        icon.className = 'admin-live-notice-icon';
+        icon.innerHTML = '<i class="bi bi-bag-check-fill"></i>';
+
+        const content = document.createElement('div');
+        content.className = 'flex-grow-1';
+        const title = document.createElement('strong');
+        title.textContent = `New website order #${order.order_id}`;
+        const detail = document.createElement('span');
+        detail.textContent = `${order.customer || 'Website customer'} · $${Number(order.total || 0).toFixed(2)} · ${order.payment_status || 'Unpaid'}`;
+        const link = document.createElement('a');
+        link.href = body.dataset.adminOrdersUrl || '/admin/orders';
+        link.textContent = 'Open Orders';
+        content.append(title, detail, link);
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Dismiss notification');
+        close.innerHTML = '&times;';
+        close.addEventListener('click', () => notice.remove());
+
+        notice.append(icon, content, close);
+        stack.prepend(notice);
+        while (stack.children.length > 4) stack.lastElementChild.remove();
+        window.setTimeout(() => notice.remove(), 14000);
+    };
+
+    const poll = async () => {
+        if (polling || document.visibilityState !== 'visible') return;
+        polling = true;
+        try {
+            const url = new URL(endpoint, window.location.origin);
+            url.searchParams.set('since_order_id', String(sinceOrderId));
+            url.searchParams.set('_poll', String(Date.now()));
+            const response = await fetch(url.toString(), {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload = await response.json();
+            if (!payload.success) return;
+
+            window.CoffeeCornerAdminApplyCounts(payload.counts || {});
+            const arrivals = Array.isArray(payload.new_orders) ? payload.new_orders : [];
+            arrivals.forEach(showOrderNotice);
+            sinceOrderId = Number(payload.next_since_order_id ?? payload.latest_website_order_id ?? sinceOrderId);
+        } catch (error) {
+            // The database remains the source of truth. The next poll retries automatically.
+        } finally {
+            polling = false;
+        }
+    };
+
+    window.setTimeout(poll, 1800);
+    window.setInterval(poll, 10000);
+})();
 </script>
 @yield('scripts')
 <script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>

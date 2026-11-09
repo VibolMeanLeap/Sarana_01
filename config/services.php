@@ -42,7 +42,7 @@ return [
     ],
 
     'ecommerce' => [
-        // Set this in .env when the shop charges for home delivery. Defaults to free delivery.
+        // Legacy fallback until an administrator saves the delivery fee in Store Settings.
         'delivery_fee' => (float) env('WEB_DELIVERY_FEE', 0),
     ],
 

@@ -27,6 +27,10 @@ class Order extends Model
         'payment_method_id',
         'is_paid',
         'payment_status',
+        'cod_collected_amount',
+        'cod_collected_at',
+        'cod_collected_by',
+        'cod_collection_note',
         'order_date',
         'order_status',
         'order_source',
@@ -41,6 +45,9 @@ class Order extends Model
         'final_price' => 'decimal:2',
         'exchange_rate' => 'decimal:4',
         'order_date' => 'datetime',
+        'cod_collected_amount' => 'decimal:2',
+        'cod_collected_at' => 'datetime',
+        'cod_collected_by' => 'integer',
     ];
 
     public function customer()

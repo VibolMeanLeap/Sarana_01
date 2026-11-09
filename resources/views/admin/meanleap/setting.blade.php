@@ -73,7 +73,8 @@
                     <div class="p-4">
                         <div class="d-flex gap-3 mb-3"><i class="bi bi-geo-alt text-success fs-5"></i><div><div class="small text-muted">Store address</div><div class="fw-semibold">{{ $shop->address ?: 'Not configured' }}</div></div></div>
                         <div class="d-flex gap-3 mb-3"><i class="bi bi-telephone text-success fs-5"></i><div><div class="small text-muted">Contact telephone</div><div class="fw-semibold">{{ $shop->tel ?: 'Not configured' }}</div></div></div>
-                        <div class="d-flex gap-3"><i class="bi bi-currency-exchange text-success fs-5"></i><div><div class="small text-muted">Currency conversion</div><div class="fw-semibold">$1 USD = ៛{{ number_format((float)$shop->exchange_rate, 0) }} KHR</div></div></div>
+                        <div class="d-flex gap-3 mb-3"><i class="bi bi-currency-exchange text-success fs-5"></i><div><div class="small text-muted">Currency conversion</div><div class="fw-semibold">$1 USD = ៛{{ number_format((float)$shop->exchange_rate, 0) }} KHR</div></div></div>
+                        <div class="d-flex gap-3"><i class="bi bi-truck text-success fs-5"></i><div><div class="small text-muted">Home delivery fee</div><div class="fw-semibold">${{ number_format((float) ($deliveryFee ?? 0), 2) }} USD <span class="small text-muted fw-normal">{{ (float) ($deliveryFee ?? 0) <= 0 ? '· Free delivery' : '· Applied to delivery orders' }}</span></div></div></div>
                     </div>
                 </section>
             </div>

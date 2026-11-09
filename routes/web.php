@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\AccountingCategoryController;
 use App\Http\Controllers\AdminExportController;
+use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AdminCustomerServiceController;
 use App\Http\Controllers\AuthContoller;
 use App\Http\Controllers\CashTransactionController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\CustomerOrderController;
+use App\Http\Controllers\CustomerInboxController;
 use App\Http\Controllers\OrderWorkflowController;
 use App\Http\Controllers\PayWayPaymentController;
 use App\Http\Controllers\CategoryController;
@@ -67,6 +69,9 @@ Route::post('/store/logout', [CostumerController::class, 'logout'])->name('logou
 /* Customer account pages. Customers cannot enter staff tools. */
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/store/account', [CostumerController::class, 'account'])->name('web.account');
+    Route::get('/store/inbox', [CustomerInboxController::class, 'index'])->name('web.inbox');
+    Route::get('/store/inbox/{contactMessageId}', [CustomerInboxController::class, 'show'])->whereNumber('contactMessageId')->name('web.inbox.show');
+    Route::post('/store/inbox/{contactMessageId}/reply', [CustomerInboxController::class, 'reply'])->whereNumber('contactMessageId')->middleware('throttle:10,1')->name('web.inbox.reply');
     Route::get('/store/checkout', [CustomerOrderController::class, 'checkoutPage'])->name('web.checkout');
     Route::post('/store/checkout', [CustomerOrderController::class, 'placeOrder'])->name('web.checkout.place');
     Route::get('/store/orders/{orderId}', [CustomerOrderController::class, 'showOrder'])->whereNumber('orderId')->name('web.orders.show');
@@ -107,11 +112,14 @@ Route::middleware(['auth', 'role:cashier'])->prefix('cashier')->name('cashier.')
 /* Administrator-only management modules. */
 Route::middleware(['auth', 'administrator'])->group(function () {
     Route::get('/admin', [AuthContoller::class, 'dash'])->name('admin.dashboard');
+    Route::get('/admin/operations/updates', [AdminOperationsController::class, 'updates'])
+        ->middleware('throttle:60,1')->name('admin.operations.updates');
 
     // Customer-service enquiries submitted from the public storefront.
     Route::get('/admin/customer-service', [AdminCustomerServiceController::class, 'index'])->name('admin.customer-service.index');
     Route::get('/admin/customer-service/{contactMessage}', [AdminCustomerServiceController::class, 'show'])->whereNumber('contactMessage')->name('admin.customer-service.show');
     Route::patch('/admin/customer-service/{contactMessage}', [AdminCustomerServiceController::class, 'update'])->whereNumber('contactMessage')->name('admin.customer-service.update');
+    Route::post('/admin/customer-service/{contactMessage}/reply', [AdminCustomerServiceController::class, 'reply'])->whereNumber('contactMessage')->middleware('throttle:20,1')->name('admin.customer-service.reply');
 
     // Consistent CSV (Excel-compatible) and print-ready PDF exports for admin list tabs.
     Route::get('/admin/exports/{type}/excel', [AdminExportController::class, 'excel'])

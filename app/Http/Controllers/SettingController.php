@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\Settings;
 use App\Models\User;
+use App\Support\StoreDeliveryFee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,7 @@ class SettingController extends Controller
     public function index()
     {
         $shop = Settings::query()->orderByDesc('id')->first();
+        $deliveryFee = StoreDeliveryFee::current();
 
         $staffRoles = Role::query()
             ->whereIn(DB::raw('LOWER(role_name)'), ['admin', 'cashier'])
@@ -39,7 +41,7 @@ class SettingController extends Controller
         $activeCashiers = User::query()->whereIn('role_id', $cashierRoleIds)->where('status', 'active')->count();
 
         return view('admin.meanleap.setting', compact(
-            'shop', 'staffRoles', 'staffAccounts', 'staffTotal', 'activeAdmins', 'activeCashiers'
+            'shop', 'staffRoles', 'staffAccounts', 'staffTotal', 'activeAdmins', 'activeCashiers', 'deliveryFee'
         ));
     }
 
@@ -207,7 +209,8 @@ class SettingController extends Controller
         if ($shop) {
             return redirect()->route('setting.edit', $shop->id);
         }
-        return view('admin.meanleap.Add');
+        $deliveryFee = StoreDeliveryFee::current();
+        return view('admin.meanleap.Add', compact('deliveryFee'));
     }
 
     public function store(Request $request)
@@ -222,7 +225,8 @@ class SettingController extends Controller
     public function edit($id)
     {
         $shop = Settings::findOrFail($id);
-        return view('admin.meanleap.Edit', compact('shop'));
+        $deliveryFee = StoreDeliveryFee::current();
+        return view('admin.meanleap.Edit', compact('shop', 'deliveryFee'));
     }
 
     public function update(Request $request, $id)
@@ -246,10 +250,14 @@ class SettingController extends Controller
             'address' => ['nullable', 'string', 'max:2000'],
             'tel' => ['nullable', 'string', 'max:50'],
             'exchange_rate' => ['required', 'numeric', 'gt:0', 'max:1000000'],
+            'delivery_fee' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ], [
             'shop_name.required' => 'Please enter the shop name.',
             'exchange_rate.required' => 'Please enter the USD to KHR exchange rate.',
+            'delivery_fee.required' => 'Please enter the home delivery fee. Enter 0 for free delivery.',
+            'delivery_fee.numeric' => 'The home delivery fee must be a valid number.',
+            'delivery_fee.min' => 'The home delivery fee cannot be negative.',
             'exchange_rate.gt' => 'The exchange rate must be greater than zero.',
             'logo.image' => 'The shop logo must be a valid image.',
             'logo.max' => 'The shop logo must be 3 MB or smaller.',
@@ -263,6 +271,7 @@ class SettingController extends Controller
         $shop->address = $validated['address'] ?? null;
         $shop->tel = $validated['tel'] ?? null;
         $shop->exchange_rate = $validated['exchange_rate'];
+        $shop->delivery_fee = round((float) $validated['delivery_fee'], 2);
 
         if ($request->hasFile('logo')) {
             $uploadDirectory = public_path('uploads');

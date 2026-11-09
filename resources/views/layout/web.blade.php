@@ -843,6 +843,7 @@
                     @auth
                         @if (strtolower((string) Auth::user()->role?->role_name) === 'customer')
                             <li class="nav-item"><a class="nav-link" href="{{ route('web.account') }}">My orders</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('web.inbox') }}">Inbox @if(($unreadStoreReplyCount ?? 0) > 0)<span class="badge rounded-pill text-bg-success ms-1">{{ $unreadStoreReplyCount }}</span>@endif</a></li>
                         @endif
                     @endauth
                 </ul>
@@ -874,6 +875,7 @@
                                 @if (strtolower((string) Auth::user()->role?->role_name) === 'customer')
                                     <li><a class="dropdown-item rounded-2 py-2" href="{{ route('web.account') }}"><i
                                                 class="bi bi-bag-check me-2"></i> My Orders & Account</a></li>
+                                    <li><a class="dropdown-item rounded-2 py-2 d-flex align-items-center justify-content-between" href="{{ route('web.inbox') }}"><span><i class="bi bi-inbox me-2"></i> Customer Inbox</span>@if(($unreadStoreReplyCount ?? 0) > 0)<span class="badge rounded-pill text-bg-success">{{ $unreadStoreReplyCount }}</span>@endif</a></li>
                                 @elseif(in_array(strtolower((string) Auth::user()->role?->role_name), ['admin', 'cashier'], true))
                                     <li><a class="dropdown-item rounded-2 py-2"
                                             href="{{ strtolower((string) Auth::user()->role?->role_name) === 'admin' ? route('admin.dashboard') : route('cashier.dashboard') }}"><i

@@ -23,8 +23,8 @@
                 <input type="datetime-local" name="transaction_date" class="form-control" value="{{ $transaction->transaction_date->format('Y-m-d\TH:i') }}" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Note</label>
-                <textarea name="note" class="form-control" rows="2">{{ $transaction->note }}</textarea>
+                <label class="form-label">Note <span class="text-muted fw-normal">(optional)</span></label>
+                <textarea name="note" class="form-control" rows="2" data-optional>{{ $transaction->note }}</textarea>
             </div>
             <button class="btn btn-primary">Update</button>
             <a href="{{ route('expense_income.index') }}" class="btn btn-secondary">Cancel</a>

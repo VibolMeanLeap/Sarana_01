@@ -451,7 +451,7 @@
                     </select>@error('category_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                 <div class="mb-3"><label class="form-label">Amount (USD) <span class="text-danger">*</span></label><input type="number" name="amount" min="0.01" step="0.01" class="form-control" required>@error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                 <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="datetime-local" name="transaction_date" value="{{ now()->format('Y-m-d\TH:i') }}" class="form-control" required>@error('transaction_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                <div class="mb-0"><label class="form-label">Note</label><textarea name="note" rows="2" class="form-control" placeholder="e.g. Electricity, rent, supplies or maintenance"></textarea></div>
+                <div class="mb-0"><label class="form-label">Note <span class="text-muted fw-normal">(optional)</span></label><textarea name="note" rows="2" class="form-control" data-optional placeholder="e.g. Electricity, rent, supplies or maintenance"></textarea></div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Save expense</button></div>
         </form>

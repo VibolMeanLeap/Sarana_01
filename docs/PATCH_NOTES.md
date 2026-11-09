@@ -32,3 +32,12 @@
 - Fixed Order tab search, payment/order status filters, source/date filters, summary meanings, payment-vs-workflow status display, safe delete visibility, and filtered order-item navigation.
 - Updated order create/edit forms and administrator navigation/payment return links to the canonical Order routes.
 - Added filtering by order ID to the Order Items list.
+
+## 2026-11-09 — COD cash collection and customer inbox
+
+- Added a cash collection confirmation to the POS delivery fulfillment workflow for Cash on Delivery orders.
+- COD remains unpaid until the final delivery handoff is confirmed with the exact amount received; collector/time/note and a dedicated payment event are retained.
+- Kept sales revenue tied to the paid-order reporting flow; no duplicate manual sales income transaction is inserted.
+- Added a private Store Account inbox with automatic enquiry acknowledgement, customer follow-up replies, administrator replies and unread navigation badges.
+- Added additive MariaDB scripts `09_cod_cash_collection.sql` and `10_store_inbox_replies.sql`.
+- See `COD_AND_CUSTOMER_INBOX_PATCH.md` for installation, test steps, ownership rules and known limitations.

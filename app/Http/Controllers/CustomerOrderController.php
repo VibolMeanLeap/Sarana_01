@@ -17,6 +17,7 @@ use App\Models\Review;
 use App\Models\Settings;
 use App\Models\StockLog;
 use App\Services\PayWayService;
+use App\Support\StoreDeliveryFee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -228,7 +229,7 @@ class CustomerOrderController extends Controller
             return redirect()->route('web.cart')->with('error', 'Online pickup/delivery options are not configured. Please contact the shop.');
         }
 
-        $deliveryFee = max(0, (float) config('services.ecommerce.delivery_fee', 0));
+        $deliveryFee = StoreDeliveryFee::current();
         $checkoutToken = (string) $request->session()->get('web_checkout_token', '');
         if ($checkoutToken === '') {
             $checkoutToken = (string) Str::uuid();
@@ -332,7 +333,7 @@ class CustomerOrderController extends Controller
                     $subtotal += $unitPrice * $quantity;
                 }
 
-                $deliveryFee = $isDelivery ? max(0, (float) config('services.ecommerce.delivery_fee', 0)) : 0.0;
+                $deliveryFee = $isDelivery ? StoreDeliveryFee::current() : 0.0;
                 $grandTotal = round($subtotal + $deliveryFee, 2);
 
                 $order = Order::create([

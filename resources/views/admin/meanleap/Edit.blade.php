@@ -44,6 +44,17 @@
                         <div class="form-text">Used by the POS to show the KHR equivalent of USD prices. Existing orders keep the rate recorded when they were sold.</div>
                     </div>
                 </div>
+                <div class="mt-4 p-3 rounded-4" style="background:#f4f8f4;border:1px solid #e2ece4">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-white text-success shadow-sm" style="width:42px;height:42px;flex:0 0 42px"><i class="bi bi-truck fs-5"></i></span>
+                        <div class="flex-grow-1">
+                            <label for="delivery_fee" class="form-label fw-semibold mb-1">Home delivery fee (USD) <span class="text-danger">*</span></label>
+                            <div class="input-group"><span class="input-group-text">$</span><input type="number" id="delivery_fee" name="delivery_fee" class="form-control" value="{{ old('delivery_fee', number_format((float) ($deliveryFee ?? 0), 2, '.', '')) }}" min="0" max="99999999" step="0.01" required data-preview-delivery-fee></div>
+                            <div class="form-text">Automatically applied to new home-delivery orders from the POS and website. Enter 0 to offer free delivery. Existing orders keep their original total.</div>
+                            @error('delivery_fee')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
                 <span class="small text-muted"><i class="bi bi-shield-check me-1"></i>Only administrators can change store settings.</span>
@@ -67,7 +78,8 @@
                 <div class="text-start border-top pt-3">
                     <div class="small text-muted mb-1">Address</div><div class="fw-semibold mb-3" data-preview-output-address>{{ $shop->address ?: 'Not configured' }}</div>
                     <div class="small text-muted mb-1">Telephone</div><div class="fw-semibold mb-3" data-preview-output-phone>{{ $shop->tel ?: 'Not configured' }}</div>
-                    <div class="small text-muted mb-1">Exchange rate</div><div class="fw-semibold">$1 USD = <span data-preview-output-rate>{{ number_format((float)$shop->exchange_rate, 0) }}</span> KHR</div>
+                    <div class="small text-muted mb-1">Exchange rate</div><div class="fw-semibold mb-3">$1 USD = <span data-preview-output-rate>{{ number_format((float)$shop->exchange_rate, 0) }}</span> KHR</div>
+                    <div class="small text-muted mb-1">Home delivery fee</div><div class="fw-semibold"><span data-preview-output-delivery-fee>${{ number_format((float) ($deliveryFee ?? 0), 2) }}</span> USD</div>
                 </div>
             </div>
         </section>
@@ -82,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const addressInput = document.querySelector('[data-preview-address]');
     const phoneInput = document.querySelector('[data-preview-phone]');
     const rateInput = document.querySelector('[data-preview-rate]');
+    const deliveryFeeInput = document.querySelector('[data-preview-delivery-fee]');
+    const deliveryFeeOutput = document.querySelector('[data-preview-output-delivery-fee]');
     const nameOutput = document.querySelector('[data-preview-output-name]');
     const addressOutput = document.querySelector('[data-preview-output-address]');
     const phoneOutput = document.querySelector('[data-preview-output-phone]');
@@ -96,6 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
     rateInput?.addEventListener('input', () => {
         const value = Number(rateInput.value);
         rateOutput.textContent = Number.isFinite(value) && value > 0 ? Math.round(value).toLocaleString('en-US') : '—';
+    });
+    deliveryFeeInput?.addEventListener('input', () => {
+        const value = Number(deliveryFeeInput.value);
+        deliveryFeeOutput.textContent = '$' + (Number.isFinite(value) && value >= 0 ? value.toFixed(2) : '—');
     });
     fileInput?.addEventListener('change', () => {
         const file = fileInput.files?.[0];

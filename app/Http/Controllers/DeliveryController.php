@@ -6,6 +6,7 @@ use App\Models\Delivery;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Services\OrderFulfillmentService;
+use App\Support\StoreDeliveryFee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -41,7 +42,7 @@ class DeliveryController extends Controller
             'per_page' => ['nullable', 'in:10,15,25,50,100'],
         ]);
 
-        $query = Delivery::with(['order.customer', 'order.orderType'])
+        $query = Delivery::with(['order.customer', 'order.orderType', 'order.paymentMethod'])
             ->when(!empty($validated['status']), fn ($q) => $q->where('status', $validated['status']))
             ->when(!empty($validated['start_date']), fn ($q) => $q->whereHas('order', fn ($order) => $order->whereDate('order_date', '>=', $validated['start_date'])))
             ->when(!empty($validated['end_date']), fn ($q) => $q->whereHas('order', fn ($order) => $order->whereDate('order_date', '<=', $validated['end_date'])))
@@ -86,7 +87,8 @@ class DeliveryController extends Controller
             ->orderByDesc('order_date')
             ->get();
 
-        return view('admin.delivery.create', compact('orders'));
+        $deliveryFee = StoreDeliveryFee::current();
+        return view('admin.delivery.create', compact('orders', 'deliveryFee'));
     }
 
     public function store(Request $request)
@@ -144,7 +146,7 @@ class DeliveryController extends Controller
 
     public function edit(Delivery $delivery)
     {
-        $delivery->load(['order.customer', 'order.orderType']);
+        $delivery->load(['order.customer', 'order.orderType', 'order.paymentMethod']);
         $current = strtolower((string) $delivery->status);
         $allowedStatuses = [$current => self::STATUS_LABELS[$current] ?? ucfirst(str_replace('_', ' ', $current))];
         if (isset(self::NEXT_DELIVERY_STATUS[$current])) {
@@ -164,12 +166,15 @@ class DeliveryController extends Controller
             'address' => ['required', 'string', 'max:255'],
             'cost' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'status' => ['required', 'in:pending,confirmed,preparing,ready,out_for_delivery,delivered,cancelled'],
+            'cod_collected_confirmed' => ['nullable', 'boolean'],
+            'cod_collected_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'cod_collection_note' => ['nullable', 'string', 'max:500'],
         ]);
 
         DB::transaction(function () use ($delivery, $validated) {
             // Always lock the order first, then the delivery row. Telegram and the
             // shared fulfillment service use the same lock order to reduce deadlocks.
-            $order = Order::query()->with('orderType')->where('order_id', $delivery->order_id)->lockForUpdate()->firstOrFail();
+            $order = Order::query()->with(['orderType', 'paymentMethod'])->where('order_id', $delivery->order_id)->lockForUpdate()->firstOrFail();
             $lockedDelivery = Delivery::query()->where('delivery_id', $delivery->delivery_id)->lockForUpdate()->firstOrFail();
             $order->setRelation('delivery', $lockedDelivery);
             $current = strtolower((string) $lockedDelivery->status);
@@ -213,6 +218,9 @@ class DeliveryController extends Controller
                         'actor_id' => auth()->id(),
                         'actor_label' => auth()->user()?->name,
                         'note' => 'Delivery status updated from the administrator delivery register.',
+                        'cod_collected_confirmed' => (bool) ($validated['cod_collected_confirmed'] ?? false),
+                        'cod_collected_amount' => $validated['cod_collected_amount'] ?? null,
+                        'cod_collection_note' => $validated['cod_collection_note'] ?? null,
                     ]);
                     // The fulfillment service owns the status change; keep updated address and fee.
                     $lockedDelivery->refresh();

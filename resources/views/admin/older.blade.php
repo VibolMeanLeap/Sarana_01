@@ -211,6 +211,240 @@
   color: #28774e;
 }
 
+.status-pill.out_for_delivery {
+  background: #eaf3ff;
+  color: #285f9b;
+}
+
+.delivery-admin-panel {
+  --delivery-ink: #183629;
+  --delivery-muted: #78877d;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #dce9df;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #f8fcf9 0%, #ffffff 68%);
+  box-shadow: 0 10px 28px rgba(26, 69, 43, .055);
+}
+
+.delivery-panel-heading { padding-bottom: 17px; border-bottom: 1px solid #e8f0ea; }
+.delivery-panel-icon {
+  width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 44px; border-radius: 14px; color: #18764d; background: #e8f5ed; font-size: 20px;
+}
+.delivery-eyebrow { color: #7a8b80; font-size: 9px; letter-spacing: .13em; font-weight: 850; }
+.delivery-panel-title { color: var(--delivery-ink); font-size: 17px; font-weight: 850; letter-spacing: -.025em; margin-top: 2px; }
+.delivery-panel-subtitle { color: var(--delivery-muted); font-size: 11px; margin-top: 3px; line-height: 1.5; }
+.delivery-progress-summary { padding: 17px 0 12px; }
+.delivery-progress-label { color: #77887c; font-size: 9px; letter-spacing: .12em; font-weight: 850; }
+.delivery-progress-caption { color: #7c8a80; font-size: 11px; margin-top: 3px; }
+.delivery-progress-percent { color: #17764c; font-size: 20px; letter-spacing: -.04em; }
+.delivery-progress-track { height: 7px; background: #e8efe9; border-radius: 30px; overflow: hidden; }
+.delivery-progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #27875a, #72b98a); transition: width .25s ease; }
+.delivery-visual-stepper { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; padding: 13px 0 19px; }
+.delivery-visual-step { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; color: #9aa79e; }
+.delivery-visual-step-icon { width: 30px; height: 30px; border: 1px solid #dce5de; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #f1f4f2; color: #8a988e; font-size: 13px; }
+.delivery-visual-step-label { color: #68796e; font-size: 10px; font-weight: 800; }
+.delivery-visual-step-description { color: #9aa69d; font-size: 9px; line-height: 1.35; }
+.delivery-visual-step.is-done .delivery-visual-step-icon { color: #fff; border-color: #218354; background: #218354; }
+.delivery-visual-step.is-done .delivery-visual-step-label { color: #23764d; }
+.delivery-visual-step.is-current .delivery-visual-step-icon { color: #1c744c; border: 2px solid #268659; background: #e9f5ed; box-shadow: 0 0 0 4px rgba(38, 134, 89, .09); }
+.delivery-visual-step.is-current .delivery-visual-step-label { color: #174f36; }
+.delivery-info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.delivery-info-card { min-width: 0; display: flex; align-items: flex-start; gap: 9px; padding: 11px; border: 1px solid #e8efe9; border-radius: 12px; background: rgba(255,255,255,.86); }
+.delivery-info-wide { grid-column: span 1; }
+.delivery-info-icon { width: 29px; height: 29px; flex: 0 0 29px; display: inline-flex; justify-content: center; align-items: center; border-radius: 9px; color: #27784f; background: #eef6f0; font-size: 13px; }
+.delivery-info-card > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.delivery-info-label { color: #87958b; font-size: 8px; font-weight: 850; letter-spacing: .1em; }
+.delivery-info-card strong { color: #294233; font-size: 11px; font-weight: 800; overflow-wrap: anywhere; }
+.delivery-info-link, .delivery-info-muted { color: #86948a; font-size: 10px; text-decoration: none; overflow-wrap: anywhere; }
+.delivery-info-link:hover { color: #176c47; text-decoration: underline; }
+.delivery-payment-state { font-size: 9px; font-weight: 800; }
+.delivery-cod-due { margin-top: 12px; padding: 11px 13px; border: 1px solid #f0dfb9; border-radius: 11px; background: #fff9ed; color: #83611d; font-size: 11px; }
+.delivery-cod-receipt { margin-top: 12px; display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #d5eadc; border-radius: 12px; background: #eff8f1; color: #266a46; }
+.delivery-cod-receipt-icon { font-size: 19px; }
+.delivery-cod-receipt strong { display: block; font-size: 11px; }
+.delivery-cod-receipt .small { color: #557a63; font-size: 10px; }
+.delivery-next-action { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: 15px; padding: 14px; border: 1px solid #e0ebe3; border-radius: 13px; background: #fff; }
+.delivery-next-copy { display: flex; flex-direction: column; gap: 3px; }
+.delivery-next-copy strong { color: #264433; font-size: 12px; }
+.delivery-next-copy span { color: #849187; font-size: 10px; }
+.delivery-next-button { border-radius: 999px; padding: 9px 16px; font-size: 11px; font-weight: 800; box-shadow: 0 5px 13px rgba(25, 117, 72, .13); }
+.delivery-next-button:disabled { opacity: .65; cursor: wait; }
+.delivery-feedback { flex-basis: 100%; padding: 8px 10px; border-radius: 9px; font-size: 10px; }
+.delivery-feedback.is-success { color: #216a43; background: #eaf6ee; }
+.delivery-feedback.is-error { color: #98423d; background: #fff0ef; }
+.delivery-activity { margin-top: 16px; padding-top: 15px; border-top: 1px solid #e8f0ea; }
+.delivery-activity-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.delivery-activity-heading strong { display: block; color: #294233; font-size: 12px; margin-top: 2px; }
+.delivery-activity-count { padding: 4px 8px; border-radius: 20px; color: #65766b; background: #f0f4f1; font-size: 9px; font-weight: 800; }
+.delivery-activity-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.delivery-activity-item { display: flex; align-items: flex-start; gap: 9px; }
+.delivery-activity-dot { flex: 0 0 25px; width: 25px; height: 25px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #27784f; background: #edf6ef; font-size: 11px; }
+.delivery-activity-item > div { display: flex; flex-direction: column; gap: 2px; }
+.delivery-activity-item strong { color: #344c3c; font-size: 10px; }
+.delivery-activity-item span:not(.delivery-activity-dot) { color: #839087; font-size: 9px; }
+.delivery-activity-item small { color: #849087; font-size: 9px; line-height: 1.4; }
+.delivery-activity-empty { color: #89958c; font-size: 10px; margin: 0; }
+/* Premium COD cash-collection dialog */
+.cod-settlement-dialog {
+  width: min(540px, calc(100% - 28px));
+  max-width: none;
+  max-height: min(92vh, 780px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  color: #24392d;
+  box-shadow: 0 28px 90px rgba(10, 31, 19, .30);
+}
+.cod-settlement-dialog::backdrop {
+  background: rgba(9, 25, 16, .62);
+  backdrop-filter: blur(5px);
+}
+.cod-settlement-dialog[open] { animation: codSettlementEnter .22s ease-out both; }
+@keyframes codSettlementEnter {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.cod-settlement-shell {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 22px;
+  background: #fff;
+}
+.cod-settlement-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 23px 24px 20px;
+  background: linear-gradient(135deg, #f2f8f3 0%, #fbfcf8 58%, #fff8e9 100%);
+  border-bottom: 1px solid #eaf0ea;
+}
+.cod-settlement-brand { display: flex; align-items: flex-start; gap: 13px; min-width: 0; }
+.cod-settlement-icon {
+  display: inline-flex;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  color: #8d6826;
+  background: #fff0cc;
+  box-shadow: inset 0 0 0 1px #f0dfb8;
+  font-size: 21px;
+}
+.cod-settlement-eyebrow { display: block; margin: 1px 0 5px; color: #779080; font-size: 9px; font-weight: 900; letter-spacing: .13em; }
+.cod-settlement-header h3 { margin: 0 0 5px; color: #203a2b; font-size: 20px; line-height: 1.2; font-weight: 850; letter-spacing: -.035em; }
+.cod-settlement-header p { margin: 0; max-width: 360px; color: #76857a; font-size: 12px; line-height: 1.5; }
+.cod-settlement-close {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e3ebe4;
+  border-radius: 11px;
+  color: #718176;
+  background: rgba(255,255,255,.82);
+  transition: background .15s ease, color .15s ease, transform .15s ease;
+}
+.cod-settlement-close:hover { color: #263d30; background: #fff; transform: rotate(4deg); }
+.cod-settlement-content { padding: 21px 24px 18px; }
+.cod-settlement-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 17px 19px;
+  border: 1px solid #245c40;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(120deg, #174b32 0%, #236644 72%, #2d7650 100%);
+  box-shadow: 0 8px 20px rgba(25, 91, 57, .14);
+}
+.cod-settlement-total-copy { display: flex; flex-direction: column; gap: 3px; }
+.cod-settlement-total-copy > span { color: #c2ddca; font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+.cod-settlement-total-copy strong { color: #fff; font-size: 34px; line-height: 1.1; font-weight: 900; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.cod-settlement-total-copy small { color: #d5e8da; font-size: 10px; }
+.cod-settlement-cash-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: 1px solid rgba(255,255,255,.19); border-radius: 15px; color: #f7dfaa; background: rgba(255,255,255,.10); font-size: 23px; }
+.cod-settlement-hint { display: flex; align-items: flex-start; gap: 9px; margin: 14px 0 18px; padding: 10px 12px; border: 1px solid #f0e5c9; border-radius: 11px; color: #806a3d; background: #fffbf1; font-size: 10px; line-height: 1.55; }
+.cod-settlement-hint i { flex: 0 0 auto; margin-top: 1px; color: #b28a3f; }
+.cod-settlement-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.cod-settlement-field { display: grid; gap: 6px; }
+.cod-settlement-field > label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; color: #405548; font-size: 11px; font-weight: 850; }
+.cod-settlement-field > label span { color: #98a39b; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.cod-settlement-field > small { color: #929d95; font-size: 10px; }
+.cod-settlement-input-wrap { display: flex; align-items: center; min-height: 48px; border: 1px solid #dce8df; border-radius: 12px; background: #fff; transition: border-color .15s ease, box-shadow .15s ease; }
+.cod-settlement-input-wrap:focus-within { border-color: #36855c; box-shadow: 0 0 0 3px rgba(54,133,92,.10); }
+.cod-settlement-input-wrap > span { padding-left: 14px; color: #789080; font-size: 16px; font-weight: 800; }
+.cod-settlement-input-wrap input { width: 100%; min-width: 0; height: 46px; padding: 0 13px 0 7px; border: 0; outline: 0; color: #244331; background: transparent; font-size: 17px; font-weight: 850; font-variant-numeric: tabular-nums; }
+.cod-settlement-field > input[type="text"] { width: 100%; min-height: 45px; padding: 10px 13px; border: 1px solid #dce8df; border-radius: 11px; outline: 0; color: #294334; background: #fff; font-size: 12px; transition: border-color .15s ease, box-shadow .15s ease; }
+.cod-settlement-field > input[type="text"]:focus { border-color: #36855c; box-shadow: 0 0 0 3px rgba(54,133,92,.10); }
+.cod-settlement-field input::placeholder { color: #aab4ad; }
+.cod-settlement-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 18px;
+  padding: 13px 14px;
+  border: 1px solid #dcebe0;
+  border-radius: 13px;
+  background: #f5faf6;
+  cursor: pointer;
+}
+.cod-settlement-confirm > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.cod-settlement-confirm-mark { display: inline-flex; flex: 0 0 22px; width: 22px; height: 22px; align-items: center; justify-content: center; margin-top: 1px; border: 1.5px solid #b8cabe; border-radius: 7px; color: transparent; background: #fff; transition: all .15s ease; }
+.cod-settlement-confirm > input:checked + .cod-settlement-confirm-mark { border-color: #21804d; color: #fff; background: #21804d; }
+.cod-settlement-confirm > input:focus-visible + .cod-settlement-confirm-mark { outline: 3px solid rgba(33,128,77,.2); outline-offset: 2px; }
+.cod-settlement-confirm-copy { display: flex; flex-direction: column; gap: 3px; }
+.cod-settlement-confirm-copy strong { color: #31513d; font-size: 11px; font-weight: 850; }
+.cod-settlement-confirm-copy small { color: #829087; font-size: 10px; line-height: 1.5; }
+.cod-settlement-feedback { margin-top: 12px; padding: 10px 12px; border: 1px solid #f1d4d1; border-radius: 10px; color: #963e38; background: #fff5f4; font-size: 11px; line-height: 1.5; }
+.cod-settlement-footer { display: flex; flex-direction: column; gap: 13px; padding: 14px 24px 20px; border-top: 1px solid #edf2ee; background: #fcfdfc; }
+.cod-settlement-secure { display: flex; align-items: center; gap: 7px; color: #839187; font-size: 9px; }
+.cod-settlement-secure i { color: #3b8960; font-size: 12px; }
+.cod-settlement-actions { display: flex; justify-content: flex-end; gap: 9px; }
+.cod-settlement-cancel, .cod-settlement-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border-radius: 999px; font-size: 11px; font-weight: 850; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.cod-settlement-cancel { border: 1px solid #dfe8e1; color: #617267; background: #fff; }
+.cod-settlement-cancel:hover { color: #314b3b; background: #f5f8f5; }
+.cod-settlement-submit { border: 1px solid #1d6b42; color: #fff; background: linear-gradient(135deg, #23814f, #17653e); box-shadow: 0 6px 14px rgba(24, 108, 65, .16); }
+.cod-settlement-submit:hover { color: #fff; background: linear-gradient(135deg, #1d7548, #145b37); box-shadow: 0 8px 18px rgba(24, 108, 65, .22); transform: translateY(-1px); }
+.cod-settlement-submit:disabled { opacity: .65; cursor: wait; transform: none; }
+@media (max-width: 575px) {
+  .cod-settlement-dialog { width: calc(100% - 18px); max-height: 94vh; border-radius: 17px; }
+  .cod-settlement-shell { border-radius: 17px; }
+  .cod-settlement-header { padding: 18px 17px 16px; gap: 9px; }
+  .cod-settlement-icon { flex-basis: 42px; width: 42px; height: 42px; border-radius: 13px; }
+  .cod-settlement-header h3 { font-size: 17px; }
+  .cod-settlement-header p { font-size: 11px; }
+  .cod-settlement-content { padding: 16px 17px; }
+  .cod-settlement-total { padding: 14px 15px; }
+  .cod-settlement-total-copy strong { font-size: 30px; }
+  .cod-settlement-footer { padding: 13px 17px 16px; }
+  .cod-settlement-actions { display: grid; grid-template-columns: 1fr 1.5fr; }
+  .cod-settlement-cancel, .cod-settlement-submit { padding: 10px 11px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cod-settlement-dialog[open] { animation: none; }
+  .cod-settlement-close, .cod-settlement-confirm-mark, .cod-settlement-cancel, .cod-settlement-submit { transition: none; }
+}
+.delivery-admin-panel[aria-busy="true"] { opacity: .78; pointer-events: none; }
+@media (max-width: 900px) {
+  .delivery-visual-stepper { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 13px; }
+  .delivery-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 575px) {
+  .delivery-admin-panel { padding: 14px; }
+  .delivery-visual-stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .delivery-info-grid { grid-template-columns: 1fr; }
+  .delivery-info-wide { grid-column: auto; }
+  .delivery-next-action { align-items: stretch; }
+  .delivery-next-button { width: 100%; }
+}
+
 .status-pill.completed,
 .status-pill.paid {
   background: #e8f5ed;
@@ -335,7 +569,7 @@
 
 @section('content')
 @php
-$orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'];
+$orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
 @endphp
 <div class="orders-page">
   @if(session('success'))
@@ -357,28 +591,29 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'ca
   <section class="orders-summary">
     <div class="orders-stat">
       <div class="orders-stat-label">Total orders</div>
-      <div class="orders-stat-value">{{ number_format($summary['total'] ?? 0) }}</div>
+      <div class="orders-stat-value" data-summary-value="total">{{ number_format($summary['total'] ?? 0) }}</div>
     </div>
     <div class="orders-stat pending">
       <div class="orders-stat-label">Awaiting payment</div>
-      <div class="orders-stat-value">{{ number_format($summary['pending'] ?? 0) }}</div>
+      <div class="orders-stat-value" data-summary-value="pending">{{ number_format($summary['pending'] ?? 0) }}</div>
     </div>
     <div class="orders-stat completed">
       <div class="orders-stat-label">Completed orders</div>
-      <div class="orders-stat-value">{{ number_format($summary['completed'] ?? 0) }}</div>
+      <div class="orders-stat-value" data-summary-value="completed">{{ number_format($summary['completed'] ?? 0) }}</div>
     </div>
     <div class="orders-stat revenue">
       <div class="orders-stat-label">Verified revenue today</div>
-      <div class="orders-stat-value">${{ number_format($summary['revenue_today'] ?? 0, 2) }}</div>
+      <div class="orders-stat-value" data-summary-value="revenue_today">${{ number_format($summary['revenue_today'] ?? 0, 2) }}</div>
     </div>
   </section>
 
-  <section class="orders-panel">
+  <section class="orders-panel" data-live-orders data-live-url="{{ route('admin.orders.index', request()->query()) }}" data-current-page="{{ $orders->currentPage() }}">
     <div class="orders-panel-head">
       <div>
         <h1 class="orders-panel-title">Order list</h1>
-        <div class="small text-muted mt-1">Search and review POS and website orders. Select a row to inspect its items.
+        <div class="small text-muted mt-1">Search and review POS and website orders. Select any delivery order to manage its full journey here.
         </div>
+        <div class="orders-live-indicator mt-2" aria-live="polite"><span class="orders-live-dot"></span><span id="ordersLiveStatus">Live updates active · checking automatically</span></div>
       </div>
       <!-- <div class="d-flex align-items-center gap-3"><span class="small text-muted">{{ $orders->total() }} result(s)</span><a href="{{ route('admin.orders.create') }}" class="btn btn-success btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i> New order</a></div> -->
     </div>
@@ -394,7 +629,7 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'ca
       <select class="form-select" name="order_status" aria-label="Order status">
         <option value="">All order statuses</option>
         @foreach($orderStatuses as $status)
-        <option value="{{ $status }}" @selected(request('order_status')===$status)>{{ ucfirst($status) }}</option>
+        <option value="{{ $status }}" @selected(request('order_status')===$status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
         @endforeach
       </select>
       <select class="form-select" name="source" aria-label="Order source">
@@ -446,125 +681,76 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'ca
             <th>Date</th>
           </tr>
         </thead>
-        <tbody>
-          @forelse($orders as $row)
-          @php
-          $orderStatus = strtolower((string) ($row->order_status ?: ($row->is_paid ? 'completed' : 'pending')));
-          $payment = $row->payments->sortByDesc('id')->first();
-          $paymentStatus = $row->is_paid ? 'paid' : strtolower((string) ($payment?->status ?: 'unpaid'));
-          @endphp
-          <tr class="order-summary-row" data-order-row="{{ $row->order_id }}" tabindex="0" aria-expanded="false"
-            title="Click anywhere on this row to view sold items">
-            <td>
-              <span class="order-id">#{{ $row->order_id }}</span>
-              <span class="order-expand-hint"><i class="bi bi-chevron-down"></i> {{ (int) $row->order_items_count }}
-                items</span>
-            </td>
-            <td>{{ $row->customer?->name ?: 'Walk-in' }}</td>
-            <td>{{ $row->customer?->phone ?: '—' }}</td>
-            <td>{{ $row->cashier?->name ?: 'Website' }}</td>
-            <td>{{ $row->orderType?->order_name ?: '—' }}</td>
-            <td><span
-                class="status-pill {{ $row->order_source === 'website' ? 'confirmed' : 'ready' }}">{{ ucfirst($row->order_source ?: 'pos') }}</span>
-            </td>
-            <td>${{ number_format((float) $row->total_amount, 2) }}</td>
-            <td>{{ number_format((float) $row->discount, 2) }}%</td>
-            <td class="fw-bold">${{ number_format((float) $row->final_price, 2) }}</td>
-            <td>{{ $row->paymentMethod?->payment_name ?: ($payment?->provider === 'aba_payway' ? 'ABA KHQR' : '—') }}
-            </td>
-            @php
-            $paymentShort = ['paid' => 'PAID', 'unpaid' => 'UNPD', 'pending' => 'PEND', 'failed' => 'FAIL', 'declined'
-            => 'DECL', 'expired' => 'EXP', 'review_required' => 'REVIEW'][$paymentStatus] ??
-            strtoupper(substr($paymentStatus, 0, 5));
-            $orderShort = ['pending' => 'PEND', 'confirmed' => 'CONF', 'preparing' => 'PREP', 'ready' => 'READY',
-            'completed' => 'DONE', 'cancelled' => 'CXL'][$orderStatus] ?? strtoupper(substr($orderStatus, 0, 5));
-            @endphp
-            <td><span class="status-pill compact {{ $paymentStatus }}"
-                title="Payment: {{ str_replace('_', ' ', ucfirst($paymentStatus)) }}"
-                aria-label="Payment: {{ str_replace('_', ' ', ucfirst($paymentStatus)) }}">{{ $paymentShort }}</span>
-            </td>
-            <td><span
-                class="status-pill compact {{ in_array($orderStatus, $orderStatuses, true) ? $orderStatus : 'pending' }}"
-                title="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}"
-                aria-label="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}">{{ $orderShort }}</span>
-            </td>
-            <td>{{ $row->order_date?->format('d M Y, h:i A') ?: '—' }}</td>
-          </tr>
-          <tr class="order-items-detail d-none" id="order-items-{{ $row->order_id }}">
-            <td colspan="13">
-              <div class="order-items-panel">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                  <div>
-                    <strong>Items sold in order #{{ $row->order_id }}</strong>
-                    <span class="text-muted small ms-2">{{ $row->orderItems->count() }} line(s)</span>
-                  </div>
-                  <strong class="text-success">Order total:
-                    ${{ number_format((float) ($row->final_price ?? $row->total_amount), 2) }}</strong>
-                </div>
-                @if($row->orderItems->isNotEmpty())
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle mb-0 order-line-table">
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th>Type</th>
-                        <th class="text-end">Qty</th>
-                        <th class="text-end">Unit price</th>
-                        <th class="text-end">Line total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @foreach($row->orderItems as $line)
-                      <tr>
-                        <td>{{ $line->product?->product_name ?? ('Deleted product #'.($line->product_id ?? '')) }}</td>
-                        <td><span
-                            class="badge {{ $line->product && $line->product->isStockTracked() ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $line->product ? ($line->product->isStockTracked() ? 'Stock' : 'Non-stock') : 'Archived' }}</span>
-                        </td>
-                        <td class="text-end">{{ number_format((int) $line->quantity) }}</td>
-                        <td class="text-end">${{ number_format((float) $line->price, 2) }}</td>
-                        <td class="text-end fw-semibold">
-                          ${{ number_format((float) $line->price * (int) $line->quantity, 2) }}</td>
-                      </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-                </div>
-                @else
-                <div class="text-muted small py-2">No line items were recorded for this order.</div>
-                @endif
-              </div>
-            </td>
-          </tr>
-          @empty
-          <tr>
-            <td colspan="13" class="text-center text-muted py-5">No orders match these filters.</td>
-          </tr>
-          @endforelse
+        <tbody id="ordersTableBody">
+          @include('admin.partials.orders-table-body', ['orders' => $orders, 'orderStatuses' => $orderStatuses])
         </tbody>
         <tfoot>
           <tr>
             <td colspan="8">FILTERED FINAL TOTAL <span
-                class="text-muted fw-normal">({{ number_format($filteredOrderCount ?? 0) }} matching orders · all
+                class="text-muted fw-normal">(<span data-filtered-order-count>{{ number_format($filteredOrderCount ?? 0) }}</span> matching orders · all
                 pages)</span></td>
-            <td class="grand-total">${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
+            <td class="grand-total" data-filtered-order-total>${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
             <td colspan="4"></td>
           </tr>
         </tfoot>
       </table>
     </div>
-    <div class="orders-pagination">
-      <div class="orders-pagination-info">
-        Showing {{ $orders->firstItem() ?? 0 }}–{{ $orders->lastItem() ?? 0 }} of {{ number_format($orders->total()) }}
-        orders
-      </div>
-      {{ $orders->links('pagination::bootstrap-5') }}
+    <div id="ordersPagination">
+      @include('admin.partials.orders-pagination', ['orders' => $orders])
     </div>
   </section>
 </div>
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+  const statusLabels = {
+    pending: 'PEND', confirmed: 'CONF', preparing: 'PREP', ready: 'READY',
+    out_for_delivery: 'DISP', completed: 'DONE', cancelled: 'CXL'
+  };
+
+  const showFeedback = (panel, message, isError = false) => {
+    const feedback = panel?.querySelector('[data-delivery-feedback]');
+    if (!feedback) return;
+    feedback.hidden = false;
+    feedback.className = 'delivery-feedback ' + (isError ? 'is-error' : 'is-success');
+    feedback.textContent = message;
+  };
+
+  const updateSummaryBadges = (orderId, payload) => {
+    const summaryRow = document.querySelector(`[data-order-row="${orderId}"]`);
+    if (!summaryRow) return;
+
+    summaryRow.dataset.currentOrderStatus = payload.order_status;
+    const orderBadge = summaryRow.querySelector('[data-order-status-label]');
+    if (orderBadge) {
+      orderBadge.className = 'status-pill compact ' + (payload.order_status || 'pending');
+      orderBadge.textContent = statusLabels[payload.order_status] || String(payload.order_status || '').slice(0, 5).toUpperCase();
+      orderBadge.title = 'Order status: ' + String(payload.order_status || '').replaceAll('_', ' ');
+      orderBadge.setAttribute('aria-label', orderBadge.title);
+    }
+
+    const paymentBadge = summaryRow.querySelector('[data-payment-status-label]');
+    if (paymentBadge) {
+      const paymentState = payload.is_paid ? 'paid' : 'unpaid';
+      paymentBadge.className = 'status-pill compact ' + paymentState;
+      paymentBadge.textContent = payload.is_paid ? 'PAID' : 'UNPD';
+      paymentBadge.title = 'Payment: ' + paymentState;
+      paymentBadge.setAttribute('aria-label', paymentBadge.title);
+    }
+  };
+
+  const updateSummaryCards = (summary) => {
+    if (!summary) return;
+    Object.entries(summary).forEach(([key, value]) => {
+      const target = document.querySelector(`[data-summary-value="${key}"]`);
+      if (!target) return;
+      target.textContent = key === 'revenue_today'
+        ? '$' + Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : Number(value || 0).toLocaleString();
+    });
+  };
+
   const toggleOrderDetails = (row) => {
     const orderId = row.dataset.orderRow;
     const detail = document.getElementById(`order-items-${orderId}`);
@@ -573,20 +759,210 @@ document.addEventListener('DOMContentLoaded', function() {
     detail.classList.toggle('d-none', !opening);
     row.setAttribute('aria-expanded', opening ? 'true' : 'false');
   };
-  document.querySelectorAll('[data-order-row]').forEach(row => {
-    row.addEventListener('click', event => {
-      if (event.target.closest('a,button,form,input,select,textarea,label')) return;
-      toggleOrderDetails(row);
-    });
-    row.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        if (event.target !== row && event.target.closest('a,button,form,input,select,textarea,label'))
-          return;
-        event.preventDefault();
-        toggleOrderDetails(row);
-      }
-    });
+
+  // Delegated events continue working after the table body is refreshed by AJAX.
+  document.addEventListener('click', (event) => {
+    const row = event.target.closest('[data-order-row]');
+    if (!row || event.target.closest('a,button,form,input,select,textarea,label,dialog')) return;
+    toggleOrderDetails(row);
   });
+
+  document.addEventListener('keydown', (event) => {
+    const row = event.target.closest('[data-order-row]');
+    if (!row || (event.key !== 'Enter' && event.key !== ' ')) return;
+    if (event.target !== row && event.target.closest('a,button,form,input,select,textarea,label,dialog')) return;
+    event.preventDefault();
+    toggleOrderDetails(row);
+  });
+
+  // Accessible COD confirmation dialog (also handles panels inserted by AJAX).
+  document.addEventListener('click', function (event) {
+    const openButton = event.target.closest('[data-open-cod-dialog]');
+    if (openButton) {
+      const dialog = document.getElementById(openButton.dataset.openCodDialog);
+      if (dialog && typeof dialog.showModal === 'function') {
+        if (!dialog.open) dialog.showModal();
+        window.setTimeout(() => dialog.querySelector('[data-cod-amount]')?.focus({ preventScroll: true }), 30);
+      } else if (dialog) {
+        dialog.setAttribute('open', 'open');
+      }
+      return;
+    }
+
+    const closeButton = event.target.closest('[data-close-cod-dialog]');
+    if (closeButton) {
+      const dialog = closeButton.closest('dialog');
+      if (dialog?.close) dialog.close();
+      else dialog?.removeAttribute('open');
+      return;
+    }
+
+    // Clicking the shaded backdrop closes the dialog; clicking its content does not.
+    const backdropDialog = event.target.closest('dialog.cod-settlement-dialog');
+    if (backdropDialog && event.target === backdropDialog) {
+      backdropDialog.close?.();
+      if (!backdropDialog.close) backdropDialog.removeAttribute('open');
+    }
+  });
+
+  document.addEventListener('input', function (event) {
+    if (!event.target.matches('[data-cod-amount], [name="cod_collection_note"]')) return;
+    const dialog = event.target.closest('dialog');
+    const feedback = dialog?.querySelector('[data-cod-dialog-feedback]');
+    if (feedback) {
+      feedback.hidden = true;
+      feedback.textContent = '';
+    }
+  });
+
+  // Save delivery status without reloading the page.
+  document.addEventListener('submit', async function (event) {
+    const form = event.target.closest('form[data-ajax-status-form]');
+    if (!form) return;
+
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+
+    const panel = form.closest('[data-delivery-panel]');
+    const orderId = form.dataset.orderId;
+    const submitter = event.submitter || form.querySelector('[data-status-submit]');
+    const originalButtonHtml = submitter?.innerHTML;
+
+    if (submitter) {
+      submitter.disabled = true;
+      submitter.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Saving…';
+    }
+    if (panel) panel.setAttribute('aria-busy', 'true');
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: new FormData(form)
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const messages = payload.errors
+          ? Object.values(payload.errors).flat().join(' ')
+          : (payload.message || `Unable to update order (HTTP ${response.status}).`);
+        const activeDialog = submitter?.closest('dialog');
+        const dialogFeedback = activeDialog?.querySelector('[data-cod-dialog-feedback]');
+        if (dialogFeedback) {
+          dialogFeedback.textContent = messages;
+          dialogFeedback.hidden = false;
+        } else {
+          showFeedback(panel, messages, true);
+        }
+        return;
+      }
+
+      if (!payload.success || !payload.delivery_panel_html || !panel) {
+        showFeedback(panel, payload.message || 'The order was saved, but the updated panel could not be rendered.', true);
+        return;
+      }
+
+      const parsed = new DOMParser().parseFromString(payload.delivery_panel_html, 'text/html');
+      const updatedPanel = parsed.querySelector('[data-delivery-panel]');
+      if (!updatedPanel) {
+        showFeedback(panel, 'The server returned an incomplete delivery panel. Please try again.', true);
+        return;
+      }
+
+      panel.replaceWith(updatedPanel);
+      updateSummaryBadges(orderId, payload);
+      updateSummaryCards(payload.summary);
+      if (window.CoffeeCornerAdminApplyCounts && payload.action_counts) {
+        window.CoffeeCornerAdminApplyCounts(payload.action_counts);
+      }
+      showFeedback(updatedPanel, payload.message || 'Delivery status updated successfully.');
+    } catch (error) {
+      const activeDialog = submitter?.closest('dialog');
+      const dialogFeedback = activeDialog?.querySelector('[data-cod-dialog-feedback]');
+      if (dialogFeedback) {
+        dialogFeedback.textContent = 'Connection problem. The server did not confirm the update. Please try again.';
+        dialogFeedback.hidden = false;
+      } else {
+        showFeedback(panel, 'Connection problem. The server did not confirm the update. Please try again.', true);
+      }
+    } finally {
+      if (panel?.isConnected) panel.removeAttribute('aria-busy');
+      if (submitter && submitter.isConnected) {
+        submitter.disabled = false;
+        if (originalButtonHtml) submitter.innerHTML = originalButtonHtml;
+      }
+    }
+  });
+
+  // Poll the current order query every 12 seconds. Orders are inserted into the
+  // visible table without a page reload; filtered and later pages are respected.
+  const liveRoot = document.querySelector('[data-live-orders]');
+  let listPollBusy = false;
+  const refreshOrders = async () => {
+    if (!liveRoot || listPollBusy || document.visibilityState !== 'visible') return;
+    listPollBusy = true;
+    const liveStatus = document.getElementById('ordersLiveStatus');
+    try {
+      const url = new URL(liveRoot.dataset.liveUrl || window.location.href, window.location.origin);
+      url.searchParams.set('_live_poll', String(Date.now()));
+      const response = await fetch(url.toString(), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      updateSummaryCards(payload.summary);
+
+      const countNode = document.querySelector('[data-filtered-order-count]');
+      if (countNode && payload.filtered_order_count !== undefined) {
+        countNode.textContent = Number(payload.filtered_order_count).toLocaleString();
+      }
+      const totalNode = document.querySelector('[data-filtered-order-total]');
+      if (totalNode && payload.filtered_final_total !== undefined) {
+        totalNode.textContent = '$' + Number(payload.filtered_final_total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      if (payload.replace_table && payload.rows_html !== undefined) {
+        const tbody = document.getElementById('ordersTableBody');
+        if (tbody) {
+          const expandedIds = Array.from(tbody.querySelectorAll('[data-order-row][aria-expanded="true"]'))
+            .map(row => row.dataset.orderRow);
+          tbody.innerHTML = payload.rows_html;
+          expandedIds.forEach((orderId) => {
+            const row = tbody.querySelector(`[data-order-row="${orderId}"]`);
+            const detail = document.getElementById(`order-items-${orderId}`);
+            if (row && detail) {
+              row.setAttribute('aria-expanded', 'true');
+              detail.classList.remove('d-none');
+            }
+          });
+        }
+        const pagination = document.getElementById('ordersPagination');
+        if (pagination && payload.pagination_html !== undefined) {
+          pagination.innerHTML = payload.pagination_html;
+        }
+      }
+
+      if (window.CoffeeCornerAdminApplyCounts && payload.action_counts) {
+        window.CoffeeCornerAdminApplyCounts(payload.action_counts);
+      }
+      if (liveStatus) {
+        const checked = payload.checked_at ? new Date(payload.checked_at) : new Date();
+        liveStatus.textContent = 'Live · updated ' + checked.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    } catch (error) {
+      if (liveStatus) liveStatus.textContent = 'Live updates reconnecting…';
+    } finally {
+      listPollBusy = false;
+    }
+  };
+
+  if (liveRoot) {
+    window.setTimeout(refreshOrders, 2500);
+    window.setInterval(refreshOrders, 12000);
+  }
 });
 </script>
 @endsection

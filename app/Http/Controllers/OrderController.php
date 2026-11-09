@@ -7,6 +7,7 @@ use App\Models\Costumer;
 use App\Models\User;
 use App\Models\OrderType;
 use App\Models\PaymentMethod;
+use App\Services\AdminActionCountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,7 +31,7 @@ class OrderController extends Controller
         ]);
 
         $query = Order::query()
-            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'orderItems.product'])
+            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'delivery', 'orderItems.product', 'statusHistory'])
             ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions']);
 
         $search = trim((string) ($validated['search'] ?? ''));
@@ -95,6 +96,23 @@ class OrderController extends Controller
                 ->whereDate('order_date', today())
                 ->sum('final_price'),
         ];
+
+        if ($request->expectsJson()) {
+            $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
+
+            return response()->json([
+                'success' => true,
+                'replace_table' => $orders->currentPage() === 1,
+                'rows_html' => view('admin.partials.orders-table-body', compact('orders', 'orderStatuses'))->render(),
+                'pagination_html' => view('admin.partials.orders-pagination', compact('orders'))->render(),
+                'summary' => $summary,
+                'filtered_order_count' => $filteredOrderCount,
+                'filtered_final_total' => $filteredFinalTotal,
+                'action_counts' => app(AdminActionCountService::class)->get(),
+                'latest_order_id' => (int) (Order::max('order_id') ?? 0),
+                'checked_at' => now()->toIso8601String(),
+            ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        }
 
         return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage'));
     }
