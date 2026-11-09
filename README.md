@@ -1,162 +1,159 @@
 # Coffee Corner Aura
 
-**Coffee Shop Management System · Laravel 13 · POS · Inventory · Online Ordering · Finance**
+**Coffee Shop Management System · Laravel 13 · POS · Online Ordering · Inventory · Delivery · Finance**
 
-Coffee Corner Aura is a web-based coffee shop management system built with Laravel. It brings the public coffee shop website, point-of-sale workflow, product and inventory management, order processing, staff/customer accounts, purchasing, finance reports, promotions, and store settings into one application.
+Coffee Corner Aura is a web-based coffee shop management system built with Laravel. It brings the public storefront, point of sale (POS), order fulfillment, customer service, product and inventory management, purchasing, finance reporting, promotions, and store settings into one application.
 
-> **Project status:** This repository represents an actively developed academic/demo project. Use the sandbox payment configuration and a non-production database while testing. Complete the deployment and security checklist before using the system for real customer transactions.
+This repository is an actively developed academic/graduation-demo project. Use a development database and sandbox payment credentials for demonstrations. Complete the security and deployment checks before using it with real customer data or payments.
 
 ---
 
 ## Contents
 
-- [Project overview](#project-overview)
-- [Main features](#main-features)
-- [User roles](#user-roles)
+- [Overview](#overview)
+- [Features](#features)
+- [Roles and access](#roles-and-access)
 - [Technology stack](#technology-stack)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Database setup](#database-setup)
 - [Environment configuration](#environment-configuration)
-- [ABA PayWay sandbox setup](#aba-payway-sandbox-setup)
-- [Run the application](#run-the-application)
-- [Main application URLs](#main-application-urls)
-- [Exports, filtering, and pagination](#exports-filtering-and-pagination)
+- [Payment integration](#payment-integration)
+- [Google sign-in](#google-sign-in-optional)
+- [Telegram notifications](#telegram-notifications-and-fulfillment)
+- [Order and delivery workflows](#order-and-delivery-workflows)
+- [AJAX updates and admin notifications](#ajax-updates-and-admin-notifications)
 - [Inventory and finance rules](#inventory-and-finance-rules)
-- [Validation and account security](#validation-and-account-security)
-- [Testing and verification](#testing-and-verification)
-- [GitHub publishing checklist](#github-publishing-checklist)
+- [Useful routes](#useful-routes)
+- [Run and test](#run-and-test)
+- [GitHub and security checklist](#github-and-security-checklist)
 - [Troubleshooting](#troubleshooting)
 - [Known limitations](#known-limitations)
+- [License](#license)
 
----
+## Overview
 
-## Project overview
+The system supports three connected operating areas:
 
-Coffee Corner Aura is designed around these daily coffee shop activities:
+1. **Storefront:** customers browse products, use a cart, place pickup or delivery orders, pay using supported methods, track orders, leave reviews, and contact the store.
+2. **POS and cashier workspace:** staff record walk-in sales, takeaway orders, and delivery orders, including Cash on Delivery (COD).
+3. **Administration:** administrators manage orders, delivery, staff, customers, products, inventory, suppliers, purchases, reviews, enquiries, settings, and finance information.
 
-1. Customers browse the website, add products to a cart, place orders, and follow order/payment status.
-2. Cashiers use the POS to create in-store orders and process the order queue.
-3. Administrators manage products, categories, offers, staff, customers, suppliers, purchases, inventory, deliveries, reviews, and financial records.
-4. The system records stock movements and sale-time product costs so inventory and profit reports can be reviewed.
+The project uses Laravel controllers, Eloquent models, middleware, Blade views, JavaScript, and a MariaDB-compatible SQL schema. Some business tables and upgrades are managed with the SQL scripts in `database/`; the historical Laravel migrations do not recreate the complete business schema by themselves.
 
-The application uses Laravel controllers, Eloquent models, Blade views, middleware, and a MySQL-compatible database. Some project-specific database objects are managed through SQL upgrade scripts because the existing custom migrations are incomplete and overlap one another.
+## Features
 
-## Main features
+### Public storefront and customer account
 
-### Public coffee shop website
-
-- Website home page and product catalogue.
-- Shop page with product/category browsing.
-- Active offer banners and discounted product prices.
-- Session-based Add to Cart, quantity updates, item removal, and cart count in the website navigation.
-- Customer registration, login, logout, and account page.
-- Customer checkout and order history/status pages.
-- ABA PayWay KHQR sandbox payment flow when merchant credentials are configured.
+- Store home/shop pages, product catalogue, product details, categories, and active offers.
+- Session-based cart with item quantity updates and removal.
+- Customer registration, login, logout, and account/order history.
+- Checkout for store pickup or home delivery.
+- Delivery fee displayed on checkout and shipping information pages.
+- ABA PayWay KHQR sandbox checkout when valid merchant configuration is provided.
+- Customer order tracking with payment state, fulfillment progress, and order activity.
+- Customer product/order reviews after an eligible completed order; new reviews require administrator approval before public display.
+- Contact/enquiry form for customer questions.
+- Store Account inbox for signed-in customers: an acknowledgement is added to a new enquiry and the customer can read store replies and continue the conversation.
+- Unread reply indicator in the storefront account navigation.
 
 ### POS and cashier workspace
 
-- Database-driven product catalogue for point-of-sale use.
-- Cart and checkout workflow for in-store orders.
-- Cashier order queue for visibility into POS and website sales. Website order fulfillment is administrator-controlled through Telegram and the administrator dashboard.
-- POS order progress updates and administrator-controlled website order fulfillment. Website orders advance through Pending, Confirmed, Preparing, Ready, Out for delivery (delivery orders only), and Completed/Delivered.
-- Cash and configured PayWay payment handling.
+- POS product catalogue, cart, checkout, and order recording.
+- Cash, KHQR/PayWay, card, and Cash on Delivery payment options where configured.
+- Walk-in, takeaway, and delivery fulfillment types.
+- POS delivery order requires customer/delivery details and creates a linked delivery record.
+- COD orders remain **Unpaid** until the delivery handoff is confirmed and the full amount is collected.
+- Cashier order queue and order status workflow.
+- Stock-tracked products are checked and deducted according to the configured stock rules.
 
-### Administrator dashboard and management
+> **Important:** Cash on Delivery is a *payment method*, not an order type. For a POS home-delivery order, choose both **Order type: Delivery** and **Payment method: Cash on Delivery**. A Dine-in or Takeaway COD selection is not a delivery order and does not receive delivery-stage controls.
 
-- Dashboard overview and business summaries.
-- Product and category management.
-- Product type selection: **Stock** or **Non-stock**.
+### Admin dashboard and management
+
+- Dashboard summaries and business activity overview.
+- Product/category management and Stock/Non-stock product classification.
 - Supplier and purchase management.
 - Inventory adjustments and stock movement history.
-- Offer creation and scheduling, with active offers displayed on the website shop.
-- Order management with expandable order details. Sold items are shown inside the Orders page rather than requiring a separate Order Items tab.
-- Customer profile and customer-account management.
-- Administrator and cashier account creation/management from Settings.
-- Delivery and customer review management.
-- Shop profile/settings, including shop name, logo, address, telephone, and exchange rate.
-- Income and expense reporting.
+- Offers and scheduled discounts.
+- Order management with expandable order details and item information.
+- Unified delivery management directly in **Admin → Orders** for Delivery-type orders created from either POS or the website.
+- Visual delivery stepper showing completed/current/upcoming stages, progress, customer contact, delivery address, fee, total, payment method, and activity history.
+- COD cash-settlement modal at final handoff. It requires the exact order amount and an explicit cash-received confirmation; the collection note is optional.
+- Separate Delivery register remains available for delivery administration.
+- Customer profile/account management and staff accounts in Settings.
+- Customer enquiries inbox with conversation view, admin replies, status handling, and private internal notes.
+- Store Settings, including an editable **Home delivery fee (USD)** field.
+- Review moderation and approval.
+- Income/expense and business reports, with supported CSV/print exports.
 
-### Financial reporting
+### Customer enquiries and replies
 
-The finance page separates sales revenue from other income and expenses. It is designed to present:
+- New signed-in customer enquiries are linked to that customer's account.
+- The system adds an acknowledgement reply and enquiry reference.
+- Customers can read the conversation and send follow-up messages in **My Account → Inbox**.
+- Administrators manage enquiries in **Admin → Customer enquiries** and can send customer-visible replies.
+- Guest enquiries remain available to administrators but are not automatically attached to an account by matching email or phone.
+- Private admin notes are not displayed in the customer's inbox.
 
-- **Sales income:** paid POS and website orders.
-- **Other income:** manually recorded income not linked to an order or purchase.
-- **Inventory purchases:** purchase-related cash outflows.
-- **Operating expenses:** other recorded expenses such as supplies, maintenance, rent, or utilities.
-- **Cost of Goods Sold (COGS):** cost of items sold, using the sale-time `order_items.unit_cost` snapshot where available and a legacy product-cost fallback for older records.
-- **Gross profit:** sales income minus COGS.
-- **Net profit:** gross profit plus other income minus operating expenses.
-- **Net cash movement:** sales income plus other income minus inventory purchases and operating expenses.
+### Delivery fee settings
 
-Inventory purchases are displayed as cash outflows, but are not deducted a second time from net profit. The cost of inventory is recognized through COGS when products are sold; this is intended to avoid double-counting purchase costs.
+- Administrators can edit the default home-delivery fee from **Admin → Settings → Store profile**.
+- The saved setting is used for new POS and website delivery orders and shown on the storefront shipping-information page.
+- Enter `0.00` to offer free delivery.
+- The `WEB_DELIVERY_FEE` environment variable remains a fallback when the database setting is `NULL` / has not yet been saved.
+- Changing the fee does not recalculate existing orders; their original totals remain unchanged.
 
-### Product types
+### Optional form fields
 
-Products use two inventory classifications:
+Fields described as optional (for example order notes, review comments, COD collection notes, internal notes, and selected customer contact/reference fields) are intended to be optional in both browser validation and server validation. Required fields and conditional requirements remain enforced, such as a delivery address for a delivery order and the COD cash amount/confirmation at final handoff.
 
-| Type | Behavior |
+## Roles and access
+
+| Role | Typical access |
 |---|---|
-| **Stock** | Tracks available quantity. Purchases/adjustments increase stock and sales reduce stock. Insufficient stock should prevent an over-sale. |
-| **Non-stock** | Does not maintain an inventory quantity. It can be sold without stock deduction and is excluded from stock purchase/adjustment workflows. |
+| **Administrator** | Full admin dashboard, orders/delivery, settings, staff management, inventory, purchasing, customer service, reviews, and finance. |
+| **Cashier** | POS and cashier order-processing workspace. No administrator-only management access. |
+| **Customer** | Public storefront, own account, checkout, own order history/tracking, review submission, and own customer inbox. |
+| **Guest** | Public storefront browsing and contact form; customer account features require sign-in. |
 
-Legacy labels such as `Drink` and `Food` are normalized to `stock` by the product-type upgrade because those products were previously stock-tracked. Existing products with sales, purchase, or stock-log history should not be reclassified; create a new product with the intended type instead.
-
----
-
-## User roles
-
-| Role | Main access |
-|---|---|
-| **Administrator** | Full access to the administrator dashboard and management modules, including Settings and staff account management. |
-| **Cashier** | POS and cashier order-processing workspace. Cashiers do not receive administrator-only management access. |
-| **Customer** | Public website, own account, checkout, own order history/status, and customer payment pages. |
-| **Guest** | Can browse public website/shop pages; account login is required for customer checkout/account features. |
-
-Administrator and cashier accounts are managed in **Settings**. The **Customer Accounts** page is for customer profiles and website-account access; it must not be used to promote customers into staff roles.
-
-Only assign the Administrator role to trusted users.
-
----
+Role-protected routes use Laravel authentication and the project's role/administrator middleware. Give the Administrator role only to trusted accounts.
 
 ## Technology stack
 
-- **Backend:** PHP 8.3+ and Laravel 13 (Composer requirement: `laravel/framework` `^13.8`).
-- **Database:** MariaDB 10.4+ is the primary database target for the supplied SQL workflow. MySQL 8.x may be usable, but validate the SQL upgrade scripts against the exact server version before applying them.
-- **Frontend:** Laravel Blade, HTML, CSS, JavaScript, and the frontend assets bundled with the project.
-- **Asset tooling:** Node.js/npm and Vite for frontend builds.
-- **Payment integration:** ABA PayWay KHQR sandbox (optional; requires merchant credentials).
-- **Development/testing tools:** Composer scripts, PHPUnit/Pest dependencies, and Laravel Artisan.
+- **Backend:** PHP `^8.3`, Laravel Framework `^13.8` (the project has been developed against Laravel 13.x).
+- **Database:** MariaDB 10.4+ is the primary target for the supplied SQL scripts; validate any MySQL alternative before applying the scripts.
+- **Frontend:** Laravel Blade, HTML, CSS, JavaScript, and Bootstrap-based UI components/icons used by the views.
+- **Asset tooling:** Node.js, npm, Vite, and Tailwind CSS tooling.
+- **Payment:** ABA PayWay KHQR sandbox integration (optional and credential-dependent).
+- **Other integrations:** Google OAuth sign-in (optional) and Telegram Bot notifications/fulfillment controls (optional).
 
 ## Requirements
 
-Install the following before starting:
+Install the following:
 
-- PHP **8.3 or newer**.
+- PHP 8.3 or newer with the Laravel-required extensions, including PDO MySQL, OpenSSL, Mbstring, cURL, DOM, Fileinfo, JSON, XML, and Tokenizer.
 - Composer 2.
-- MariaDB **10.4 or newer** (recommended for the supplied SQL scripts), or a compatible MySQL 8.x server after validating the scripts.
-- Node.js and npm (for Vite asset installation/builds).
+- MariaDB 10.4+ (recommended for the provided SQL scripts).
+- Node.js and npm (to install/build frontend assets).
 - Git.
-- A local web server such as Laravel's Artisan server, XAMPP, or another PHP-compatible server.
+- A local PHP web server such as Laravel Artisan, XAMPP, or another compatible environment.
 
-Enable the PHP extensions required by Laravel and PDO MySQL, including `pdo_mysql`, `mbstring`, `openssl`, `ctype`, `curl`, `dom`, `fileinfo`, `filter`, `hash`, `json`, `pcre`, `session`, `tokenizer`, and `xml`. Check your actual environment with:
+Check PHP/Composer platform compatibility with:
 
 ```bash
 composer check-platform-reqs
 ```
 
----
-
 ## Installation
 
 ### 1. Clone the repository
 
-Replace `<repository-url>` with your GitHub repository URL:
+Replace the URL with your own GitHub repository URL:
 
 ```bash
-git clone <repository-url>
-cd Coffee-Corner-Aura
+git clone <your-repository-url>
+cd <your-project-folder>
 ```
 
 ### 2. Install PHP dependencies
@@ -165,25 +162,25 @@ cd Coffee-Corner-Aura
 composer install
 ```
 
-### 3. Create the local environment file
+### 3. Create your local environment file
 
-**Windows PowerShell:**
+Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-**macOS / Linux / Git Bash:**
+macOS, Linux, or Git Bash:
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and configure the database connection. Never commit this file.
+Edit `.env` for your local database and integrations. Never commit `.env`.
 
-### 4. Configure the database
+### 4. Create and configure the database
 
-Create a new empty database, for example `sarona`, using `utf8mb4`. See [Database setup](#database-setup) before importing or upgrading any SQL.
+Create a new MariaDB database (for example `sarona01`) using `utf8mb4`. Follow [Database setup](#database-setup) before opening the application.
 
 ### 5. Generate the application key
 
@@ -192,90 +189,77 @@ php artisan key:generate
 php artisan optimize:clear
 ```
 
-### 6. Install frontend dependencies and build assets
+### 6. Install and build frontend assets
 
 ```bash
 npm install
 npm run build
 ```
 
-For frontend development with hot reload, use:
+During frontend development, run `npm run dev` in a separate terminal.
 
-```bash
-npm run dev
-```
-
-### 7. Start Laravel
+### 7. Start the Laravel application
 
 ```bash
 php artisan serve
 ```
 
-Open the URL printed by Artisan, normally:
-
-```text
-http://127.0.0.1:8000
-```
-
----
+Open the local URL printed by Artisan, normally `http://127.0.0.1:8000`.
 
 ## Database setup
 
-### Important database design note
+### Important: use the SQL-first upgrade path
 
-The project has a SQL-first custom schema. The repository's historical Laravel migration files are incomplete and include overlapping/duplicate custom table migrations. **Do not use `php artisan migrate:fresh`, `php artisan migrate:refresh`, or drop/recreate your existing database as a routine setup or update step.** These commands can destroy data or fail against existing tables.
+The project contains historical Laravel migrations that do not fully represent the custom business schema and may overlap with existing tables. The supplied SQL dump and additive SQL upgrade files are the documented setup path.
 
-The current application expects the project-specific tables and fields from the SQL schema plus the upgrade scripts described below.
+**Do not use `php artisan migrate:fresh`, `php artisan migrate:refresh`, `db:wipe`, or other commands that drop/recreate the database.** They can destroy existing business records or fail against the historic schema.
 
-### Fresh demo database
+### Fresh local/demo database
 
-For a new local/demo installation:
+1. Create a new empty database in MariaDB/phpMyAdmin.
+2. Import `database/sarona_demo.sql` as the base demo schema/data. Review and sanitize demo records before publishing this SQL file to a public repository.
+3. Apply the additive schema scripts to the selected database in this order:
 
-1. Create an empty database, e.g. `sarona`.
-2. Import `database/sarona_demo.sql` using phpMyAdmin or the MySQL/MariaDB command line. This file is the original base demo dump and may not include the latest application fields by itself.
-3. Run `database/role_access_upgrade.sql` to apply the role-index/customer-account compatibility update when starting from the supplied older demo dump.
-4. Run `database/01_upgrade_schema.sql` to add the newer order workflow fields, sale-time unit-cost field, payments table/indexes, and audit-history foreign-key behavior.
-5. Run `database/03_stock_nonstock_finance_upgrade.sql` to normalize product types and update the order-item insert trigger so only Stock products reduce inventory.
-6. Run `database/04_telegram_order_fulfillment.sql` to add the order event history and Telegram notification tables, and reconcile the known demo delivery/order mismatch.
-7. Optionally run `database/02_audit_stock_balance.sql` to review product quantities against recorded stock movements. This is a **read-only audit query**, not a schema migration; it does not repair or change quantities.
+   | Order | Script | Purpose |
+   |---:|---|---|
+   | 1 | `database/role_access_upgrade.sql` | Compatibility update for role access/indexes on older imported databases. |
+   | 2 | `database/01_upgrade_schema.sql` | Order source/status fields, order notes, sale-time item cost, payment support, and related schema updates. |
+   | 3 | `database/03_stock_nonstock_finance_upgrade.sql` | Stock/Non-stock normalization and stock deduction trigger update. |
+   | 4 | `database/04_telegram_order_fulfillment.sql` | Order status history and Telegram order-notification support. |
+   | 5 | `database/05_google_sign_in.sql` | Optional Google account-linking field/index. |
+   | 6 | `database/06_customer_reviews_moderation.sql` | Customer review approval flag. |
+   | 7 | `database/07_pos_delivery_workflow.sql` | POS delivery/order-channel support and Cash on Delivery payment method. |
+   | 8 | `database/08_storefront_customer_service.sql` | Store contact/enquiry table. |
+   | 9 | `database/09_cod_cash_collection.sql` | COD amount, collection timestamp, collector, and collection note fields. |
+   | 10 | `database/10_store_inbox_replies.sql` | Customer/admin conversation replies and inbox support. |
+   | 11 | `database/11_admin_delivery_fee_settings.sql` | Editable delivery fee column in Store Settings. |
 
-The expected SQL upgrade files should be present in the repository under `database/`:
+4. `database/02_audit_stock_balance.sql` is a **read-only audit query**, not a schema upgrade. Run it separately when you want to compare product quantities with recorded stock movements. It does not repair or change stock.
+5. Run `php artisan optimize:clear` after applying schema updates.
 
-```text
-database/
-├── sarona_demo.sql
-├── role_access_upgrade.sql
-├── 01_upgrade_schema.sql
-├── 02_audit_stock_balance.sql
-├── 03_stock_nonstock_finance_upgrade.sql
-└── 04_telegram_order_fulfillment.sql
-```
+The delivery-fee upgrade also has a Laravel migration at `database/migrations/2026_11_09_000001_add_delivery_fee_to_settings_table.php` when the installation has a healthy migration history. Use **either** the SQL script `11_admin_delivery_fee_settings.sql` or that migration; do not apply both. For the project's SQL-first setup, the SQL script is the recommended method.
 
-If one of the upgrade files is absent from your working copy, retrieve it from the corresponding project update patch before documenting the repository as ready for a fresh install.
+### Existing database with live/demo records
 
-### Existing database
+1. Export a full backup before making changes.
+2. Do not import `sarona_demo.sql` over an existing database.
+3. Check which upgrade scripts have already been applied and apply only missing scripts, in the documented order.
+4. Run upgrades against the database configured by `.env`, not an unintended database selected in phpMyAdmin.
+5. Never use `migrate:fresh`, `db:wipe`, or drop/recreate commands on the working database.
 
-If you already have a working `sarona` / `sarona01` database containing real project data:
+Some SQL upgrade scripts are written to be re-runnable, but always back up first and test against a copy. Do not assume every historic migration or third-party SQL edit is reversible.
 
-1. Export a complete backup first.
-2. Do **not** import `sarona_demo.sql` over the existing database.
-3. Check which upgrade scripts have already been applied.
-4. Apply only the missing upgrade scripts, in the order above, after confirming the target database selected in phpMyAdmin.
-5. Do not import the stock audit query as a repair script. It only reports differences.
+### Data notes
 
-The `01_upgrade_schema.sql`, `03_stock_nonstock_finance_upgrade.sql`, and `04_telegram_order_fulfillment.sql` scripts are intended as additive/compatibility updates. Always test them on a backup before running them against a database that contains important records.
-
-### Historical data notes
-
-- The original order-item schema did not always store cost at the time of sale. When `01_upgrade_schema.sql` adds `order_items.unit_cost`, older rows are backfilled using the product's current cost as the best available estimate. This does not reconstruct the exact historical cost at the original sale date.
-- The stock audit can reveal quantity differences. It does not determine the reason for a discrepancy and does not automatically adjust stock.
-- Legacy `Drink`/`Food` product types are mapped to Stock to preserve the previous stock-tracking behavior.
-
----
+- Older `order_items` rows may have their sale-time cost backfilled from the product's current cost. This is an estimate; it cannot reconstruct the exact historical cost at the original sale date.
+- The stock audit reports discrepancies; it does not identify their cause or change quantities.
+- Existing contact messages without a linked `user_id` remain in the admin inbox and are not automatically linked to an account by email/phone matching.
 
 ## Environment configuration
 
-At minimum, configure these settings in your local `.env` file:
+The `.env.example` file contains the basic application, database, Telegram, and callback placeholders. The integration variables below may need to be added to your local `.env` when the related feature is enabled.
+
+### Core application/database
 
 ```dotenv
 APP_NAME="Coffee Corner Aura"
@@ -287,7 +271,7 @@ APP_URL=http://127.0.0.1:8000
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=sarona
+DB_DATABASE=sarona01
 DB_USERNAME=root
 DB_PASSWORD=
 
@@ -295,379 +279,297 @@ SESSION_DRIVER=file
 CACHE_STORE=file
 QUEUE_CONNECTION=sync
 FILESYSTEM_DISK=public
+```
 
-MAIL_MAILER=log
-MAIL_FROM_ADDRESS="hello@example.test"
-MAIL_FROM_NAME="${APP_NAME}"
+Use your own database name and credentials. `APP_KEY` is generated by `php artisan key:generate`.
 
-# ABA PayWay sandbox (optional)
+### ABA PayWay sandbox
+
+```dotenv
 PAYWAY_BASE_URL=https://checkout-sandbox.payway.com.kh
 PAYWAY_MERCHANT_ID=
 PAYWAY_API_KEY=
-PAYWAY_CALLBACK_URL=
+PAYWAY_CALLBACK_URL=https://YOUR-PUBLIC-HTTPS-DOMAIN/store/payments/payway/callback
 PAYWAY_CURRENCY=USD
 PAYWAY_PAYMENT_OPTION=abapay_khqr
 PAYWAY_LIFETIME=15
 PAYWAY_QR_IMAGE_TEMPLATE=template3_color
+```
 
-# Telegram order notifications (optional; website order workflow)
+### Google sign-in (optional)
+
+```dotenv
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=https://YOUR-DOMAIN/auth/google/callback
+```
+
+Configure the same redirect URI in the Google OAuth client settings. Google sign-in requires correctly configured OAuth credentials and HTTPS callback reachability in the deployed environment.
+
+### Telegram bot notifications (optional)
+
+```dotenv
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_GROUP_CHAT_ID=
 TELEGRAM_WEBHOOK_SECRET=
 TELEGRAM_ADMIN_IDS=
 ```
 
-Update `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` to match your local database. `APP_KEY` is generated by `php artisan key:generate`.
+`TELEGRAM_ADMIN_IDS` is a comma-separated list of numeric Telegram user IDs authorized to perform Telegram fulfillment actions. Keep the bot token, chat ID when private, webhook secret, and administrator IDs out of source control.
 
-For a production deployment, set `APP_ENV=production`, `APP_DEBUG=false`, configure a real HTTPS `APP_URL`, use a restricted database user, and configure an appropriate mail driver. Never expose credentials or enable debug mode on a public server.
+### Delivery fee fallback
 
----
+```dotenv
+WEB_DELIVERY_FEE=2.00
+```
 
-## ABA PayWay sandbox setup
+The administrator-saved Store Settings value takes precedence once the delivery fee database column is installed and a value has been saved. The environment value is a fallback when the stored value is `NULL`/not yet configured. The setting affects new delivery orders only.
 
-ABA PayWay is optional. Cash/POS and website functionality that does not require KHQR can be tested without configuring PayWay. KHQR sandbox payments require ABA-provided sandbox merchant credentials.
+## Payment integration
 
-Configure these values in `.env`:
+ABA PayWay is optional. Local cash-based POS usage and other non-KHQR workflows can be tested without enabling KHQR. KHQR sandbox transactions require merchant credentials issued for the sandbox environment.
 
-| Variable | Purpose |
+Important behavior:
+
+- Use the sandbox base URL for sandbox credentials.
+- `PAYWAY_CALLBACK_URL` must be a public HTTPS URL reachable by ABA. A local `127.0.0.1` address is not reachable by ABA.
+- For local testing, a public HTTPS development tunnel such as ngrok can expose the local Laravel server. Update `APP_URL` and `PAYWAY_CALLBACK_URL` to the currently assigned HTTPS host.
+- After changing `.env`, run `php artisan optimize:clear` and restart local services if necessary.
+- A browser redirect or QR scan is not, by itself, proof of payment. The application must verify the transaction server-to-server with ABA before marking an order paid.
+- Never commit merchant IDs/secrets, raw payment responses, QR payloads, transaction references, or bank references.
+
+## Google sign-in (optional)
+
+Google OAuth supports the project's staff/customer sign-in flow when configured. The application uses the Google API client dependency. Set the OAuth client ID, secret, and redirect URI in `.env`, configure the same redirect URI with Google, and keep credentials private. Test staff and customer audiences separately; OAuth sign-in should not grant a more privileged role than the account's assigned role.
+
+## Telegram notifications and fulfillment
+
+Telegram is an additional notification/management channel; the Admin Orders page remains the primary in-app workflow. The bot and public HTTPS webhook must be configured before Telegram can deliver messages or process buttons.
+
+### Configure the bot
+
+1. Create a bot using Telegram's official `@BotFather` and keep its token private.
+2. Add the bot to the intended administrator group and grant permission to send messages.
+3. Set `TELEGRAM_GROUP_CHAT_ID` to the current numeric group/supergroup ID. When a Telegram group is upgraded to a supergroup, Telegram assigns a new chat ID; update the environment value if the old ID returns a “group chat was upgraded to a supergroup chat” error. Supergroup IDs commonly begin with `-100`.
+4. Add trusted numeric Telegram user IDs to `TELEGRAM_ADMIN_IDS`.
+5. Generate a random webhook secret, for example:
+
+   ```bash
+   php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+   ```
+
+6. Configure the `.env` values and run `php artisan optimize:clear`.
+7. Register the webhook at `https://YOUR-DOMAIN/telegram/webhook` with Telegram's `setWebhook` method and the same secret in the `secret_token` property. The Laravel endpoint validates the Telegram secret header before processing updates.
+
+Telegram actions are restricted to configured administrators and update the shared order/delivery records. A Telegram outage should not be treated as evidence that an order was not saved: verify the order in Admin → Orders and inspect `storage/logs/laravel.log` for the notification error.
+
+If a bot token has appeared in a URL in logs, screenshots, a public issue, or a repository, revoke it with BotFather and replace it in `.env`. Removing it from the latest commit alone does not invalidate an exposed token.
+
+## Order and delivery workflows
+
+### Website order
+
+1. A signed-in customer creates a cart and submits checkout.
+2. The order, line items, and (for a delivery type) delivery information are saved in the database.
+3. For KHQR, the order remains unpaid until the server-side PayWay verification confirms the transaction amount and currency.
+4. Paid orders wait for fulfillment confirmation; COD orders remain unpaid while staff prepare and dispatch them.
+5. Authorized staff advance the order through the correct fulfillment stages. The customer tracking page reads the same order state and event history.
+
+### POS delivery order using COD
+
+1. In POS, select **Order type: Delivery**.
+2. Select **Payment method: Cash on Delivery**.
+3. Enter the customer contact and delivery address, then save the order. It should remain **Unpaid**.
+4. Open **Admin → Orders**. The unified visual delivery panel appears for Delivery-type orders from POS and website.
+5. Advance one step at a time: `Pending → Confirmed → Preparing → Ready → Out for delivery → Delivered`.
+6. At final handoff, the Cash Settlement modal displays the amount due. Enter the amount actually received, tick the cash-received confirmation, and optionally add a note.
+7. The server checks that the amount matches the order's exact final price. Only then is the order marked Paid/Delivered and the cash-collection event recorded.
+
+For pickup orders, the fulfillment path ends at collection and does not include an Out for delivery stage.
+
+### COD accounting rule
+
+The COD patch does not create a second manual sales-income transaction when cash is collected. Sales revenue is recognized from the order's paid state. This avoids double-counting the same sale in finance reports. Do not mark a COD order paid before the customer actually hands over the money.
+
+## AJAX updates and admin notifications
+
+The admin experience uses lightweight AJAX polling (not WebSockets) to keep order information and actionable counts current without repeatedly reloading the whole page.
+
+- Admin action badges refresh approximately every 10 seconds and hide when their count is zero; large counts display as `99+`.
+- The Orders list checks for new/updated orders approximately every 12 seconds and updates the relevant table content without a full-page reload.
+- New website orders can trigger an in-app toast/notification with the order reference and a link to the Orders tab.
+- Polling pauses while the browser tab is hidden and resumes when it becomes visible.
+- Delivery status transitions update the visual stepper, order/payment indicators, and activity information after the server confirms the change.
+- Telegram message refresh is deferred after the HTTP response so a slow Telegram API request does not unnecessarily delay the admin action.
+
+The database remains the source of truth. Notifications are a convenience layer; a failed Telegram or browser notification does not undo a saved order. Staff should check Admin → Orders for pending work after reconnecting.
+
+### Action badge meaning
+
+| Admin area | Count represents |
 |---|---|
-| `PAYWAY_BASE_URL` | ABA sandbox API base URL. |
-| `PAYWAY_MERCHANT_ID` | Your sandbox merchant ID. |
-| `PAYWAY_API_KEY` | Your sandbox API key/secret. Keep it private. |
-| `PAYWAY_CALLBACK_URL` | Public HTTPS callback URL that ABA can reach. |
-| `PAYWAY_CURRENCY` | Payment currency, normally `USD` for this setup. |
-| `PAYWAY_PAYMENT_OPTION` | Payment option, default `abapay_khqr`. |
-| `PAYWAY_LIFETIME` | QR/payment lifetime in minutes. |
-| `PAYWAY_QR_IMAGE_TEMPLATE` | QR image template identifier. |
-
-### Testing locally with ngrok
-
-ABA cannot call a `127.0.0.1` callback on your computer. For local sandbox tests, expose the Laravel server through a public HTTPS tunnel such as ngrok.
-
-**Terminal 1 – start Laravel:**
-
-```bash
-php artisan serve --host=127.0.0.1 --port=8000
-```
-
-**Terminal 2 – start ngrok:**
-
-```bash
-ngrok http 8000
-```
-
-Copy the HTTPS forwarding domain shown by ngrok and set:
-
-```dotenv
-APP_URL=https://YOUR-NGROK-DOMAIN
-PAYWAY_CALLBACK_URL=https://YOUR-NGROK-DOMAIN/web/payments/payway/callback
-```
-
-Replace `YOUR-NGROK-DOMAIN` with the current domain issued by ngrok. If the ngrok domain changes, update `.env` and any callback/allowlist configuration required by ABA, then run:
-
-```bash
-php artisan optimize:clear
-```
-
-Keep both Laravel and ngrok running while testing. Do not share your ngrok authtoken, merchant API key, or payment credentials. A tunnel is for development/testing; use a stable HTTPS domain and the correct production PayWay configuration for deployment.
-
-The application uses a public callback route at `/web/payments/payway/callback`. The callback is treated as a notification; the application should verify transaction status server-to-server before considering an order paid. Do not trust a browser redirect alone as proof of payment.
-
----
-
-## Telegram order notifications and fulfillment
-
-The Telegram integration is optional until a bot and public HTTPS webhook have been configured. It does not create a second order database: Telegram actions update the same `orders` and `delivery` rows used by the administrator dashboard and customer order-tracking page.
-
-### Order lifecycle
-
-1. A customer submits a website checkout. The order and its item/delivery records are saved as `pending`; stock reservation follows the existing checkout workflow.
-2. The customer pays through ABA KHQR. A successful browser redirect or the callback body is **not** treated as payment proof. Laravel verifies the transaction with ABA's server-side Check Transaction request.
-3. Only after ABA confirms the amount and currency does the order become paid. The order remains `pending` until an administrator accepts it.
-4. The application posts one paid-order notification to the configured Telegram group. The message includes the order reference, customer contact, items, total, and delivery address when applicable.
-5. An allowlisted administrator presses the single next-step button. The Telegram webhook validates the Telegram secret header, group chat ID, Telegram user ID, message ID, and signed callback data before updating the database.
-6. The order and delivery status are updated in the same database transaction. The original Telegram message is edited to show the latest status and the next permitted action. The customer order page polls the same database state and shows its progress and audit history.
-
-Delivery orders use this sequence:
-
-`Pending → Confirmed → Preparing → Ready → Out for delivery → Delivered`
-
-Store-pickup orders use:
-
-`Pending → Confirmed → Preparing → Ready for pickup → Collected`
-
-Every new status transition is written to `order_status_history`, including the actor and Telegram identity where applicable. Duplicate or out-of-order Telegram button presses are rejected; the bot refreshes the original group message to the current state. Cashiers can see website orders but cannot advance them. Administrators can also use the admin order screen as a controlled fallback.
-
-### Create and configure the Telegram bot
-
-1. Create a bot with Telegram's official **@BotFather** account and copy its bot token. Keep the token private.
-2. Add the bot to your administrator group and give it permission to send messages. Use the group's numeric chat ID as `TELEGRAM_GROUP_CHAT_ID` (supergroups commonly have a negative ID beginning with `-100`).
-3. Add the numeric Telegram user IDs of trusted administrators, comma-separated, to `TELEGRAM_ADMIN_IDS`. Group membership alone does not grant permission to press order buttons.
-4. Generate a random webhook secret containing only letters, numbers, `_` or `-`. For example, run `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"` and put the result into `TELEGRAM_WEBHOOK_SECRET`.
-5. Configure `.env`:
-
-```dotenv
-TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
-TELEGRAM_GROUP_CHAT_ID=YOUR_GROUP_CHAT_ID
-TELEGRAM_WEBHOOK_SECRET=YOUR_RANDOM_WEBHOOK_SECRET
-TELEGRAM_ADMIN_IDS=YOUR_TELEGRAM_USER_ID,ANOTHER_ADMIN_USER_ID
-```
-
-6. Use a public HTTPS domain. For local testing, Laravel may be exposed through ngrok as described in the PayWay section. Set `APP_URL` to that HTTPS origin, then clear cached configuration:
-
-```bash
-php artisan optimize:clear
-```
-
-7. Register the webhook with Telegram. Replace the placeholders locally; do not paste the token or secret into source control or public chat:
-
-```bash
-curl -X POST "https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://YOUR_PUBLIC_DOMAIN/telegram/webhook","secret_token":"YOUR_RANDOM_WEBHOOK_SECRET","allowed_updates":["callback_query"]}'
-```
-
-The webhook endpoint is `/telegram/webhook`. Telegram sends the `X-Telegram-Bot-Api-Secret-Token` header; Laravel checks this header before processing an update. Keep the public HTTPS endpoint online while using Telegram actions. If the tunnel URL changes, register the new webhook URL again.
-
-### Demo testing checklist
-
-- Place a website order and check that it appears as `pending` and unpaid in the database.
-- Complete the ABA sandbox payment and wait for Laravel's server-side verification. Confirm that the Telegram group receives exactly one notification only after payment is verified.
-- Press **Confirm order** as an allowlisted administrator. Check that both `orders.order_status` and, for delivery orders, `delivery.status` become `confirmed`.
-- Advance each button one step at a time. Check the original Telegram message, admin order list, delivery register, customer tracking page, and `order_status_history` after each action.
-- Try pressing a stale button or using a Telegram account not in the allowlist; it must not change the database.
-- Test a pickup order and verify that it does not receive an `Out for delivery` step.
-
-The Telegram bot token, numeric group ID, webhook secret, allowlisted administrator IDs, and public HTTPS webhook are deployment settings. Do not commit `.env`. A paid delivery cancellation does not automatically refund a payment; record the appropriate refund/adjustment through the shop's accounting process.
-
----
-
-## Run the application
-
-Typical local development workflow:
-
-```bash
-# Terminal 1
-php artisan serve
-
-# Terminal 2 (optional, for frontend asset development)
-npm run dev
-```
-
-After changing `.env`, routes, configuration, or Blade files, clear Laravel's cached state:
-
-```bash
-php artisan optimize:clear
-```
-
-Useful commands:
-
-```bash
-php artisan route:list
-php artisan route:list --name=admin.orders
-php artisan route:list --name=admin.exports
-php artisan test
-npm run build
-```
-
----
-
-## Main application URLs
-
-The exact routes are defined in `routes/web.php`. The main entry points are:
-
-| Area | URL | Access |
-|---|---|---|
-| Staff login | `/` | Administrator / Cashier login page |
-| Administrator dashboard | `/admin` | Administrator |
-| POS | `/pos` | Administrator / Cashier |
-| Cashier workspace | `/cashier` | Cashier |
-| Website home | `/web` | Public |
-| Website shop | `/web/shop` | Public |
-| Website cart | `/web/cart` | Public cart; checkout requires customer login |
-| Customer login | `/web/login` | Public |
-| Customer registration | `/web/register` | Public |
-| Customer account | `/web/account` | Customer |
-| Administrator orders | `/admin/orders` | Administrator |
-| Income & Expenses | `/admin/expense-income` | Administrator |
-| Settings | `/admin/meanleap/setting` | Administrator |
-| Customer accounts | `/admin/user` | Administrator |
-
-Use the application navigation to move between management pages. Some older URLs are retained as redirects for compatibility.
-
----
-
-## Exports, filtering, and pagination
-
-Administrator list pages provide relevant search/filter controls and pagination where implemented. The Orders screen supports order-level searching/filtering and expandable line-item details.
-
-Export actions are available for supported administration lists, including products, categories, suppliers, customers/customer accounts, staff accounts, accounting categories, offers, orders, order items, purchases, inventory, transactions, deliveries, and reviews.
-
-- **Excel export:** generated as UTF-8 CSV, which can be opened by Microsoft Excel and other spreadsheet applications. It is not an `.xlsx` workbook.
-- **PDF export:** opens a print-ready report. Choose **Save as PDF** in the browser's print dialog.
-- Exports use the selected list filters and are designed to include all matching records rather than only the current visible pagination page.
-
-Product and supplier tables do not have a reliable created-at timestamp in the supplied schema, so they should be sorted by available fields such as ID/name rather than displaying a fabricated creation date.
-
----
+| Orders | Orders awaiting fulfillment (pending status). |
+| Delivery | Deliveries not yet delivered or cancelled. |
+| Inventory/stock | Active stock-tracked products with quantity at or below zero. |
+| Reviews | Reviews awaiting administrator approval. |
+| Customer enquiries | Unread enquiries and unread customer replies on unresolved conversations. |
 
 ## Inventory and finance rules
 
-- Stock-tracked products are checked before a sale and reduced when an order item is inserted.
-- Non-stock products do not have an inventory balance and do not reduce quantity during sales.
-- Purchase receipts and manual inventory adjustments are intended to create stock movement history for Stock products.
-- Sale-time product cost is saved to `order_items.unit_cost` for new orders so future cost changes do not rewrite the cost basis of older sales.
-- The database stock trigger is part of the inventory workflow. Apply `03_stock_nonstock_finance_upgrade.sql` before selling Non-stock products.
-- Do not manually edit or delete historical stock movements without understanding the related product quantity, purchase, and order records.
-- Product classification is protected after historical activity. If the wrong type was selected, deactivate the product and create a replacement with the correct type rather than reinterpreting old records.
-- Paid orders and payment history should be corrected through a controlled adjustment/refund process, not by casually changing saved order lines.
+- **Stock** products track available quantity. Sales reduce stock; purchase receipts/valid adjustments increase stock; insufficient stock should prevent overselling.
+- **Non-stock** products do not use an inventory balance and are excluded from stock deduction.
+- The order-item record stores a sale-time `unit_cost` snapshot for more reliable COGS reporting on new sales.
+- Sales revenue is derived from paid POS/website orders.
+- Manual finance entries are intended for non-sale expenses (for example utilities, rent, maintenance, or operating supplies). Do not enter a paid order as manual income as well.
+- Inventory purchases are cash outflows; inventory cost is recognized as COGS when items are sold. Do not subtract the same purchase cost again from profit.
+- Historical cost backfills may be estimates where sale-time cost was not recorded originally.
 
----
+## Useful routes
 
-## Validation and account security
+Exact route definitions live in `routes/web.php`. Main paths in the current storefront route family include:
 
-- Forms use client-side validation feedback and Laravel server-side validation rules where implemented.
-- Invalid required fields are highlighted with a red border and field-level feedback.
-- Password fields include show/hide controls on supported login and account forms.
-- Passwords are stored using Laravel password hashing.
-- Administrator, cashier, and customer routes use authentication and role middleware.
-- Administrator/cashier account management is separate from customer account management.
-- Payment status must be confirmed by the payment integration, not by a client-side message.
+| Area | Path | Access |
+|---|---|---|
+| Staff login | `/` | Staff login page |
+| Admin dashboard | `/admin` | Administrator |
+| POS | `/pos` | Administrator / Cashier |
+| Cashier workspace | `/cashier` | Cashier |
+| Storefront shop | `/store/shop` | Public |
+| Storefront cart | `/store/cart` | Public cart |
+| Customer login | `/store/login` | Public |
+| Customer registration | `/store/register` | Public |
+| Customer account | `/store/account` | Customer |
+| Customer inbox | `/store/inbox` | Customer |
+| Customer checkout | `/store/checkout` | Customer |
+| Customer order tracking | `/store/orders/{orderId}` | Owner customer account |
+| Admin orders | `/admin/orders` | Administrator |
+| Admin delivery register | `/admin/delivery` | Administrator |
+| Customer enquiries | `/admin/customer-service` | Administrator |
+| Admin reviews | `/admin/reviews` | Administrator |
+| Inventory | `/admin/inventory` | Administrator |
+| Store settings | `/admin/meanleap/setting` | Administrator |
+| Finance | `/admin/expense-income` | Administrator |
 
-Client-side validation improves usability but is not a security boundary. All requests must continue to be validated and authorized by the backend.
+Use the application navigation where possible; some legacy paths are retained for compatibility.
 
----
+## Run and test
 
-## Testing and verification
-
-Run the project checks from the repository root:
+Start the application:
 
 ```bash
-composer check-platform-reqs
-php artisan route:list
-php artisan test
+php artisan serve
+```
+
+Run frontend hot reload in another terminal if needed:
+
+```bash
+npm run dev
+```
+
+Build production frontend assets:
+
+```bash
 npm run build
 ```
 
-Recommended manual test checklist:
+Useful checks:
 
-- [ ] Staff login works for an active Administrator and Cashier account.
-- [ ] Cashiers cannot access administrator-only pages.
-- [ ] Customer registration/login works and customers can only view their own orders.
-- [ ] Add to Cart works from both the website home page and Shop page.
-- [ ] Cart quantity updates and item removal update the cart count and totals.
-- [ ] Active offers appear on the website and discounted prices carry through cart/checkout.
-- [ ] POS checkout creates the expected order and payment status.
-- [ ] KHQR sandbox test is confirmed through the server-side payment status flow.
-- [ ] Stock products reduce quantity and create a stock movement on sale.
-- [ ] Non-stock products can be sold without quantity deduction.
-- [ ] Purchases/stock adjustments affect only eligible Stock products.
-- [ ] Clicking an order row displays its sold item details.
-- [ ] Order total summaries remain consistent when changing pagination pages.
-- [ ] Income/expense totals reconcile with paid orders, purchase records, and manual transactions.
-- [ ] CSV and print/PDF exports respect the chosen filters.
-- [ ] Empty/invalid form submissions show validation errors and do not save invalid data.
-
-A passing syntax or route check does not replace browser, database, inventory, or payment integration testing. Always test against a disposable or backed-up database first.
-
----
-
-## GitHub publishing checklist
-
-Before pushing this project to a public GitHub repository, check the following carefully.
-
-### Never commit secrets or private data
-
-Do **not** commit:
-
-- `.env` or any real environment file.
-- ABA PayWay merchant API keys, ngrok authtokens, database passwords, or production credentials.
-- Real customer names, phone numbers, emails, or account details.
-- Real payment QR payloads, callback payloads, transaction responses, or bank references.
-- Production database exports or the separate personal database file `sarona (7).sql`.
-- Laravel logs, session files, cache contents, or local backups.
-- `vendor/` or `node_modules/`.
-
-The original development archive used during project review contained a local `.env` file. Make sure it is not tracked in Git. If a real `.env` or credential was ever pushed, deleting it in a new commit is not enough: rotate the exposed credentials and remove the secret from Git history.
-
-### Confirm ignored files are not tracked
-
-The repository `.gitignore` should contain at least:
-
-```gitignore
-.env
-.env.*
-!.env.example
-/vendor
-/node_modules
-/public/build
-/public/hot
-/storage/logs/*
-/storage/framework/sessions/*
+```bash
+composer check-platform-reqs
+php artisan optimize:clear
+php artisan route:list
+php artisan test
 ```
 
-Check tracked files before committing:
+### Recommended manual test checklist
+
+- [ ] Administrator and cashier login work; cashier cannot access administrator-only routes.
+- [ ] Customer registration/login and customer-owned order access work.
+- [ ] Product browsing, cart updates, and checkout work.
+- [ ] Website and POS orders save the correct item, total, source, and payment state.
+- [ ] KHQR is only marked paid after server-side PayWay verification.
+- [ ] POS Delivery + COD appears in Admin → Orders and remains unpaid until the final cash handoff.
+- [ ] Wrong COD amount or missing confirmation is rejected; correct amount records collector/time/note.
+- [ ] Delivery stage changes update the admin stepper and customer tracking page.
+- [ ] New website orders appear in Admin → Orders and produce in-app notifications when the admin page is open.
+- [ ] Admin action badge counts match pending items in each tab.
+- [ ] Editable delivery fee is used for new POS and website delivery orders; pickup/takeaway is not charged.
+- [ ] Optional fields can be left blank, while required and conditional fields remain validated.
+- [ ] Signed-in customer enquiries appear in My Account → Inbox; admin replies are visible to the customer.
+- [ ] Guest enquiries remain manageable by the admin and are not exposed to another account.
+- [ ] Reviews remain unpublished until approved by an administrator.
+- [ ] Stock products reduce quantity; Non-stock products do not.
+- [ ] Finance report totals do not double-count paid orders or inventory purchases.
+- [ ] Telegram notification and webhook work with the current bot token and current group/supergroup chat ID.
+
+Static syntax checks are not a substitute for browser/database/payment testing. Test with a backed-up or disposable database and sandbox payment credentials.
+
+## GitHub and security checklist
+
+Before pushing to a public GitHub repository, review every staged file.
+
+### Never commit
+
+- `.env`, production environment files, API secrets, passwords, OAuth client secrets, PayWay merchant keys, Telegram bot tokens, webhook secrets, or ngrok tokens.
+- Customer exports, real database backups, unredacted SQL dumps, personal phone/email/address details, payment QR payloads, callback payloads, transaction responses, or bank references.
+- Laravel logs, local session/cache files, generated dependencies, `vendor/`, or `node_modules/`.
+- Uploaded customer files or private media unless they are intentionally public and licensed for redistribution.
+
+The demo SQL file `database/sarona_demo.sql` should be reviewed and anonymized before public publication. A live database export must never be committed. Keep numbered schema upgrade scripts, because they are part of the documented setup process.
+
+The root `.gitignore` already excludes common Laravel runtime/dependency files and `.env`; verify your current copy still does. Add local dump patterns if needed without ignoring the numbered schema upgrade scripts, for example:
+
+```gitignore
+# Local database backups/exports (keep documented upgrade scripts tracked)
+/database/*backup*.sql
+/database/*dump*.sql
+/database/sarona01*.sql
+*.sql.gz
+```
+
+Before staging:
 
 ```bash
 git status --short
 git ls-files .env
 ```
 
-If `.env` is already tracked, remove it from Git's index while keeping your local file:
+If a secret was ever committed, rotating it is essential. Deleting it in a later commit does not remove it from Git history.
+
+Suggested final publishing workflow:
 
 ```bash
-git rm --cached .env
-```
-
-If `vendor` or `node_modules` were previously committed, untrack them too:
-
-```bash
-git rm -r --cached vendor node_modules
-```
-
-Then review the staged changes. Do not remove local files unless you intend to.
-
-### Publish a safe example database
-
-If you include `database/sarona_demo.sql`, keep it strictly as demo data. Replace real people and transaction information with fictional records. Do not add `sarona (7).sql` or an unfiltered export of your working database to the repository. Review payment-related columns (`qr_string`, `qr_image`, `raw_response`, `callback_payload`, `bank_ref`, and `tran_id`) before publishing any SQL file.
-
-### Suggested Git commands
-
-```bash
+git add README.md LICENSE
+# Review all other source changes and staged filenames before adding them.
 git status --short
-git add .
-git status --short
-git commit -m "Document Coffee Corner Aura project"
-git push -u origin main
+git diff --cached --check
+git commit -m "Update project documentation and license"
+git fetch origin
+git pull --rebase origin main
+git push -u origin HEAD
 ```
 
-Before `git add .`, review the status output and ensure there are no secrets, personal database exports, logs, or generated dependency folders staged for commit.
-
----
+Change `main` if your default branch has a different name. If the remote repository is empty, the pull step is not needed. Do not use `git push --force` to resolve a normal push rejection.
 
 ## Troubleshooting
 
-### `Route [name] not defined`
-
-Clear route/config cache and check the route name:
+### Route not found
 
 ```bash
 php artisan optimize:clear
 php artisan route:list
 ```
 
-Make sure the local `routes/web.php` includes the route definition from the latest project update.
+Confirm the relevant route exists in `routes/web.php` and the controller import/name is correct.
 
-### `SQLSTATE[42S02]` table not found or `SQLSTATE[42S22]` column not found
+### SQL table or column not found
 
 - Confirm `.env` points to the intended database.
-- Confirm the base SQL dump was imported into the correct empty database for a fresh setup.
-- Confirm the required schema upgrade scripts were applied in order.
+- Check that the base demo schema was imported only for a fresh database.
+- Check which additive SQL scripts have been applied and apply the missing one(s) in order.
 - Do not import a demo dump over a working database.
 
-### `Class ... does not exist`
-
-Run:
+### Composer class/autoload error
 
 ```bash
 composer install
@@ -675,63 +577,69 @@ composer dump-autoload
 php artisan optimize:clear
 ```
 
-Then verify the controller/model file and namespace match the route import.
-
-### Changes in `.env` are not taking effect
-
-Run:
+### `.env` changes are not taking effect
 
 ```bash
 php artisan optimize:clear
 ```
 
-Check spelling and quoting in `.env`, then restart the local development server.
+Check variable spelling/quoting and restart the local server.
 
-### Product images or shop logo are missing
+### PayWay callback or KHQR verification fails
 
-Check that the uploaded file exists under the public image/upload directory used by the relevant controller. Confirm that the web server can read the `public/` files and that the filename saved in the database matches the physical file.
+- Confirm the sandbox credentials and base URL match.
+- Confirm `PAYWAY_CALLBACK_URL` uses a public HTTPS host and the `/store/payments/payway/callback` path.
+- Confirm the current tunnel/domain is active and configured with the provider.
+- Check Laravel logs for the transaction reference and server-side verification response. Never publish API keys or raw payment payloads.
 
-### ABA callback does not arrive locally
+### Telegram notification cannot be sent
 
-- Confirm `php artisan serve` and ngrok are both running.
-- Confirm `PAYWAY_CALLBACK_URL` uses the current ngrok HTTPS domain and ends with `/web/payments/payway/callback`.
-- Run `php artisan optimize:clear` after changing `.env`.
-- Confirm the callback URL and merchant sandbox settings with ABA.
-- Check Laravel logs for the transaction reference and server-side verification result. Never paste API keys or payment secrets into public issues.
+- Check `TELEGRAM_BOT_TOKEN` and `TELEGRAM_GROUP_CHAT_ID` in the local `.env`.
+- Confirm the bot is still a member of the group and can send messages.
+- If the group was upgraded to a supergroup, update the chat ID to the new value (commonly a negative `-100...` ID).
+- Verify webhook URL/secret for Telegram button actions.
+- Run `php artisan optimize:clear` after environment changes and inspect `storage/logs/laravel.log` locally.
+- If a token is exposed in logs or source control, revoke it with BotFather and configure a new token.
 
-### Stock differs from stock logs
+### Views or Blade changes do not appear
 
-Run the read-only stock audit query in `database/02_audit_stock_balance.sql`. Review the returned product IDs and their movement histories. The query does not repair quantities. Investigate missing adjustments or historical movements before changing stock.
+```bash
+php artisan view:clear
+php artisan optimize:clear
+```
 
----
+Then refresh the browser. Check the first application exception in `storage/logs/laravel.log`; a broken exception renderer may hide the original error page.
+
+### Stock balance differs from the movement log
+
+Run the read-only query in `database/02_audit_stock_balance.sql`, review the related product's movement history, and investigate before creating an adjustment. The audit script does not correct stock automatically.
 
 ## Known limitations
 
-- The project-specific SQL schema is ahead of some historical Laravel migrations. Use the documented SQL setup/upgrade workflow; do not assume `php artisan migrate:fresh` can recreate the full business schema.
-- The original demo SQL is an older base snapshot and must be upgraded for the latest order/payment and Stock/Non-stock features.
-- Historical COGS values backfilled from current product cost are estimates, not exact historical costs.
-- The stock audit reports unexplained differences; it does not identify the cause or auto-correct inventory.
-- ABA PayWay integration is configured for sandbox testing unless valid production credentials and a production callback/domain have been separately approved and configured.
-- Excel exports are CSV files and PDF exports use the browser print dialog.
-- Live payment, concurrency, and production hosting behavior must be validated in the target environment.
-
----
+- The custom business schema is partly SQL-managed; the historical Laravel migrations do not independently recreate the full project database.
+- `database/sarona_demo.sql` is a base demo snapshot and requires the documented schema upgrade scripts for the newer workflows.
+- Historical COGS may be approximate where sale-time unit cost was not originally recorded.
+- AJAX updates use timed polling, not WebSockets or guaranteed push delivery. The database is authoritative; a badge/toast is not a durable message queue.
+- Telegram and ABA PayWay require valid external configuration and an accessible HTTPS endpoint for callbacks/webhooks.
+- PayWay is documented for sandbox testing unless production credentials, callback URL, and provider approval are separately configured.
+- CSV exports are spreadsheet-compatible CSV rather than native `.xlsx`; print/PDF reports use the browser's print-to-PDF function where implemented.
+- A production deployment still needs environment hardening, HTTPS, backups, monitoring, secure mail configuration, and end-to-end transaction testing.
 
 ## Contributing
 
-For a project contribution or local modification:
+For a project contribution or local change:
 
-1. Create a branch for the change.
-2. Keep database changes additive where possible and document any required SQL upgrade.
-3. Validate authorization, request input, stock movements, order totals, and payment status on the backend.
-4. Run PHP/route/build checks and test the relevant workflow with a non-production database.
-5. Update this README when setup requirements, routes, or workflows change.
-
----
+1. Create a feature branch.
+2. Keep schema changes additive when practical and include a numbered SQL upgrade plus an installation note.
+3. Validate authorization, request data, stock movements, order totals, and payment transitions on the server.
+4. Run PHP, route, frontend build, and relevant manual workflow checks.
+5. Update this README whenever installation, integration variables, routes, or workflows change.
 
 ## License
 
-No standalone project license file was confirmed during the project review. Add a `LICENSE` file before presenting the repository as open source, and make sure the license you choose covers the code and assets you own or are permitted to redistribute.
+This project is distributed under the [MIT License](LICENSE). The `composer.json` package metadata also declares `MIT`.
+
+Before publishing, confirm that you or your project team have the rights to license all included code, images, fonts, icons, and other assets. Third-party assets/packages remain subject to their own licenses.
 
 ---
 
