@@ -14,6 +14,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ngrok terminates HTTPS and forwards the request to the local Laravel server.
+        // Trust the forwarded host/proto/port headers so Laravel generates HTTPS redirects
+        // and secure URLs instead of redirecting downloads to plain HTTP.
+        // For production, restrict this to the known proxy IP ranges where possible.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         $middleware->alias([
             'administrator' => EnsureAdministrator::class,
             'role' => EnsureRole::class,

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountingCategoryController;
 use App\Http\Controllers\AdminExportController;
+use App\Http\Controllers\AdminCustomerServiceController;
 use App\Http\Controllers\AuthContoller;
 use App\Http\Controllers\CashTransactionController;
 use App\Http\Controllers\CashierController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockLogController;
+use App\Http\Controllers\StorefrontPageController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\GoogleAuthController;
@@ -40,6 +42,11 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
 // Keep one public storefront landing page. The old /store URL is a permanent alias.
 Route::redirect('/store', '/store/shop', 301)->name('web.home');
 Route::get('/store/shop', [CustomerOrderController::class, 'shop'])->name('web.shop');
+Route::get('/store/about', [StorefrontPageController::class, 'about'])->name('web.about');
+Route::get('/store/shipping', [StorefrontPageController::class, 'shipping'])->name('web.shipping');
+Route::get('/store/returns', [StorefrontPageController::class, 'returns'])->name('web.returns');
+Route::get('/store/contact', [StorefrontPageController::class, 'contact'])->name('web.contact');
+Route::post('/store/contact', [StorefrontPageController::class, 'submitContact'])->middleware('throttle:5,1')->name('web.contact.submit');
 Route::get('/store/product/{productId}', [CustomerOrderController::class, 'product'])->whereNumber('productId')->name('web.product.show');
 Route::get('/store/cart', [CustomerOrderController::class, 'cart'])->name('web.cart');
 Route::post('/store/cart/items/{productId}', [CustomerOrderController::class, 'addToCart'])->whereNumber('productId')->name('web.cart.add');
@@ -100,6 +107,11 @@ Route::middleware(['auth', 'role:cashier'])->prefix('cashier')->name('cashier.')
 /* Administrator-only management modules. */
 Route::middleware(['auth', 'administrator'])->group(function () {
     Route::get('/admin', [AuthContoller::class, 'dash'])->name('admin.dashboard');
+
+    // Customer-service enquiries submitted from the public storefront.
+    Route::get('/admin/customer-service', [AdminCustomerServiceController::class, 'index'])->name('admin.customer-service.index');
+    Route::get('/admin/customer-service/{contactMessage}', [AdminCustomerServiceController::class, 'show'])->whereNumber('contactMessage')->name('admin.customer-service.show');
+    Route::patch('/admin/customer-service/{contactMessage}', [AdminCustomerServiceController::class, 'update'])->whereNumber('contactMessage')->name('admin.customer-service.update');
 
     // Consistent CSV (Excel-compatible) and print-ready PDF exports for admin list tabs.
     Route::get('/admin/exports/{type}/excel', [AdminExportController::class, 'excel'])

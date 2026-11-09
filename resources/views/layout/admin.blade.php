@@ -59,6 +59,7 @@
             <a href="{{ route('reports.index') }}" class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i>Reports & analytics</a>
             <a href="{{ route('delivery.index') }}" class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i class="bi bi-truck"></i>Delivery</a>
             <a href="{{ route('reviews.index') }}" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i class="bi bi-star"></i>Reviews</a>
+            <a href="{{ route('admin.customer-service.index') }}" class="{{ request()->is('admin/customer-service*') ? 'active' : '' }}"><i class="bi bi-chat-square-text"></i>Customer enquiries</a>
         </nav>
         <div class="nav-label">People & settings</div>
         <nav class="app-nav">

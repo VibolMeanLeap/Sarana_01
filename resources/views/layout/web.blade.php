@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</title>
+    <title>@yield('web_title', $shopSettings?->shop_name ?: 'Coffee Corner')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -28,6 +28,60 @@
             background-color: #f8fafc;
             color: var(--text-dark);
             font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Google Maps in Store Footer */
+        .store-footer-map {
+            margin-top: 35px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(230, 241, 232, .13);
+        }
+
+        .store-footer-map-title {
+            color: #f0d6a7;
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .store-footer-map-description {
+            color: rgba(229, 239, 231, .65);
+            font-size: .84rem;
+            margin-bottom: 18px;
+        }
+
+        .store-footer-map-frame {
+            width: 100%;
+            height: 320px;
+            display: block;
+            border: 0;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .store-footer-map-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: #e7c58e;
+            font-size: .85rem;
+            font-weight: 700;
+            text-decoration: none;
+            margin-top: 12px;
+        }
+
+        .store-footer-map-link:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 767.98px) {
+            .store-footer-map {
+                margin-top: 25px;
+            }
+
+            .store-footer-map-frame {
+                height: 260px;
+            }
         }
 
         /* Navbar Header */
@@ -222,27 +276,163 @@
             padding: 50px 0;
         }
 
-        /* Footer */
-        footer {
-            background-color: #0b0d0e;
-            color: #94a3b8;
-            padding: 40px 0 20px 0;
-            font-size: 0.875rem;
+        /* Customer-first storefront footer */
+        .store-footer {
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at 88% 8%, rgba(220, 181, 112, .13), transparent 24%), linear-gradient(125deg, #0d241a 0%, #122f22 58%, #183b2a 100%);
+            color: #d7e2d9;
+            padding: 58px 0 22px;
+            font-size: .9rem
         }
 
-        footer a {
-            color: #cbd5e1;
+        .store-footer:before {
+            content: "";
+            position: absolute;
+            right: -160px;
+            top: -210px;
+            width: 430px;
+            height: 430px;
+            border: 1px solid rgba(240, 211, 161, .11);
+            border-radius: 50%;
+            box-shadow: 0 0 0 35px rgba(255, 255, 255, .018), 0 0 0 75px rgba(255, 255, 255, .014);
+            pointer-events: none
+        }
+
+        .store-footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
             text-decoration: none;
+            font-weight: 850;
+            font-size: 1.1rem;
+            letter-spacing: -.025em
         }
 
-        footer a:hover {
-            color: #ffffff;
+        .store-footer-mark {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            border-radius: 15px;
+            background: rgba(231, 198, 143, .13);
+            border: 1px solid rgba(231, 198, 143, .25);
+            color: #e9c991;
+            font-size: 1.25rem;
+            overflow: hidden
+        }
+
+        .store-footer-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #fff
+        }
+
+        .store-footer-copy {
+            max-width: 310px;
+            color: rgba(224, 236, 226, .66);
+            font-size: .84rem;
+            line-height: 1.8;
+            margin: 17px 0 0
+        }
+
+        .store-footer-heading {
+            color: #f0d6a7;
+            font-size: .72rem;
+            font-weight: 900;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            margin: 5px 0 17px
+        }
+
+        .store-footer-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 11px
+        }
+
+        .store-footer-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: rgba(229, 239, 231, .78);
+            font-size: .85rem;
+            text-decoration: none;
+            transition: color .18s, transform .18s
+        }
+
+        .store-footer-links a i {
+            color: #d8b978;
+            font-size: .9rem
+        }
+
+        .store-footer-links a:hover {
+            color: #fff;
+            transform: translateX(3px)
+        }
+
+        .store-footer-contact {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: rgba(229, 239, 231, .76);
+            font-size: .84rem;
+            line-height: 1.7;
+            margin-bottom: 13px
+        }
+
+        .store-footer-contact i {
+            color: #e0bd7e;
+            margin-top: 3px
+        }
+
+        .store-footer-contact a {
+            color: inherit;
+            text-decoration: none;
+            overflow-wrap: anywhere
+        }
+
+        .store-footer-contact a:hover {
+            color: #fff
+        }
+
+        .store-footer-bottom {
+            border-top: 1px solid rgba(230, 241, 232, .13);
+            margin-top: 42px;
+            padding-top: 18px;
+            color: rgba(220, 233, 223, .52);
+            font-size: .76rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .store-footer-bottom strong {
+            color: rgba(245, 218, 171, .85);
+            font-weight: 700
+        }
+
+        @media(max-width:767.98px) {
+            .store-footer {
+                padding-top: 42px
+            }
+
+            .store-footer-bottom {
+                margin-top: 30px
+            }
         }
     </style>
     <style>
         .hide-arrow::after {
-        display: none !important;
+            display: none !important;
         }
+
         :root {
             --primary-green: #10b981;
             --primary-green-hover: #059669;
@@ -395,12 +585,12 @@
             padding: 0;
             box-sizing: border-box;
         }
-    
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #ffffff;
         }
-    
+
         /* Info Bar Outer Window */
         .info-bar {
             background-color: #0b1519;
@@ -412,7 +602,7 @@
             /* Hide anything cutting outside the wrapper bounds */
             position: relative;
         }
-    
+
         /* Continuous Left-to-Right Scrolling Marquee Wrapper */
         .info-bar-marquee {
             display: flex;
@@ -421,12 +611,12 @@
             animation: scrollRight 25s linear infinite;
             /* Loops forever */
         }
-    
+
         /* Pause rotation animation on mouse hover for easy reading/clicking */
         .info-bar:hover .info-bar-marquee {
             animation-play-state: paused;
         }
-    
+
         /* Main duplicate groups flanking one another for infinite seamless looping */
         .marquee-group {
             display: flex;
@@ -438,7 +628,7 @@
             padding-right: 60px;
             /* Maintains uniform spacers when tracking sets */
         }
-    
+
         /* Individual Feature Item */
         .info-bar-item {
             display: flex;
@@ -453,11 +643,11 @@
             white-space: nowrap;
             /* Prevent copy lines breaking in mid-sentence */
         }
-    
+
         .info-bar-item:hover {
             opacity: 0.85;
         }
-    
+
         /* SVG Icon Customization */
         .info-bar-icon {
             width: 20px;
@@ -470,7 +660,7 @@
             stroke-linejoin: round;
             flex-shrink: 0;
         }
-    
+
         /* Toast Message Notification Styles */
         .toast-container {
             position: fixed;
@@ -478,7 +668,7 @@
             right: 20px;
             z-index: 1000;
         }
-    
+
         .toast {
             background-color: white;
             color: black;
@@ -492,41 +682,41 @@
             opacity: 0;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-    
+
         .toast.show {
             transform: translateY(0);
             opacity: 1;
         }
-    
+
         /* Infinite Left-to-Right Scrolling Animation Core */
         @keyframes scrollRight {
             0% {
                 transform: translateX(-50%);
                 /* Starts offset back left by one complete duplicated set length */
             }
-    
+
             100% {
                 transform: translateX(0%);
                 /* Smoothly travels forward across exactly one set width */
             }
         }
-    
+
         /* Tablet and Mobile Optimization adjustments */
         @media (max-width: 768px) {
             .info-bar-item {
                 font-size: 13px;
             }
-    
+
             .marquee-group {
                 gap: 40px;
                 padding-right: 40px;
             }
-    
+
             @keyframes scrollRight {
                 0% {
                     transform: translateX(-50%);
                 }
-    
+
                 100% {
                     transform: translateX(0%);
                 }
@@ -541,7 +731,7 @@
     <div class="info-bar">
         <!-- The scrolling marquee inner carriage tracks sets infinitely -->
         <div class="info-bar-marquee">
-    
+
             <!-- MARQUEE SET 1 (Original track node) -->
             <div class="marquee-group">
                 <!-- Item 1: Shipping -->
@@ -555,7 +745,7 @@
                     </svg>
                     <span>Free Express Shipping Over \$35</span>
                 </div>
-    
+
                 <!-- Item 2: Organic Quality -->
                 <div class="info-bar-item"
                     onclick="showInfo('Our beans are sustainably certified organic, locally sourced, and freshly roasted daily.')">
@@ -565,7 +755,7 @@
                     </svg>
                     <span>100% Organic & Freshly Roasted</span>
                 </div>
-    
+
                 <!-- Item 3: Support -->
                 <div class="info-bar-item"
                     onclick="showInfo('Need assistance? Our support team is available via chat, email, or telephone anytime.')">
@@ -578,7 +768,7 @@
                     <span>24/7 Dedicated Support</span>
                 </div>
             </div>
-    
+
             <!-- MARQUEE SET 2 (Cloned twin duplicate to prevent white whitespace gaps during transitions) -->
             <div class="marquee-group" aria-hidden="true">
                 <!-- Item 1 Duplicate -->
@@ -592,7 +782,7 @@
                     </svg>
                     <span>Free Express Shipping Over \$35</span>
                 </div>
-    
+
                 <!-- Item 2 Duplicate -->
                 <div class="info-bar-item"
                     onclick="showInfo('Our beans are sustainably certified organic, locally sourced, and freshly roasted daily.')">
@@ -602,7 +792,7 @@
                     </svg>
                     <span>100% Organic & Freshly Roasted</span>
                 </div>
-    
+
                 <!-- Item 3 Duplicate -->
                 <div class="info-bar-item"
                     onclick="showInfo('Need assistance? Our support team is available via chat, email, or telephone anytime.')">
@@ -615,10 +805,10 @@
                     <span>24/7 Dedicated Support</span>
                 </div>
             </div>
-    
+
         </div>
     </div>
-    
+
     <!-- Container for dynamic text popups (Toasts) -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -626,10 +816,16 @@
     <nav class="navbar navbar-expand-lg navbar-clean sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold fs-4 d-flex align-items-center text-dark" href="{{ route('web.shop') }}">
-                @if($shopSettings?->logo && file_exists(public_path('uploads/'.$shopSettings->logo)))
-                    <span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px"><img src="{{ asset('uploads/'.$shopSettings->logo) }}" alt="{{ $shopSettings->shop_name }} logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
+                @if ($shopSettings?->logo && file_exists(public_path('uploads/' . $shopSettings->logo)))
+                    <span class="me-2 d-inline-flex align-items-center justify-content-center"
+                        style="width:40px;height:40px"><img src="{{ asset('uploads/' . $shopSettings->logo) }}"
+                            alt="{{ $shopSettings->shop_name }} logo"
+                            style="max-width:100%;max-height:100%;object-fit:contain"></span>
                 @else
-                    <span class="p-2 rounded-circle bg-light-green text-green me-2 d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;background-color:var(--light-green-bg);color:var(--primary-green)"><i class="bi bi-cup-hot-fill fs-5"></i></span>
+                    <span
+                        class="p-2 rounded-circle bg-light-green text-green me-2 d-inline-flex align-items-center justify-content-center"
+                        style="width:36px;height:36px;background-color:var(--light-green-bg);color:var(--primary-green)"><i
+                            class="bi bi-cup-hot-fill fs-5"></i></span>
                 @endif
                 {{ $shopSettings?->shop_name ?: 'Coffee Corner' }}
             </a>
@@ -641,66 +837,74 @@
             <div class="collapse navbar-collapse" id="cleanNav">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="{{ route('web.shop') }}">Shop</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('web.shop') }}#customer-reviews">Customer reviews</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('web.shop') }}#customer-reviews">Customer
+                            reviews</a>
+                    </li>
                     @auth
-                        @if(strtolower((string) Auth::user()->role?->role_name) === 'customer')
+                        @if (strtolower((string) Auth::user()->role?->role_name) === 'customer')
                             <li class="nav-item"><a class="nav-link" href="{{ route('web.account') }}">My orders</a></li>
                         @endif
                     @endauth
                 </ul>
 
                 <div class="d-flex align-items-center gap-3">
-                
+
                     <!-- ១. PROFILE POPUP DROPDOWN -->
                     <div class="dropdown">
-                        <button class="btn border-0 p-0 text-dark dropdown-toggle hide-arrow" type="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
+                        <button class="btn border-0 p-0 text-dark dropdown-toggle hide-arrow" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person" style="font-size: 25px;"></i>
                         </button>
-                
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2 p-3" style="width: 250px;">
+
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2 p-3"
+                            style="width: 250px;">
                             @auth
-                            {{-- ករណី User បាន Login រួច --}}
-                            <li class="mb-2">
-                                <div class="fw-bold text-dark text-truncate">
-                                    Name: {{ Auth::user()->customer?->name ?? Auth::user()->name }}
-                                </div>
-                                <small class="text-muted d-block text-truncate">
-                                    Phone: {{ Auth::user()->phone ?? Auth::user()->email }}
-                                </small>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            @if(strtolower((string) Auth::user()->role?->role_name) === 'customer')
-                            <li><a class="dropdown-item rounded-2 py-2" href="{{ route('web.account') }}"><i class="bi bi-bag-check me-2"></i> My Orders & Account</a></li>
-                            @elseif(in_array(strtolower((string) Auth::user()->role?->role_name), ['admin', 'cashier'], true))
-                            <li><a class="dropdown-item rounded-2 py-2" href="{{ strtolower((string) Auth::user()->role?->role_name) === 'admin' ? route('admin.dashboard') : route('cashier.dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Staff Workspace</a></li>
-                            @endif
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                {{-- Form សម្រាប់ Logout តាមវិធីត្រឹមត្រូវ --}}
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit"
-                                        class="dropdown-item rounded-2 py-2 text-danger w-100 text-start border-0 bg-transparent">
-                                        <i class="bi bi-box-arrow-right me-2"></i> Log Out
-                                    </button>
-                                </form>
-                            </li>
+                                {{-- ករណី User បាន Login រួច --}}
+                                <li class="mb-2">
+                                    <div class="fw-bold text-dark text-truncate">
+                                        Name: {{ Auth::user()->customer?->name ?? Auth::user()->name }}
+                                    </div>
+                                    <small class="text-muted d-block text-truncate">
+                                        Phone: {{ Auth::user()->phone ?? Auth::user()->email }}
+                                    </small>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                @if (strtolower((string) Auth::user()->role?->role_name) === 'customer')
+                                    <li><a class="dropdown-item rounded-2 py-2" href="{{ route('web.account') }}"><i
+                                                class="bi bi-bag-check me-2"></i> My Orders & Account</a></li>
+                                @elseif(in_array(strtolower((string) Auth::user()->role?->role_name), ['admin', 'cashier'], true))
+                                    <li><a class="dropdown-item rounded-2 py-2"
+                                            href="{{ strtolower((string) Auth::user()->role?->role_name) === 'admin' ? route('admin.dashboard') : route('cashier.dashboard') }}"><i
+                                                class="bi bi-speedometer2 me-2"></i> Staff Workspace</a></li>
+                                @endif
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    {{-- Form សម្រាប់ Logout តាមវិធីត្រឹមត្រូវ --}}
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="dropdown-item rounded-2 py-2 text-danger w-100 text-start border-0 bg-transparent">
+                                            <i class="bi bi-box-arrow-right me-2"></i> Log Out
+                                        </button>
+                                    </form>
+                                </li>
                             @else
-                            {{-- ករណីមិនទាន់បាន Login --}}
-                            <li class="text-center py-2">
-                                <p class="small text-muted mb-3">Welcome! Please login to manage your account.</p>
-                                <a href="{{ route('webLogin') }}" class="btn btn-success w-100 rounded-2 mb-2">Log In</a>
-                                <a href="{{ route('webRegister') }}" class="btn btn-outline-secondary w-100 rounded-2">Register</a>
-                            </li>
+                                {{-- ករណីមិនទាន់បាន Login --}}
+                                <li class="text-center py-2">
+                                    <p class="small text-muted mb-3">Welcome! Please login to manage your account.</p>
+                                    <a href="{{ route('webLogin') }}" class="btn btn-success w-100 rounded-2 mb-2">Log
+                                        In</a>
+                                    <a href="{{ route('webRegister') }}"
+                                        class="btn btn-outline-secondary w-100 rounded-2">Register</a>
+                                </li>
                             @endauth
                         </ul>
                     </div>
-                
+
                     @php($webCartCount = array_sum(array_map('intval', (array) session('web_cart', []))))
                     <a class="btn border-0 p-0 position-relative text-dark" href="{{ route('web.cart') }}"
                         aria-label="View shopping cart ({{ $webCartCount }} items)" title="View cart">
@@ -709,70 +913,144 @@
                             class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-success text-white {{ $webCartCount > 0 ? '' : 'd-none' }}"
                             style="font-size: 0.65rem;">{{ $webCartCount }}</span>
                     </a>
-                
+
                 </div>
             </div>
         </div>
     </nav>
     {{-- container --}}
     @yield('content')
-    @if(session('cart_success') || session('cart_error'))
-        <div class="container position-fixed start-50 translate-middle-x" style="top:88px;z-index:1080;max-width:680px" aria-live="polite">
-            <div class="alert {{ session('cart_error') ? 'alert-danger' : 'alert-success' }} alert-dismissible fade show shadow-sm rounded-4" role="alert">
-                <i class="bi {{ session('cart_error') ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill' }} me-2"></i>
+    @if (session('cart_success') || session('cart_error'))
+        <div class="container position-fixed start-50 translate-middle-x"
+            style="top:88px;z-index:1080;max-width:680px" aria-live="polite">
+            <div class="alert {{ session('cart_error') ? 'alert-danger' : 'alert-success' }} alert-dismissible fade show shadow-sm rounded-4"
+                role="alert">
+                <i
+                    class="bi {{ session('cart_error') ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill' }} me-2"></i>
                 {{ session('cart_error') ?? session('cart_success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         </div>
     @endif
     {{-- endcontainer --}}
-    <!-- 8. Footer -->
-    <footer>
-        <div class="container">
-            <div class="row g-4 mb-4">
-                <div class="col-6 col-md-3">
-                    <h6 class="text-white fw-bold mb-3">Quick Links</h6>
-                    <ul class="list-unstyled d-flex flex-column gap-2">
-                        <li><a href="{{ route('web.shop') }}">Shop</a></li>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Subscriptions</a></li>
+
+    <!-- Customer-first storefront footer -->
+    <footer class="store-footer">
+        <div class="container position-relative">
+            <div class="row g-4 g-lg-5">
+                <div class="col-12 col-md-6 col-lg-3">
+                    <a class="store-footer-brand" href="{{ route('web.shop') }}">
+                        <span class="store-footer-mark">
+                            @if ($shopSettings?->logo && file_exists(public_path('uploads/' . $shopSettings->logo)))
+                                <img src="{{ asset('uploads/' . $shopSettings->logo) }}"
+                                    alt="{{ $shopSettings->shop_name ?: 'Store' }} logo">
+                            @else
+                                <i class="bi bi-cup-hot-fill"></i>
+                            @endif
+                        </span>
+                        <span>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</span>
+                    </a>
+                    <p class="store-footer-copy">Good coffee, thoughtful service and an easier way to enjoy your
+                        favourites.
+                        Browse the menu or contact our team whenever you need help.</p>
+                </div>
+                <div class="col-6 col-md-6 col-lg-3">
+                    <h6 class="store-footer-heading">Quick links</h6>
+                    <ul class="store-footer-links">
+                        <li><a href="{{ route('web.shop') }}"><i class="bi bi-shop"></i>Shop the menu</a></li>
+                        <li><a href="{{ route('web.about') }}"><i class="bi bi-stars"></i>About us</a></li>
+                        <li><a
+                                href="{{ auth()->check() && strtolower((string) auth()->user()->role?->role_name) === 'customer' ? route('web.account') : route('webLogin') }}"><i
+                                    class="bi bi-receipt"></i>Track an order</a></li>
                     </ul>
                 </div>
-                <div class="col-6 col-md-3">
-                    <h6 class="text-white fw-bold mb-3">Customer Service</h6>
-                    <ul class="list-unstyled d-flex flex-column gap-2">
-                        <li><a href="#">Shipping Info</a></li>
-                        <li><a href="#">Return Policy</a></li>
-                        <li><a href="#">Contact Us</a></li>
+                <div class="col-6 col-md-6 col-lg-3">
+                    <h6 class="store-footer-heading">Customer service</h6>
+                    <ul class="store-footer-links">
+                        <li><a href="{{ route('web.shipping') }}"><i class="bi bi-truck"></i>Shipping information</a>
+                        </li>
+                        <li><a href="{{ route('web.returns') }}"><i class="bi bi-shield-check"></i>Returns & order
+                                issues</a></li>
+                        <li><a href="{{ route('web.contact') }}"><i class="bi bi-chat-dots"></i>Contact support</a>
+                        </li>
                     </ul>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <h6 class="text-white fw-bold mb-3">{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</h6>
-                    @if($shopSettings?->address)
-                        <p class="small mb-2 text-white-50"><i class="bi bi-geo-alt me-2"></i>{{ $shopSettings->address }}</p>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <h6 class="store-footer-heading">Visit & contact</h6>
+                    @if ($shopSettings?->address)
+                        <div class="store-footer-contact"><i
+                                class="bi bi-geo-alt-fill"></i><span>{{ $shopSettings->address }}</span>
+                        </div>
                     @endif
-                    @if($shopSettings?->tel)
-                        <p class="small mb-2"><a href="tel:{{ preg_replace('/[^0-9+]/', '', $shopSettings->tel) }}"><i class="bi bi-telephone me-2"></i>{{ $shopSettings->tel }}</a></p>
+                    @if ($shopSettings?->tel)
+                        <div class="store-footer-contact"><i class="bi bi-telephone-fill"></i><a
+                                href="tel:{{ preg_replace('/[^0-9+]/', '', $shopSettings->tel) }}">{{ $shopSettings->tel }}</a>
+                        </div>
                     @endif
-                    <div class="d-flex justify-content-md-end gap-3 fs-5 mt-3">
-                        <a href="#"><i class="bi bi-facebook"></i></a>
-                        <a href="#"><i class="bi bi-twitter-x"></i></a>
-                        <a href="#"><i class="bi bi-instagram"></i></a>
+                    <div class="store-footer-contact"><i class="bi bi-chat-square-heart-fill"></i><a
+                            href="{{ route('web.contact') }}">Send our team a message</a></div>
+                    <a href="{{ route('web.contact') }}" class="btn btn-sm rounded-pill px-3 mt-1"
+                        style="background:#e7c58e;color:#253321;font-weight:850"><i
+                            class="bi bi-arrow-up-right me-1"></i>Get
+                        support</a>
+                </div>
+            </div>
+
+            {{-- Google Maps Location --}}
+            <div class="store-footer-map">
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <h5 class="store-footer-map-title">
+                            <i class="bi bi-geo-alt-fill me-2"></i>
+                            Find Our Location
+                        </h5>
+
+                        <p class="store-footer-map-description mb-0">
+                            Visit us and enjoy your favourite coffee.
+                        </p>
                     </div>
                 </div>
+
+                <iframe class="store-footer-map-frame"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3878.10731613387!2d102.95597197485266!3d13.590255086785147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x311ae751f409e2a3%3A0x3dbffb38eb34a012!2sBuild%20Bright%20University%2C%20Banteay%20Meanchey%20Campus!5e0!3m2!1sen!2skh!4v1794181749150!5m2!1sen!2skh"
+                    title="Coffee Corner Google Maps Location" loading="lazy" allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+
+                <a href="https://www.google.com/maps/search/?api=1&query=13.590255086785147,102.95597197485266"
+                    target="_blank" rel="noopener noreferrer" class="store-footer-map-link">
+
+                    <i class="bi bi-map"></i>
+                    Open in Google Maps
+                    <i class="bi bi-arrow-up-right"></i>
+                </a>
+
             </div>
-            <div class="border-top border-secondary pt-3 small text-white-50 d-flex flex-wrap justify-content-between gap-2">
-                <span>© {{ date('Y') }} {{ $shopSettings?->shop_name ?: 'Coffee Corner' }}. All rights reserved.</span>
-                @if($shopSettings?->exchange_rate)<span>Reference rate: $1 USD = ៛{{ number_format((float)$shopSettings->exchange_rate, 0) }} KHR</span>@endif
+            {{-- End Google Maps Location --}}
+            <div class="store-footer-bottom">
+                <div class="store-footer-bottom">
+                    <span>© {{ date('Y') }} <strong>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</strong>.
+                        All rights
+                        reserved.</span>
+                    @if ($shopSettings?->exchange_rate)
+                        <span>Reference rate: $1 USD = ៛{{ number_format((float) $shopSettings->exchange_rate, 0) }}
+                            KHR</span>
+                    @endif
+                    <a href="{{ route('web.shop') }}" style="color:rgba(245,218,171,.8);text-decoration:none"><i
+                            class="bi bi-arrow-up-circle me-1"></i>Back to shop</a>
+                </div>
             </div>
-        </div>
+
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
-<script src="{{ asset('assets/js/form-validation.js') }}"></script>
-<script src="{{ asset('assets/js/password-toggle.js') }}"></script>
+    <script>
+        window.CoffeeCornerValidationErrors = @json($errors->toArray());
+    </script>
+    <script src="{{ asset('assets/js/form-validation.js') }}"></script>
+    <script src="{{ asset('assets/js/password-toggle.js') }}"></script>
 </body>
 
 </html>
