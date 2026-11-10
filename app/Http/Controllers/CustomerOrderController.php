@@ -17,7 +17,6 @@ use App\Models\Review;
 use App\Models\Settings;
 use App\Models\StockLog;
 use App\Services\PayWayService;
-use App\Support\StoreDeliveryFee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -229,7 +228,7 @@ class CustomerOrderController extends Controller
             return redirect()->route('web.cart')->with('error', 'Online pickup/delivery options are not configured. Please contact the shop.');
         }
 
-        $deliveryFee = StoreDeliveryFee::current();
+        $deliveryFee = max(0, (float) config('services.ecommerce.delivery_fee', 0));
         $checkoutToken = (string) $request->session()->get('web_checkout_token', '');
         if ($checkoutToken === '') {
             $checkoutToken = (string) Str::uuid();
@@ -333,7 +332,7 @@ class CustomerOrderController extends Controller
                     $subtotal += $unitPrice * $quantity;
                 }
 
-                $deliveryFee = $isDelivery ? StoreDeliveryFee::current() : 0.0;
+                $deliveryFee = $isDelivery ? max(0, (float) config('services.ecommerce.delivery_fee', 0)) : 0.0;
                 $grandTotal = round($subtotal + $deliveryFee, 2);
 
                 $order = Order::create([
@@ -425,14 +424,51 @@ class CustomerOrderController extends Controller
 
     public function orderStatus(int $orderId): JsonResponse
     {
-        $order = $this->ownedOrder($orderId)->firstOrFail();
+        // Always scope the request to the authenticated customer's own order.
+        $order = $this->ownedOrder($orderId)
+            ->with(['delivery', 'statusHistory', 'review'])
+            ->firstOrFail();
+
+        $events = $order->statusHistory
+            ->sortByDesc('created_at')
+            ->take(30)
+            ->values()
+            ->map(function (OrderStatusHistory $event) {
+                $title = match ($event->event_type) {
+                    'payment_collected' => 'Cash on Delivery collected',
+                    'payment_verified' => 'Payment verified',
+                    'telegram_notified' => 'Shop notified',
+                    default => $event->to_status
+                        ? 'Status: '.str_replace('_', ' ', ucfirst($event->to_status))
+                        : ucfirst(str_replace('_', ' ', $event->event_type)),
+                };
+
+                return [
+                    'id' => (int) $event->history_id,
+                    'event_type' => $event->event_type,
+                    'to_status' => $event->to_status,
+                    'title' => $title,
+                    'actor_type' => $event->actor_type,
+                    'actor_label' => $event->actor_label,
+                    'note' => $event->note,
+                    'created_at_label' => optional($event->created_at)->format('d M Y, h:i A'),
+                ];
+            });
 
         return response()->json([
             'order_id' => $order->order_id,
             'order_status' => $order->order_status,
-            'delivery_status' => $order->delivery()->value('status'),
+            'delivery_status' => $order->delivery?->status,
             'payment_status' => $order->payment_status,
             'paid' => (bool) $order->is_paid,
+            'final_price' => (float) $order->final_price,
+            'cod_collected_amount' => $order->cod_collected_amount !== null ? (float) $order->cod_collected_amount : null,
+            'cod_collected_at' => $order->cod_collected_at?->toIso8601String(),
+            'cod_collected_at_label' => $order->cod_collected_at?->format('d M Y, h:i A'),
+            'cod_collection_note' => $order->cod_collection_note,
+            'status_history' => $events,
+            'review_html' => view('website.partials.order-review', ['order' => $order])->render(),
+            'updated_at' => now()->toIso8601String(),
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
 

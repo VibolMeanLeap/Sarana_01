@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AccountingCategoryController;
 use App\Http\Controllers\AdminExportController;
-use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AdminCustomerServiceController;
 use App\Http\Controllers\AuthContoller;
 use App\Http\Controllers\CashTransactionController;
@@ -30,6 +29,8 @@ use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminOperationsController;
+
 
 /* Staff sign-in (admin and cashier). */
 Route::get('/', [AuthContoller::class, 'showLogin'])->name('showlogin');
@@ -70,7 +71,9 @@ Route::post('/store/logout', [CostumerController::class, 'logout'])->name('logou
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/store/account', [CostumerController::class, 'account'])->name('web.account');
     Route::get('/store/inbox', [CustomerInboxController::class, 'index'])->name('web.inbox');
+    Route::get('/store/inbox/updates', [CustomerInboxController::class, 'updates'])->name('web.inbox.updates');
     Route::get('/store/inbox/{contactMessageId}', [CustomerInboxController::class, 'show'])->whereNumber('contactMessageId')->name('web.inbox.show');
+    Route::get('/store/inbox/{contactMessageId}/updates', [CustomerInboxController::class, 'threadUpdates'])->whereNumber('contactMessageId')->name('web.inbox.thread-updates');
     Route::post('/store/inbox/{contactMessageId}/reply', [CustomerInboxController::class, 'reply'])->whereNumber('contactMessageId')->middleware('throttle:10,1')->name('web.inbox.reply');
     Route::get('/store/checkout', [CustomerOrderController::class, 'checkoutPage'])->name('web.checkout');
     Route::post('/store/checkout', [CustomerOrderController::class, 'placeOrder'])->name('web.checkout.place');
@@ -112,8 +115,21 @@ Route::middleware(['auth', 'role:cashier'])->prefix('cashier')->name('cashier.')
 /* Administrator-only management modules. */
 Route::middleware(['auth', 'administrator'])->group(function () {
     Route::get('/admin', [AuthContoller::class, 'dash'])->name('admin.dashboard');
-    Route::get('/admin/operations/updates', [AdminOperationsController::class, 'updates'])
-        ->middleware('throttle:60,1')->name('admin.operations.updates');
+
+    // AJAX endpoint for live administrator notifications and action counts.
+    Route::get('/admin/operations/updates', [
+        AdminOperationsController::class,
+        'updates'
+    ])
+        ->middleware('throttle:60,1')
+        ->name('admin.operations.updates');
+
+    Route::get('/admin/customer-service/updates', [AdminCustomerServiceController::class, 'updates'])
+    ->middleware('throttle:60,1')->name('admin.customer-service.updates');
+Route::get('/admin/customer-service/{contactMessage}/thread', [AdminCustomerServiceController::class, 'thread'])
+    ->whereNumber('contactMessage')->middleware('throttle:120,1')->name('admin.customer-service.thread');
+Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCustomerServiceController::class, 'threadUpdates'])
+    ->whereNumber('contactMessage')->middleware('throttle:120,1')->name('admin.customer-service.thread-updates');
 
     // Customer-service enquiries submitted from the public storefront.
     Route::get('/admin/customer-service', [AdminCustomerServiceController::class, 'index'])->name('admin.customer-service.index');

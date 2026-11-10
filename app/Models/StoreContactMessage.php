@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class StoreContactMessage extends Model
 {
@@ -27,7 +28,21 @@ class StoreContactMessage extends Model
 
     public function replies(): HasMany
     {
-        return $this->hasMany(StoreContactReply::class, 'contact_message_id')->orderBy('created_at')->orderBy('id');
+        return $this->hasMany(StoreContactReply::class, 'contact_message_id')
+            ->orderBy('created_at')
+            ->orderBy('id');
+    }
+
+    public function latestReply(): HasOne
+    {
+        return $this->hasOne(StoreContactReply::class, 'contact_message_id')->latestOfMany('id');
+    }
+
+    public function latestCustomerReply(): HasOne
+    {
+        return $this->hasOne(StoreContactReply::class, 'contact_message_id')
+            ->where('sender_type', 'customer')
+            ->latestOfMany('id');
     }
 
     public function customer(): BelongsTo
