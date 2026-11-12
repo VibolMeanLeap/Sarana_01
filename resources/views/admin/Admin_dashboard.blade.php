@@ -1,7 +1,7 @@
 @extends('layout.admin')
 
-@section('page_title', 'Overview')
-@section('topbar_title', 'Store overview')
+@section('page_title', __('Overview'))
+@section('topbar_title', __('Store overview'))
 
 @push('styles')
 <style>
@@ -478,26 +478,26 @@ $firstName = collect(preg_split('/\s+/', trim(auth()->user()->name ?? 'there')))
 $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
 @endphp
 <div class="d-flex flex-column gap-4">
+  @include('admin.partials.dashboard-date-filter')
   <section class="aura-hero">
     <div class="row align-items-center g-4">
       <div class="col-lg-8">
-        <div class="aura-kicker"><i class="bi bi-stars"></i> Your command center · {{ now()->format('l, d M Y') }}</div>
-        <h1>Good to see you, {{ $firstName }}.</h1>
-        <p>Here is your store at a glance. Keep the team moving, watch the numbers, and make every cup count.</p>
+        <div class="aura-kicker"><i class="bi bi-stars"></i> {{ __('Your command center') }} · {{ now()->locale(app()->getLocale())->translatedFormat('l, d M Y') }}</div>
+        <h1>{{ __('Good to see you, :name.', ['name' => $firstName]) }}</h1>
+        <p>{{ __('Here is your store at a glance. Keep the team moving, watch the numbers, and make every cup count.') }}</p>
         <div class="aura-hero-actions">
           <a href="{{ route('pos.dashboard') }}" class="btn aura-btn-white"><i
-              class="bi bi-lightning-charge-fill me-1"></i> Open point of sale</a>
+              class="bi bi-lightning-charge-fill me-1"></i> {{ __('Open point of sale') }}</a>
           <a href="{{ route('admin.orders.index') }}" class="btn aura-btn-glass"><i class="bi bi-receipt me-1"></i>
-            Manage orders</a>
+            {{ __('Manage orders') }}</a>
         </div>
       </div>
       <div class="col-lg-4 d-flex justify-content-lg-end">
         <div class="aura-live-card w-100">
-          <div class="label"><i class="bi bi-activity me-1"></i> Today's performance</div>
+          <div class="label"><i class="bi bi-activity me-1"></i> {{ __('Period performance') }}</div>
           <div class="value">${{ number_format($todayRevenue, 2) }}</div>
-          <div class="foot">{{ number_format($todayOrderCount) }} orders recorded today</div>
-          <div class="mt-3 d-flex align-items-center justify-content-between small"><span class="text-white-50">Payment
-              completion</span><strong>{{ $paymentCompletionRate }}%</strong></div>
+          <div class="foot">{{ number_format($todayOrderCount) }} {{ __('orders recorded in selected period') }}</div>
+          <div class="mt-3 d-flex align-items-center justify-content-between small"><span class="text-white-50">{{ __('Payment completion') }}</span><strong>{{ $paymentCompletionRate }}%</strong></div>
           <div class="progress mt-2" style="height:6px;background:rgba(255,255,255,.2)">
             <div class="progress-bar bg-white" style="width:{{ $paymentCompletionRate }}%"></div>
           </div>
@@ -509,34 +509,34 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
   <section class="row g-3">
     <div class="col-6 col-xl-3">
       <div class="aura-stat" style="--orb:#e8f5ed;--accent:#238052">
-        <div class="aura-stat-top"><span class="aura-stat-label">Total revenue</span><span class="aura-stat-icon"><i
+        <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Total revenue') }}</span><span class="aura-stat-icon"><i
               class="bi bi-wallet2"></i></span></div>
         <div class="aura-stat-value">${{ number_format($totalRevenue, 2) }}</div>
-        <div class="aura-stat-foot">From {{ number_format($paidOrders) }} verified paid orders</div>
+        <div class="aura-stat-foot">{{ __('From :count verified paid orders in this period', ['count' => number_format($paidOrders)]) }}</div>
       </div>
     </div>
     <div class="col-6 col-xl-3">
       <div class="aura-stat" style="--orb:#edf1ff;--accent:#5869ad">
-        <div class="aura-stat-top"><span class="aura-stat-label">Total orders</span><span class="aura-stat-icon"><i
+        <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Total orders') }}</span><span class="aura-stat-icon"><i
               class="bi bi-receipt-cutoff"></i></span></div>
         <div class="aura-stat-value">{{ number_format($totalOrders) }}</div>
-        <div class="aura-stat-foot">{{ number_format($pendingOrders) }} awaiting payment</div>
+        <div class="aura-stat-foot">{{ __(':count awaiting payment in this period', ['count' => number_format($pendingOrders)]) }}</div>
       </div>
     </div>
     <div class="col-6 col-xl-3">
       <div class="aura-stat" style="--orb:#fff3df;--accent:#a8792f">
-        <div class="aura-stat-top"><span class="aura-stat-label">Active products</span><span class="aura-stat-icon"><i
+        <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Active products') }}</span><span class="aura-stat-icon"><i
               class="bi bi-cup-hot"></i></span></div>
         <div class="aura-stat-value">{{ number_format($productCount) }}</div>
-        <div class="aura-stat-foot">Across {{ number_format($customerCount) }} registered customers</div>
+        <div class="aura-stat-foot">{{ __('Across :count registered customers', ['count' => number_format($customerCount)]) }}</div>
       </div>
     </div>
     <div class="col-6 col-xl-3">
       <div class="aura-stat" style="--orb:#f2eafa;--accent:#8055a3">
-        <div class="aura-stat-top"><span class="aura-stat-label">Stock units</span><span class="aura-stat-icon"><i
+        <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Stock units') }}</span><span class="aura-stat-icon"><i
               class="bi bi-box-seam"></i></span></div>
         <div class="aura-stat-value">{{ number_format($stockUnits) }}</div>
-        <div class="aura-stat-foot">{{ number_format($lowStockProducts->count()) }} products need attention</div>
+        <div class="aura-stat-foot">{{ __(':count products need attention', ['count' => number_format($lowStockProducts->count())]) }}</div>
       </div>
     </div>
   </section>
@@ -546,9 +546,9 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
       <div class="aura-panel">
         <div class="aura-panel-head">
           <div>
-            <div class="aura-section-title">Revenue momentum</div>
-            <div class="aura-section-sub">Paid sales over the last seven days</div>
-          </div><span class="aura-mini-badge"><i class="bi bi-graph-up-arrow"></i> 7-day view</span>
+            <div class="aura-section-title">{{ __('Revenue momentum') }}</div>
+            <div class="aura-section-sub">{{ __('Paid sales for the selected period') }}</div>
+          </div><span class="aura-mini-badge"><i class="bi bi-graph-up-arrow"></i> {{ __($dateRangeLabel) }}</span>
         </div>
         <div class="aura-panel-body">
           @php
@@ -563,9 +563,9 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
           $revenueLine = $trendPoints->map(fn ($point) => $point['x'].','.$point['y'])->implode(' ');
           $revenueArea = '38,184 '.$revenueLine.' 702,184';
           @endphp
-          <div class="aura-chart-legend"><span><i></i> Paid revenue (USD)</span><small>7 consecutive days ·
-              {{ $overviewTrend->sum('orders') }} orders</small></div>
-          <div class="aura-svg-chart" role="img" aria-label="Paid revenue over the last seven days">
+          <div class="aura-chart-legend"><span><i></i> {{ __('Paid revenue (USD)') }}</span><small>{{ __($dateRangeLabel) }} ·
+              {{ $overviewTrend->sum('orders') }} {{ __('orders') }}</small></div>
+          <div class="aura-svg-chart" role="img" aria-label="{{ __('Paid sales for the selected period') }}">
             <svg viewBox="0 0 740 232" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="revenueAreaFill" x1="0" x2="0" y1="0" y2="1">
@@ -588,8 +588,7 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
               @endforeach
             </svg>
           </div>
-          @if($overviewTrend->sum('revenue') <= 0) <div class="small text-muted text-center mt-1">No verified paid sales
-            in this seven-day period yet. The chart will populate automatically after the first payment.
+          @if($overviewTrend->sum('revenue') <= 0) <div class="small text-muted text-center mt-1">{{ __('No verified paid sales in this period yet. The chart will populate automatically after the first payment.') }}
         </div>
         @endif
       </div>
@@ -599,9 +598,9 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
   <div class="aura-panel">
     <div class="aura-panel-head">
       <div>
-        <div class="aura-section-title">Top sellers</div>
-        <div class="aura-section-sub">Best-performing products by paid units</div>
-      </div><a href="{{ route('admin.product') }}" class="aura-link">Catalog <i class="bi bi-arrow-up-right"></i></a>
+        <div class="aura-section-title">{{ __('Top sellers') }}</div>
+        <div class="aura-section-sub">{{ __('Best-performing products by paid units') }}</div>
+      </div><a href="{{ route('admin.product') }}" class="aura-link">{{ __('Catalog') }} <i class="bi bi-arrow-up-right"></i></a>
     </div>
     <div class="aura-panel-body">
       @forelse($topSellingProducts as $product)
@@ -616,11 +615,9 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
             class="text-muted fw-normal">sold</span></span>
       </div>
       @empty
-      <div class="aura-empty"><i class="bi bi-cup-hot"></i>No paid product sales yet. Your best sellers will appear
-        here.</div>
+      <div class="aura-empty"><i class="bi bi-cup-hot"></i>{{ __('No paid product sales yet. Your best sellers will appear here.') }}</div>
       @endforelse
-      <div class="border-top mt-3 pt-3 d-flex justify-content-between"><span class="small text-muted">Average paid
-          order</span><strong class="small">${{ number_format($averageOrderValue, 2) }}</strong></div>
+      <div class="border-top mt-3 pt-3 d-flex justify-content-between"><span class="small text-muted">{{ __('Average paid order') }}</span><strong class="small">${{ number_format($averageOrderValue, 2) }}</strong></div>
     </div>
   </div>
 </div>
@@ -631,12 +628,12 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
     <div class="aura-panel">
       <div class="aura-panel-head">
         <div>
-          <div class="aura-section-title">Order activity</div>
-          <div class="aura-section-sub">Orders recorded each day, paid or pending</div>
-        </div><span class="aura-mini-badge">7-day view</span>
+          <div class="aura-section-title">{{ __('Order activity') }}</div>
+          <div class="aura-section-sub">{{ __('Orders recorded in the selected period, paid or pending') }}</div>
+        </div><span class="aura-mini-badge">{{ __($dateRangeLabel) }}</span>
       </div>
       <div class="aura-panel-body">
-        <div class="aura-bar-chart" role="img" aria-label="Orders recorded over the last seven days">
+        <div class="aura-bar-chart" role="img" aria-label="{{ __('Orders recorded in the selected period, paid or pending') }}">
           @foreach($overviewTrend as $row)
 
           @php
@@ -654,8 +651,7 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
           </div>
           @endforeach
         </div>
-        <div class="d-flex justify-content-between small text-muted mt-3"><span>Total
-            orders</span><strong>{{ number_format($overviewTrend->sum('orders')) }}</strong></div>
+        <div class="d-flex justify-content-between small text-muted mt-3"><span>{{ __('Total orders') }}</span><strong>{{ number_format($overviewTrend->sum('orders')) }}</strong></div>
       </div>
     </div>
   </div>
@@ -663,21 +659,21 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
     <div class="aura-panel">
       <div class="aura-panel-head">
         <div>
-          <div class="aura-section-title">Latest orders</div>
-          <div class="aura-section-sub">Recent activity from your shop</div>
-        </div><a href="{{ route('admin.orders.index') }}" class="aura-link">All orders <i
+          <div class="aura-section-title">{{ __('Latest orders') }}</div>
+          <div class="aura-section-sub">{{ __('Recent activity from your shop') }}</div>
+        </div><a href="{{ route('admin.orders.index') }}" class="aura-link">{{ __('All orders') }} <i
             class="bi bi-arrow-up-right"></i></a>
       </div>
       <div class="table-responsive">
         <table class="table aura-table align-middle mb-0">
           <thead>
             <tr>
-              <th class="ps-4">Order</th>
-              <th>Customer</th>
-              <th>Handled by</th>
-              <th>Amount</th>
-              <th>Payment</th>
-              <th class="pe-4">Date</th>
+              <th class="ps-4">{{ __('Order') }}</th>
+              <th>{{ __('Customer') }}</th>
+              <th>{{ __('Handled by') }}</th>
+              <th>{{ __('Amount') }}</th>
+              <th>{{ __('Payment') }}</th>
+              <th class="pe-4">{{ __('Date') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -689,12 +685,12 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
             @endphp
             <tr>
               <td class="ps-4"><span class="aura-order-id">#{{ $order->order_id }}</span></td>
-              <td>{{ $order->customer->name ?? 'Walk-in' }}</td>
-              <td>{{ $order->cashier->name ?? 'Website' }}</td>
+              <td>{{ $order->customer->name ?? __('Walk-in') }}</td>
+              <td>{{ $order->cashier->name ?? __('Website') }}</td>
               <td class="fw-bold">${{ number_format((float)($order->final_price ?? $order->total_amount ?? 0), 2) }}
               </td>
               <td><span
-                  class="aura-mini-badge {{ $order->is_paid ? '' : 'pending' }}">{{ $order->is_paid ? 'Paid' : 'Pending' }}</span>
+                  class="aura-mini-badge {{ $order->is_paid ? '' : 'pending' }}">{{ $order->is_paid ? __('Paid') : __('Pending') }}</span>
               </td>
               <td class="pe-4 text-nowrap">{{ $order->order_date ? $order->order_date->format('d M, h:i A') : '—' }}
               </td>
@@ -702,8 +698,7 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
             @empty
             <tr>
               <td colspan="6">
-                <div class="aura-empty"><i class="bi bi-receipt"></i>No orders yet. Your first customer order will
-                  appear here.</div>
+                <div class="aura-empty"><i class="bi bi-receipt"></i>{{ __('No orders in this period. Try another date range.') }}</div>
               </td>
             </tr>
             @endforelse
@@ -716,11 +711,11 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
     <div class="aura-panel">
       <div class="aura-panel-head">
         <div>
-          <div class="aura-section-title">Stock watch</div>
-          <div class="aura-section-sub">Low inventory that needs a restock</div>
+          <div class="aura-section-title">{{ __('Stock watch') }}</div>
+          <div class="aura-section-sub">{{ __('Low inventory that needs a restock') }}</div>
         </div><span
           class="aura-mini-badge {{ $lowStockProducts->count() ? 'pending' : '' }}">{{ $lowStockProducts->count() }}
-          alerts</span>
+          {{ __('alerts') }}</span>
       </div>
       <div class="aura-panel-body">
         @forelse($lowStockProducts as $product)
@@ -728,16 +723,16 @@ $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
               class="bi bi-box-seam"></i></span>
           <div class="flex-grow-1 min-w-0">
             <div class="small fw-bold text-truncate">{{ $product->product_name }}</div>
-            <div class="small text-muted">{{ $product->category->category_name ?? 'Uncategorized' }}</div>
+            <div class="small text-muted">{{ $product->category->category_name ?? __('Uncategorized') }}</div>
           </div><span
             class="aura-mini-badge {{ (int)$product->qty <= 2 ? 'cancelled' : 'pending' }}">{{ (int)$product->qty }}
-            left</span>
+            {{ __('left') }}</span>
         </div>
         @empty
-        <div class="aura-empty"><i class="bi bi-check-circle"></i>All active products have healthy stock levels.</div>
+        <div class="aura-empty"><i class="bi bi-check-circle"></i>{{ __('All active products have healthy stock levels.') }}</div>
         @endforelse
         <a href="{{ route('inventory.index') }}" class="btn btn-light w-100 mt-3 rounded-3 fw-bold small"><i
-            class="bi bi-box-arrow-in-right me-1"></i> Open inventory management</a>
+            class="bi bi-box-arrow-in-right me-1"></i> {{ __('Open inventory management') }}</a>
       </div>
     </div>
   </div>

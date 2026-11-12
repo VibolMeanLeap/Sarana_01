@@ -1,0 +1,14 @@
+Optional: show the same language preference in Admin > Settings
+===============================================================
+
+Open: resources/views/admin/meanleap/setting.blade.php
+
+Find the existing line:
+@include('admin.message.message')
+
+Immediately AFTER it, add:
+
+@include('admin.partials.language-preferences-card')
+
+This adds a Language & Display card to the Admin Settings page. It is optional;
+the POS Settings dropdown works independently and is the part needed by cashiers.

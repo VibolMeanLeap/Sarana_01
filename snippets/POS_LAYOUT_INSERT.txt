@@ -1,0 +1,29 @@
+POS layout integration (one additive include)
+==============================================
+
+Open: resources/views/layout/pos.blade.php
+
+Find the existing POS navbar action group. In the supplied project it begins:
+
+<div class="d-flex align-items-center flex-wrap gap-2 gap-md-3">
+
+Immediately inside that div, BEFORE the staff-name span, add:
+
+@include('partials.pos-language-settings')
+
+For example:
+
+<div class="d-flex align-items-center flex-wrap gap-2 gap-md-3">
+    @include('partials.pos-language-settings')
+    <span class="small text-muted d-none d-sm-inline">
+        <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name ?? 'Staff' }}
+    </span>
+    ...keep your existing Workspace, Orders, and Sign out controls...
+</div>
+
+Do not replace the whole POS layout. Your live version may contain later COD,
+AJAX, notification, and payment improvements that must remain intact.
+
+The partial uses the existing route name `language.switch` and the existing
+translator asset `public/assets/js/cc-khmer-ui.js` and dictionary
+`public/assets/lang/km-ui.json` from the bilingual localization patch.

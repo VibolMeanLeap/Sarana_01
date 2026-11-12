@@ -48,6 +48,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return route('showlogin');
         });
+
+        $middleware->appendToGroup(
+            'web',
+            \App\Http\Middleware\SetLocale::class
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Keep Laravel's standard exception handling for the demo environment.

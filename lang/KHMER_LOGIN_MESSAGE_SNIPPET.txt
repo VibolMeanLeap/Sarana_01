@@ -1,0 +1,5 @@
+If your project uses JSON translations for Khmer, merge this entry into lang/km.json:
+
+"Too many unsuccessful sign-in attempts. Please try again in :seconds seconds.": "អ្នកបានព្យាយាមចូលប្រព័ន្ធបរាជ័យច្រើនដង។ សូមព្យាយាមម្ដងទៀតក្នុងរយៈពេល :seconds វិនាទី។"
+
+Do not replace your existing lang/km.json file; add the entry inside its existing JSON object and preserve valid commas/braces.

@@ -30,11 +30,20 @@ use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminOperationsController;
+use App\Http\Controllers\LanguageController;
 
-
+// Language switching: English / Khmer
+Route::post('/language', [LanguageController::class, 'update'])
+    ->middleware('throttle:20,1')
+    ->name('language.switch');
 /* Staff sign-in (admin and cashier). */
 Route::get('/', [AuthContoller::class, 'showLogin'])->name('showlogin');
-Route::post('/login/process', [AuthContoller::class, 'processlogin'])->name('process_login');
+Route::post('/login/process', [AuthContoller::class, 'processlogin'])
+    ->middleware([
+        \App\Http\Middleware\ProtectLoginAttempts::class . ':name,staff',
+        'throttle:10,1',
+    ])
+    ->name('process_login');
 Route::post('/logout', [AuthContoller::class, 'logout'])->name('process_logout');
 Route::get('/auth/google/{audience}', [GoogleAuthController::class, 'redirect'])
     ->where('audience', 'staff|customer')->middleware('throttle:10,1')->name('google.redirect');
@@ -64,7 +73,12 @@ Route::post('/telegram/webhook', TelegramWebhookController::class)->middleware('
 Route::get('/store/register', [CostumerController::class, 'webRegister'])->name('webRegister');
 Route::get('/store/login', [CostumerController::class, 'webLogin'])->name('webLogin');
 Route::post('/store/register/process', [CostumerController::class, 'register'])->name('register');
-Route::post('/store/login/process', [CostumerController::class, 'login'])->name('login');
+Route::post('/store/login/process', [CostumerController::class, 'login'])
+    ->middleware([
+        \App\Http\Middleware\ProtectLoginAttempts::class . ':phone,customer',
+        'throttle:10,1',
+    ])
+    ->name('login');
 Route::post('/store/logout', [CostumerController::class, 'logout'])->name('logout');
 
 /* Customer account pages. Customers cannot enter staff tools. */

@@ -29,89 +29,15 @@ class AuthContoller extends Controller
 
         return view('admin.login');
     }
-    public function dash()
+    /**
+     * Keep the legacy dashboard action compatible with the new date-filtered dashboard.
+     * Some older route files still point /admin to AuthContoller@dash.
+     */
+    public function dash(Request $request)
     {
-        $totalOrders = Order::count();
-        $paidOrders = Order::where('is_paid', true)->count();
-        $pendingOrders = Order::where('is_paid', false)->count();
-        $totalRevenue = (float) Order::where('is_paid', true)
-            ->sum(DB::raw('COALESCE(final_price, total_amount, 0)'));
-
-        $productCount = Product::where('status', 'Active')->count();
-        $stockUnits = (int) Product::sum('qty');
-        $customerCount = Costumer::count();
-
-        $lowStockProducts = Product::with('category')
-            ->where('status', 'Active')
-            ->where('qty', '<=', 5)
-            ->orderBy('qty')
-            ->limit(5)
-            ->get();
-
-        $topStockProducts = Product::where('status', 'Active')
-            ->orderByDesc('qty')
-            ->limit(7)
-            ->get(['product_name', 'qty']);
-
-        $stockChartLabels = $topStockProducts->pluck('product_name')->values();
-        $stockChartValues = $topStockProducts->pluck('qty')->map(fn ($qty) => (int) $qty)->values();
-
-        // A seven-day paid-sales trend for the dashboard. The query only uses
-        // columns already present in the supplied orders table.
-        $trendStart = now()->subDays(6)->startOfDay();
-        $trendRows = Order::query()
-            ->whereBetween('order_date', [$trendStart, now()->endOfDay()])
-            ->selectRaw('DATE(order_date) as sales_day, COUNT(*) as order_count, SUM(CASE WHEN is_paid = 1 THEN COALESCE(final_price, total_amount, 0) ELSE 0 END) as paid_revenue')
-            ->groupBy(DB::raw('DATE(order_date)'))
-            ->get()
-            ->keyBy('sales_day');
-
-        $salesTrend = collect(range(6, 0))->map(function ($daysAgo) use ($trendRows) {
-            $date = now()->subDays($daysAgo);
-            $row = $trendRows->get($date->format('Y-m-d'));
-
-            return [
-                'label' => $date->format('D'),
-                'date' => $date->format('d M'),
-                'revenue' => (float) ($row->paid_revenue ?? 0),
-                'orders' => (int) ($row->order_count ?? 0),
-            ];
-        });
-
-        $todayOrders = Order::whereDate('order_date', today());
-        $todayOrderCount = (clone $todayOrders)->count();
-        $todayPaidOrderCount = (clone $todayOrders)->where('is_paid', true)->count();
-        $todayRevenue = (float) (clone $todayOrders)->where('is_paid', true)
-            ->sum(DB::raw('COALESCE(final_price, total_amount, 0)'));
-        $averageOrderValue = $paidOrders > 0 ? $totalRevenue / $paidOrders : 0;
-        $paymentCompletionRate = $todayOrderCount > 0 ? (int) round(($todayPaidOrderCount / $todayOrderCount) * 100) : 0;
-
-        $topSellingProducts = DB::table('order_items')
-            ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
-            ->join('product', 'product.product_id', '=', 'order_items.product_id')
-            ->where('orders.is_paid', true)
-            ->select('product.product_name')
-            ->selectRaw('SUM(order_items.quantity) as units_sold')
-            ->groupBy('product.product_id', 'product.product_name')
-            ->orderByDesc('units_sold')
-            ->limit(5)
-            ->get();
-
-        $topSellingMax = max(1, (int) ($topSellingProducts->max('units_sold') ?? 0));
-
-        $recentOrders = Order::with(['customer', 'cashier', 'paymentMethod'])
-            ->orderByDesc('order_date')
-            ->limit(7)
-            ->get();
-
-        return view('admin.Admin_dashboard', compact(
-            'totalOrders', 'paidOrders', 'pendingOrders', 'totalRevenue',
-            'productCount', 'stockUnits', 'customerCount', 'lowStockProducts',
-            'topStockProducts', 'stockChartLabels', 'stockChartValues', 'recentOrders',
-            'salesTrend', 'todayOrderCount', 'todayRevenue', 'averageOrderValue',
-            'paymentCompletionRate', 'topSellingProducts', 'topSellingMax', 'todayPaidOrderCount'
-        ));
+        return app(DashboardController::class)->index($request);
     }
+
     public function index (Request $request){
         if($request->get('search')!=''){
              $user_key = User::with('role')->orderBy('user_id', 'desc')->where('name','like','%'.$request->get('search').'%')->paginate(10);

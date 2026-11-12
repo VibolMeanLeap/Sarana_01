@@ -1,0 +1,15 @@
+// 1) Add these imports with the other controller imports at the top of routes/web.php:
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LanguageController;
+
+// 2) Add this public route once, outside the auth/admin route groups:
+Route::post('/language', [LanguageController::class, 'update'])
+    ->middleware('throttle:20,1')
+    ->name('language.switch');
+
+// 3) Inside the existing administrator-only middleware group, replace ONLY:
+// Route::get('/admin', [AuthContoller::class, 'dash'])->name('admin.dashboard');
+// with:
+Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+// Do not replace the rest of routes/web.php. Keep all your existing route definitions.

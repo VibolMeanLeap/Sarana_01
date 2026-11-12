@@ -843,13 +843,16 @@
                     @auth
                         @if (strtolower((string) Auth::user()->role?->role_name) === 'customer')
                             <li class="nav-item"><a class="nav-link" href="{{ route('web.account') }}">My orders</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{ route('web.inbox') }}">Inbox <span class="badge rounded-pill text-bg-success ms-1" data-store-inbox-count @if(($unreadStoreReplyCount ?? 0) < 1) hidden @endif>{{ $unreadStoreReplyCount ?? 0 }}</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('web.inbox') }}">Inbox <span
+                                        class="badge rounded-pill text-bg-success ms-1" data-store-inbox-count
+                                        @if (($unreadStoreReplyCount ?? 0) < 1) hidden @endif>{{ $unreadStoreReplyCount ?? 0 }}</span></a>
+                            </li>
                         @endif
                     @endauth
                 </ul>
 
                 <div class="d-flex align-items-center gap-3">
-
+                    @include('partials.language-switcher')
                     <!-- ១. PROFILE POPUP DROPDOWN -->
                     <div class="dropdown">
                         <button class="btn border-0 p-0 text-dark dropdown-toggle hide-arrow" type="button"
@@ -875,7 +878,12 @@
                                 @if (strtolower((string) Auth::user()->role?->role_name) === 'customer')
                                     <li><a class="dropdown-item rounded-2 py-2" href="{{ route('web.account') }}"><i
                                                 class="bi bi-bag-check me-2"></i> My Orders & Account</a></li>
-                                    <li><a class="dropdown-item rounded-2 py-2 d-flex align-items-center justify-content-between" href="{{ route('web.inbox') }}"><span><i class="bi bi-inbox me-2"></i> Customer Inbox</span><span class="badge rounded-pill text-bg-success" data-store-inbox-count @if(($unreadStoreReplyCount ?? 0) < 1) hidden @endif>{{ $unreadStoreReplyCount ?? 0 }}</span></a></li>
+                                    <li><a class="dropdown-item rounded-2 py-2 d-flex align-items-center justify-content-between"
+                                            href="{{ route('web.inbox') }}"><span><i class="bi bi-inbox me-2"></i>
+                                                Customer Inbox</span><span class="badge rounded-pill text-bg-success"
+                                                data-store-inbox-count
+                                                @if (($unreadStoreReplyCount ?? 0) < 1) hidden @endif>{{ $unreadStoreReplyCount ?? 0 }}</span></a>
+                                    </li>
                                 @elseif(in_array(strtolower((string) Auth::user()->role?->role_name), ['admin', 'cashier'], true))
                                     <li><a class="dropdown-item rounded-2 py-2"
                                             href="{{ strtolower((string) Auth::user()->role?->role_name) === 'admin' ? route('admin.dashboard') : route('cashier.dashboard') }}"><i
