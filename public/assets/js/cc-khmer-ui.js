@@ -140,11 +140,15 @@
         });
     }
 
-    fetch(dictionaryUrl, { headers: { 'Accept': 'application/json' }, cache: 'force-cache' })
-        .then((response) => {
+    const embeddedDictionary = window.CC_KHMER_DICTIONARY;
+    const dictionaryRequest = embeddedDictionary && typeof embeddedDictionary === 'object' && !Array.isArray(embeddedDictionary)
+        ? Promise.resolve(embeddedDictionary)
+        : fetch(dictionaryUrl, { headers: { 'Accept': 'application/json' }, cache: 'force-cache' }).then((response) => {
             if (!response.ok) throw new Error(`Khmer dictionary request failed (${response.status})`);
             return response.json();
-        })
+        });
+
+    dictionaryRequest
         .then((data) => {
             if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid Khmer dictionary format');
             dictionary = data;
@@ -158,13 +162,23 @@
                         translated
                     };
                 });
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', startObserver, { once: true });
-            } else {
+
+            const initialize = () => {
+                // The first full-page translation is synchronous before content is revealed.
                 startObserver();
+                document.documentElement.classList.add('cc-locale-ready');
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initialize, { once: true });
+            } else {
+                initialize();
             }
         })
         .catch((error) => {
             console.warn('[Coffee Corner Aura] Khmer UI translation unavailable:', error.message);
+            // Fail open rather than leaving the page hidden if the dictionary is unavailable.
+            document.documentElement.classList.add('cc-locale-ready');
         });
+
 })();

@@ -1,7 +1,0 @@
-Inside the EXISTING ->withMiddleware(function (Middleware $middleware): void { ... })
-block in bootstrap/app.php, add this one line:
-
-$middleware->appendToGroup('web', \App\Http\Middleware\SetLocale::class);
-
-Keep all existing trustProxies(), alias(), validateCsrfTokens(), and redirectGuestsTo()
-configuration. Do not replace bootstrap/app.php.

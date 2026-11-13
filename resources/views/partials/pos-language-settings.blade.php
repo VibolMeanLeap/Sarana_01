@@ -2,9 +2,6 @@
     $activeLocale = in_array(app()->getLocale(), ['en', 'km'], true) ? app()->getLocale() : 'en';
 @endphp
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
     .cc-pos-settings .dropdown-menu {
         min-width: 255px;
@@ -49,17 +46,6 @@
         font-size: 11px;
         line-height: 1.45;
     }
-    body.locale-km,
-    html[lang="km"] body {
-        font-family: "Krasa", "Noto Sans Khmer", "Khmer OS System", "Leelawadee UI", sans-serif !important;
-        letter-spacing: normal !important;
-    }
-    body.locale-km :where(h1,h2,h3,h4,h5,h6,p,a,button,label,th,td,li,small,strong,em,span,div,select,option,input,textarea):not(.bi):not(.fa):not(.mdi):not(.material-icons):not([class*="fa-"]):not([class*="mdi-"]):not([class*="icon"]),
-    html[lang="km"] body :where(h1,h2,h3,h4,h5,h6,p,a,button,label,th,td,li,small,strong,em,span,div,select,option,input,textarea):not(.bi):not(.fa):not(.mdi):not(.material-icons):not([class*="fa-"]):not([class*="mdi-"]):not([class*="icon"]) {
-        font-family: "Krasa", "Noto Sans Khmer", "Khmer OS System", "Leelawadee UI", sans-serif !important;
-        letter-spacing: normal !important;
-    }
-    body.locale-km { line-height: 1.55; }
 </style>
 
 <div class="dropdown cc-pos-settings">
@@ -118,4 +104,4 @@
         else document.addEventListener('DOMContentLoaded', applyLocale, { once: true });
     })();
 </script>
-<script src="{{ asset('assets/js/cc-khmer-ui.js') }}" defer></script>
+<script src="{{ asset('assets/js/cc-khmer-ui.js') }}?v=20261113-locale-flash-fix" defer onerror="document.documentElement.classList.add('cc-locale-ready')"></script>

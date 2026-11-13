@@ -1,7 +1,0 @@
-// Make sure this route is inside your existing administrator middleware group:
-Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
-
-// And make sure this import exists at the top of routes/web.php:
-use App\\Http\\Controllers\\DashboardController;
-
-// Do not add a second route with the same name. Replace the existing admin.dashboard route.

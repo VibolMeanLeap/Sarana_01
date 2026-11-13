@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ app()->getLocale() === 'km' ? 'km' : 'en' }}">
 
 <head>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.locale-bootstrap')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('page_title', 'Overview') · {{ $shopSettings?->shop_name ?: config('app.name', 'Coffee Corner') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -633,6 +634,9 @@
                 <a href="{{ route('setting.list') }}"
                     class="{{ request()->is('admin/meanleap/setting*') ? 'active' : '' }}"><i
                         class="bi bi-sliders"></i>Settings & staff management</a>
+                <a href="{{ route('admin.backups.index') }}"
+                    class="{{ request()->is('admin/backups*') ? 'active' : '' }}"><i
+                        class="bi bi-database-lock"></i>Backups & restore</a>
             </nav>
             <div class="sidebar-bottom">
                 <div class="sidebar-note"><strong><i class="bi bi-shield-check me-1"></i>Administrator
@@ -669,21 +673,23 @@
             </header>
 
             <main class="content-area">
-                @if (session('success') || session('success_login') || session('update_success') || session('delete_success'))
-                    <div class="alert alert-success alert-dismissible fade show border-0" role="alert">
-                        <i
-                            class="bi bi-check-circle-fill me-2"></i>{{ session('success') ?? (session('success_login') ?? (session('update_success') ?? session('delete_success'))) }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                            aria-label="Close"></button>
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show border-0" role="alert">
-                        <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                            aria-label="Close"></button>
-                    </div>
-                @endif
+                @unless (request()->routeIs('admin.backups.*'))
+                    @if (session('success') || session('success_login') || session('update_success') || session('delete_success'))
+                        <div class="alert alert-success alert-dismissible fade show border-0" role="alert">
+                            <i
+                                class="bi bi-check-circle-fill me-2"></i>{{ session('success') ?? (session('success_login') ?? (session('update_success') ?? session('delete_success'))) }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show border-0" role="alert">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+                @endunless
                 @yield('content')
             </main>
             <footer class="px-4 pb-4 text-center text-muted small">

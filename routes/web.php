@@ -30,6 +30,7 @@ use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminOperationsController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\LanguageController;
 
 // Language switching: English / Khmer
@@ -271,6 +272,18 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
     Route::get('/admin/reviews/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
     Route::put('/admin/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/admin/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    // Full database and uploaded-file backups. These routes inherit auth + administrator middleware.
+    Route::get('/admin/backups', [BackupController::class, 'index'])->name('admin.backups.index');
+    Route::post('/admin/backups', [BackupController::class, 'store'])->middleware('throttle:5,1')->name('admin.backups.store');
+    Route::get('/admin/backups/{filename}/download', [BackupController::class, 'download'])
+        ->where('filename', '[A-Za-z0-9._-]+')->name('admin.backups.download');
+    Route::post('/admin/backups/{filename}/restore', [BackupController::class, 'restoreStored'])
+        ->where('filename', '[A-Za-z0-9._-]+')->middleware('throttle:2,1')->name('admin.backups.restore');
+    Route::post('/admin/backups/restore-upload', [BackupController::class, 'restoreUploaded'])
+        ->middleware('throttle:2,1')->name('admin.backups.restore-upload');
+    Route::delete('/admin/backups/{filename}', [BackupController::class, 'destroy'])
+        ->where('filename', '[A-Za-z0-9._-]+')->name('admin.backups.destroy');
 
     // Shop configuration
     Route::get('/admin/meanleap/setting', [SettingController::class, 'index'])->name('setting.list');
