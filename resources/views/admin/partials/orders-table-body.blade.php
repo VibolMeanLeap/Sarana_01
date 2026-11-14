@@ -14,12 +14,14 @@
                 <span class="order-expand-hint text-success"><i class="bi bi-truck"></i> Delivery controls · {{ strtoupper($row->order_source ?: 'POS') }}</span>
               @endif
             </td>
-            <td>{{ $row->customer?->name ?: 'Walk-in' }}</td>
-            <td>{{ $row->customer?->phone ?: '—' }}</td>
+            <td>
+              <strong class="d-block">{{ $row->customer?->name ?: 'Walk-in' }}</strong>
+              <span class="small text-muted">{{ $row->customer?->phone ?: 'No phone recorded' }}</span>
+            </td>
             <td>{{ $row->cashier?->name ?: 'Website' }}</td>
-            <td>{{ $row->orderType?->order_name ?: '—' }}</td>
-            <td><span
-                class="status-pill {{ $row->order_source === 'website' ? 'confirmed' : 'ready' }}">{{ ucfirst($row->order_source ?: 'pos') }}</span>
+            <td>
+              <strong class="d-block">{{ $row->orderType?->order_name ?: '—' }}</strong>
+              <span class="status-pill {{ $row->order_source === 'website' ? 'confirmed' : 'ready' }}">{{ ucfirst($row->order_source ?: 'pos') }}</span>
             </td>
             <td>${{ number_format((float) $row->total_amount, 2) }}</td>
             <td>{{ number_format((float) $row->discount, 2) }}%</td>
@@ -42,10 +44,22 @@
                 title="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}"
                 aria-label="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}">{{ $orderShort }}</span>
             </td>
-            <td>{{ $row->order_date?->format('d M Y, h:i A') ?: '—' }}</td>
+            <td class="text-nowrap" style="min-width:96px;padding-left:10px;padding-right:10px">
+              <div style="color:#294233;font-size:11px;font-weight:850;line-height:1.25">{{ $row->order_date?->format('d M Y') ?: '—' }}</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;color:#839087;font-size:10px;line-height:1.2"><i class="bi bi-clock" aria-hidden="true"></i><span>{{ $row->order_date?->format('h:i A') ?: '—' }}</span></div>
+            </td>
+            <td class="text-nowrap" data-order-review-cell="{{ $row->order_id }}">
+              @if(($row->open_review_flags_count ?? 0) > 0)
+                <span class="badge rounded-pill text-bg-warning mb-1"><i class="bi bi-flag-fill me-1"></i>{{ $row->open_review_flags_count }} open</span><br>
+              @else
+                <span class="badge rounded-pill" style="background:#e8f4eb;color:#24613e">Clear</span><br>
+              @endif
+              <button type="button" class="btn btn-sm btn-outline-success mt-1" data-open-order-review data-order-id="{{ $row->order_id }}" data-bs-toggle="modal" data-bs-target="#orderReviewFlagModal"><i class="bi bi-flag me-1"></i>Mark</button>
+              <a class="btn btn-sm btn-link px-1 mt-1" href="{{ route('admin.orders.receipt', $row->order_id) }}" target="_blank" rel="noopener"><i class="bi bi-receipt me-1"></i>Receipt</a>
+            </td>
           </tr>
           <tr class="order-items-detail d-none" id="order-items-{{ $row->order_id }}">
-            <td colspan="13">
+            <td colspan="12">
               <div class="order-items-panel">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                   <div>
@@ -87,6 +101,27 @@
                 <div class="text-muted small py-2">No line items were recorded for this order.</div>
                 @endif
 
+                @if($row->reviewFlags->isNotEmpty())
+                  <div class="mt-3 p-3 rounded-3" style="background:#f0f7f2;border:1px solid #d8e8dd">
+                    <div class="d-flex align-items-center gap-2 mb-2"><i class="bi bi-shield-exclamation text-success"></i><strong class="small">Order review history</strong></div>
+                    @foreach($row->reviewFlags as $flag)
+                      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 py-2 {{ !$loop->last ? 'border-bottom' : '' }}" style="border-color:#dce9df!important">
+                        <div class="flex-grow-1">
+                          <div class="d-flex flex-wrap align-items-center gap-2"><strong class="small">{{ \Illuminate\Support\Str::headline($flag->reason) }}</strong><span class="badge {{ $flag->status === 'open' ? 'text-bg-warning' : 'text-bg-success' }}">{{ ucfirst($flag->status) }}</span></div>
+                          <div class="small mt-1">{{ $flag->notes }}</div>
+                          <div class="small text-muted mt-1">Marked {{ $flag->created_at?->format('d M Y, h:i A') ?: '' }}@if($flag->related_order_id) · Related order: <a href="{{ route('admin.orders.receipt', $flag->related_order_id) }}" target="_blank" rel="noopener">#{{ $flag->related_order_id }}</a>@endif</div>
+                        </div>
+                        @if($flag->status === 'open')
+                          <form method="POST" action="{{ route('admin.orders.flags.resolve', [$row->order_id, $flag->flag_id]) }}" onsubmit="return confirm('Resolve this marker? The audit note will remain in the order history.')">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="btn btn-sm btn-outline-success">Resolve</button>
+                          </form>
+                        @endif
+                      </div>
+                    @endforeach
+                  </div>
+                @endif
+
                 @if ($isDeliveryOrder)
                   @include('admin.partials.delivery-management', ['row' => $row])
                 @endif
@@ -95,6 +130,6 @@
           </tr>
           @empty
           <tr>
-            <td colspan="13" class="text-center text-muted py-5">No orders match these filters.</td>
+            <td colspan="12" class="text-center text-muted py-5">No orders match these filters.</td>
           </tr>
           @endforelse
