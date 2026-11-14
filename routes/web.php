@@ -279,9 +279,9 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
     Route::get('/admin/backups/{filename}/download', [BackupController::class, 'download'])
         ->where('filename', '[A-Za-z0-9._-]+')->name('admin.backups.download');
     Route::post('/admin/backups/{filename}/restore', [BackupController::class, 'restoreStored'])
-        ->where('filename', '[A-Za-z0-9._-]+')->middleware('throttle:2,1')->name('admin.backups.restore');
+        ->where('filename', '[A-Za-z0-9._-]+')->middleware('throttle:backup-restore')->name('admin.backups.restore');
     Route::post('/admin/backups/restore-upload', [BackupController::class, 'restoreUploaded'])
-        ->middleware('throttle:2,1')->name('admin.backups.restore-upload');
+        ->middleware('throttle:backup-restore')->name('admin.backups.restore-upload');
     Route::delete('/admin/backups/{filename}', [BackupController::class, 'destroy'])
         ->where('filename', '[A-Za-z0-9._-]+')->name('admin.backups.destroy');
 

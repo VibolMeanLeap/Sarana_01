@@ -5,7 +5,10 @@ namespace App\Providers;
 use App\Models\Settings;
 use App\Models\StoreContactReply;
 use App\Services\AdminActionCountService;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +28,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // Keep stored-archive and uploaded-archive restore limits independent.
+        // Laravel's basic throttle middleware keys authenticated requests by user,
+        // so the two restore routes would otherwise consume the same allowance.
+        // Five attempts per minute per administrator and route still limits abuse
+        // while allowing legitimate retries after a failed restore.
+        RateLimiter::for('backup-restore', function (Request $request) {
+            $administratorId = $request->user()?->getAuthIdentifier() ?? $request->ip();
+            $routeName = $request->route()?->getName() ?? 'backup-restore';
+
+            return Limit::perMinute(5)->by($administratorId.'|'.$routeName);
+        });
 
         View::composer('*', static function ($view) {
             $view->with('shopSettings', app('shop.settings'));
