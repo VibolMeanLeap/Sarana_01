@@ -1,85 +1,30 @@
 @extends('layout.admin')
-
 @section('page_title', 'Edit purchase')
 @section('topbar_title', 'Edit purchase')
-
 @section('content')
-<div class="container-fluid px-0">
-    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
-        <div>
-            <div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Inventory & suppliers</div>
-            <h1 class="h3 fw-bold mb-1">Edit purchase #{{ $purchase->purchase_id }}</h1>
-            <p class="text-muted mb-0">Update purchase details while keeping the stock and expense records aligned.</p>
-        </div>
-        <a href="{{ route('purchase.index') }}" class="btn btn-outline-secondary rounded-pill px-3"><i class="bi bi-arrow-left me-2"></i>Back to purchases</a>
-    </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger border-0 rounded-4 shadow-sm" role="alert">
-            <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please review the highlighted fields.</div>
-            <div class="small">{{ $errors->first() }}</div>
-        </div>
-    @endif
+<style>
+.cc-p-form{--g:#176b4b;--gd:#104d38;background:linear-gradient(180deg,#edf5ef 0,#f5f8f5 100%);border-radius:22px;padding:clamp(16px,2.2vw,28px);min-height:calc(100vh - 140px)}.cc-p-form-wrap{max-width:1120px;margin:0 auto}.cc-p-form-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:20px}.cc-p-form-head h1{font-size:28px;font-weight:800;letter-spacing:-.04em;color:#1d3529;margin:4px 0}.cc-p-form-head p{font-size:13px;color:#748178;margin:0}.cc-p-form-card{background:#fff;border:1px solid #dfeae2;border-radius:18px;overflow:hidden;box-shadow:0 12px 32px #204b3010}.cc-p-form-card-head{padding:19px 23px;background:linear-gradient(100deg,#e6f2e9,#f7fbf7);border-bottom:1px solid #dce9df;display:flex;align-items:center;gap:13px}.cc-p-form-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#cfe8d5;color:#176b4b;font-size:20px}.cc-p-form-card-head h2{font-size:16px;font-weight:800;color:#214b35;margin:0}.cc-p-form-card-head p{font-size:12px;color:#6d8575;margin:3px 0 0}.cc-p-form .form-label{font-size:12px;font-weight:800;color:#496553;margin-bottom:7px}.cc-p-form .form-control,.cc-p-form .form-select,.cc-p-form .input-group-text{border-color:#d7e4da;border-radius:10px;min-height:44px;font-size:13px;box-shadow:none}.cc-p-form .form-control:focus,.cc-p-form .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}.cc-p-form .input-group .input-group-text{background:#f1f7f2;color:#53705e;font-weight:800}.cc-p-form-body{padding:24px}.cc-p-form-footer{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;padding:16px 24px;background:#f2f8f3;border-top:1px solid #e0ece3}.cc-p-save{border:0;border-radius:11px;padding:10px 18px;background:#176b4b;color:#fff;font-weight:800}.cc-p-save:hover{background:#104d38}.cc-p-cancel{border:1px solid #d5e2d8;border-radius:11px;padding:10px 18px;background:#fff;color:#476450;text-decoration:none;font-weight:700}.cc-p-aside{background:linear-gradient(150deg,#e5f2e8,#f7faf7);border:1px solid #d4e7d8;border-radius:17px;padding:22px;height:100%}.cc-p-aside-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#cfe8d5;color:#176b4b;font-size:20px;margin-bottom:13px}.cc-p-aside h2{font-size:16px;font-weight:800;color:#214b35}.cc-p-aside p,.cc-p-aside li{font-size:12px;color:#62776a}.cc-p-aside ul{padding-left:18px}.cc-p-total-preview{margin-top:16px;padding:15px;border:1px dashed #a7cbb0;border-radius:13px;background:#f6fbf7}.cc-p-total-preview span{font-size:11px;font-weight:800;letter-spacing:.06em;color:#698373}.cc-p-total-preview strong{display:block;font-size:27px;color:#176b4b;letter-spacing:-.04em}.cc-p-alert{border-radius:12px;padding:12px 15px;border:1px solid #f0cccc;background:#fff3f3;color:#a53c3c;margin-bottom:14px;font-size:13px}.cc-p-form .invalid-feedback{font-size:11px}.cc-p-form .form-control.is-invalid,.cc-p-form .form-select.is-invalid{border-color:#dc6b6b}
+</style>
 
-    <div class="row g-4">
-        <div class="col-12 col-xl-8">
-            <section class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-header bg-white px-4 py-3"><h2 class="h5 fw-bold mb-1">Purchase details</h2><p class="small text-muted mb-0">All fields are required.</p></div>
-                <form action="{{ route('purchase.update', $purchase->purchase_id) }}" method="POST" novalidate>
-                    @csrf @method('PUT')
-                    <div class="card-body p-4">
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <label for="supplier_id" class="form-label fw-semibold">Supplier <span class="text-danger">*</span></label>
-                                <select id="supplier_id" name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror" required>
-                                    <option value="">Choose a supplier</option>
-                                    @foreach($suppliers as $supplier)
-                                        <option value="{{ $supplier->supplier_id }}" @selected((string) old('supplier_id', $purchase->supplier_id) === (string) $supplier->supplier_id)>{{ $supplier->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('supplier_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="product_id" class="form-label fw-semibold">Product <span class="text-danger">*</span></label>
-                                <select id="product_id" name="product_id" class="form-select @error('product_id') is-invalid @enderror" required>
-                                    <option value="">Choose a product</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->product_id }}" @selected((string) old('product_id', $purchase->product_id) === (string) $product->product_id)>{{ $product->product_name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('product_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="quantity" class="form-label fw-semibold">Quantity received <span class="text-danger">*</span></label>
-                                <div class="input-group"><input id="quantity" type="number" name="quantity" min="1" step="1" inputmode="numeric" class="form-control @error('quantity') is-invalid @enderror" value="{{ old('quantity', $purchase->quantity) }}" required><span class="input-group-text">units</span></div>
-                                @error('quantity')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="cost_price" class="form-label fw-semibold">Unit cost price <span class="text-danger">*</span></label>
-                                <div class="input-group"><span class="input-group-text">$</span><input id="cost_price" type="number" name="cost_price" min="0" step="0.01" inputmode="decimal" class="form-control @error('cost_price') is-invalid @enderror" value="{{ old('cost_price', $purchase->cost_price) }}" required></div>
-                                @error('cost_price')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="purchase_date" class="form-label fw-semibold">Purchase date <span class="text-danger">*</span></label>
-                                <input id="purchase_date" type="date" name="purchase_date" class="form-control @error('purchase_date') is-invalid @enderror" value="{{ old('purchase_date', $purchase->purchase_date ? $purchase->purchase_date->format('Y-m-d') : '') }}" required>
-                                @error('purchase_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-light border-0 px-4 py-3 d-flex justify-content-end gap-2">
-                        <a href="{{ route('purchase.index') }}" class="btn btn-light border rounded-pill px-4">Cancel</a>
-                        <button type="submit" class="btn btn-success rounded-pill px-4"><i class="bi bi-check2-circle me-2"></i>Save changes</button>
-                    </div>
-                </form>
-            </section>
-        </div>
-        <div class="col-12 col-xl-4">
-            <aside class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body p-4">
-                <span class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width:44px;height:44px;background:#fff4df;color:#96651a"><i class="bi bi-exclamation-circle fs-4"></i></span>
-                <h2 class="h5 fw-bold">Inventory adjustment notice</h2>
-                <p class="small text-muted mb-0">Changing this purchase reverses the original received quantity and applies the revised quantity within a database transaction. If the original quantity is no longer available in stock, the update is blocked to protect inventory accuracy.</p>
-            </div></aside>
-        </div>
-    </div>
-</div>
+<div class="cc-p-form"><div class="cc-p-form-wrap">
+    <div class="cc-p-form-head"><div><div class="small text-success fw-bold text-uppercase" style="letter-spacing:.14em">Inventory operations</div><h1>Edit purchase #{{ $purchase->purchase_id }}</h1><p>Update purchase details while keeping stock and expenses aligned.</p></div><a href="{{ route('purchase.index') }}" class="cc-p-cancel"><i class="bi bi-arrow-left me-1"></i> Back to purchases</a></div>
+    @if($errors->any())<div class="cc-p-alert"><strong>Please correct the highlighted information.</strong><ul class="mb-0 mt-1">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+    @if(session('error'))<div class="cc-p-alert">{{ session('error') }}</div>@endif
+    <div class="row g-3"><div class="col-12 col-xl-8"><section class="cc-p-form-card"><div class="cc-p-form-card-head"><span class="cc-p-form-icon"><i class="bi bi-pencil-square"></i></span><div><h2>Purchase details</h2><p>Changes will reverse the old quantity and apply the updated purchase.</p></div></div>
+        <form action="{{ route('purchase.update', $purchase->purchase_id) }}" method="POST">@csrf @method('PUT')
+            <div class="cc-p-form-body"><div class="row g-3">
+                <div class="col-12 col-md-6"><label for="supplier_id" class="form-label">SUPPLIER <span class="text-danger">*</span></label><select id="supplier_id" name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror" required><option value="">Choose a supplier</option>@foreach($suppliers as $supplier)<option value="{{ $supplier->supplier_id }}" @selected((string)old('supplier_id',$purchase->supplier_id)===(string)$supplier->supplier_id)>{{ $supplier->name }}</option>@endforeach</select>@error('supplier_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="col-12 col-md-6"><label for="product_id" class="form-label">PRODUCT <span class="text-danger">*</span></label><select id="product_id" name="product_id" class="form-select @error('product_id') is-invalid @enderror" required><option value="">Choose a stock product</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected((string)old('product_id',$purchase->product_id)===(string)$product->product_id)>{{ $product->product_name }}</option>@endforeach</select>@error('product_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="col-12 col-md-6"><label for="quantity" class="form-label">QUANTITY RECEIVED <span class="text-danger">*</span></label><div class="input-group"><input id="quantity" type="number" name="quantity" min="1" max="1000000" step="1" inputmode="numeric" class="form-control @error('quantity') is-invalid @enderror" value="{{ old('quantity',$purchase->quantity) }}" required><span class="input-group-text">units</span></div>@error('quantity')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="col-12 col-md-6"><label for="cost_price" class="form-label">UNIT COST PRICE <span class="text-danger">*</span></label><div class="input-group"><span class="input-group-text">$</span><input id="cost_price" type="number" name="cost_price" min="0" step="0.01" inputmode="decimal" class="form-control @error('cost_price') is-invalid @enderror" value="{{ old('cost_price',$purchase->cost_price) }}" required></div>@error('cost_price')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="col-12 col-md-6"><label for="purchase_date" class="form-label">PURCHASE DATE <span class="text-danger">*</span></label><input id="purchase_date" type="date" name="purchase_date" class="form-control @error('purchase_date') is-invalid @enderror" value="{{ old('purchase_date',$purchase->purchase_date ? $purchase->purchase_date->format('Y-m-d') : '') }}" required>@error('purchase_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+            </div><div class="cc-p-total-preview"><span>UPDATED PURCHASE TOTAL</span><strong id="purchaseTotalPreview">$0.00</strong><div class="small text-muted">The original stock quantity must still be available before this purchase can be changed.</div></div></div>
+            <div class="cc-p-form-footer"><a href="{{ route('purchase.index') }}" class="cc-p-cancel">Cancel</a><button type="submit" class="cc-p-save"><i class="bi bi-check2-circle me-1"></i> Save changes</button></div>
+        </form>
+    </section></div><div class="col-12 col-xl-4"><aside class="cc-p-aside"><span class="cc-p-aside-icon"><i class="bi bi-exclamation-shield"></i></span><h2>Inventory protection</h2><p>Editing a purchase reverses its previous received quantity, then applies the new quantity in one transaction.</p><p class="mb-0">If the original quantity has already been used and is no longer available in stock, the system blocks the update to prevent a negative or inaccurate inventory balance.</p></aside></div></div>
+</div></div>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{const q=document.getElementById('quantity'),c=document.getElementById('cost_price'),o=document.getElementById('purchaseTotalPreview');const update=()=>{const n=Math.max(0,Number(q.value)||0),v=Math.max(0,Number(c.value)||0);o.textContent=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n*v)};q.addEventListener('input',update);c.addEventListener('input',update);update();});
+</script>
 @endsection

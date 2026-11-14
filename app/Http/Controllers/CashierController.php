@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +33,14 @@ class CashierController extends Controller
 
     public function orders(Request $request)
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:paid,unpaid'],
+            'period' => ['nullable', 'in:today,week,month'],
+            'start_date' => ['nullable', 'date_format:Y-m-d'],
+            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+        ]);
+
         $cashierId = (int) auth()->id();
         $query = Order::with(['customer', 'orderType', 'paymentMethod', 'orderItems'])
             ->withCount('delivery')
@@ -45,24 +54,34 @@ class CashierController extends Controller
                     });
             });
 
-        if ($request->filled('search')) {
-            $search = trim($request->input('search'));
+        if (! empty($validated['search'])) {
+            $search = trim($validated['search']);
             $query->where(function ($builder) use ($search) {
                 $builder->where('order_id', 'like', "%{$search}%")
                     ->orWhere('payment_status', 'like', "%{$search}%");
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('is_paid', $request->input('status') === 'paid');
+        if (! empty($validated['status'])) {
+            $query->where('is_paid', $validated['status'] === 'paid');
         }
 
-        if ($request->filled('start_date')) {
-            $query->whereDate('order_date', '>=', $request->input('start_date'));
-        }
+        if (! empty($validated['period'])) {
+            $periodStart = match ($validated['period']) {
+                'today' => today()->toDateString(),
+                'week' => now()->startOfWeek(Carbon::MONDAY)->toDateString(),
+                'month' => now()->startOfMonth()->toDateString(),
+            };
+            $query->whereDate('order_date', '>=', $periodStart)
+                ->whereDate('order_date', '<=', today()->toDateString());
+        } else {
+            if (! empty($validated['start_date'])) {
+                $query->whereDate('order_date', '>=', $validated['start_date']);
+            }
 
-        if ($request->filled('end_date')) {
-            $query->whereDate('order_date', '<=', $request->input('end_date'));
+            if (! empty($validated['end_date'])) {
+                $query->whereDate('order_date', '<=', $validated['end_date']);
+            }
         }
 
         $orders = $query->orderByDesc('order_date')->paginate(12)->withQueryString();

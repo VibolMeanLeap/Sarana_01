@@ -114,6 +114,8 @@ Route::get('/web/{legacyPath}', function (string $legacyPath) {
 /* POS is available to admins and cashiers only. */
 Route::middleware(['auth', 'role:admin,cashier'])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos.dashboard');
+    Route::get('/pos/catalog/products', [PosController::class, 'refreshCatalog'])->name('pos.catalog.products');
+    Route::post('/pos/products', [PosController::class, 'storeQuickProduct'])->name('pos.products.store');
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
     Route::get('/pos/payments/{payment}/qr', [PayWayPaymentController::class, 'showForStaff'])->whereNumber('payment')->name('pos.payments.show');
     Route::get('/pos/payments/{payment}/status', [PayWayPaymentController::class, 'statusForStaff'])->whereNumber('payment')->name('pos.payments.status');
@@ -212,6 +214,14 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
         ->whereNumber('orderId')
         ->name('admin.orders.status');
 
+    // Non-destructive order audit markers and printable receipts.
+    Route::get('/admin/orders/{orderId}/receipt', [OrderController::class, 'receipt'])
+        ->whereNumber('orderId')->name('admin.orders.receipt');
+    Route::post('/admin/orders/{orderId}/flags', [OrderController::class, 'storeReviewFlag'])
+        ->whereNumber('orderId')->name('admin.orders.flags.store');
+    Route::patch('/admin/orders/{orderId}/flags/{flagId}/resolve', [OrderController::class, 'resolveReviewFlag'])
+        ->whereNumber('orderId')->whereNumber('flagId')->name('admin.orders.flags.resolve');
+
     Route::get('/admin/older_items', function (Request $request) {
         $params = $request->filled('order_id') ? ['search' => $request->input('order_id')] : [];
         return redirect()->route('admin.orders.index', $params);
@@ -279,9 +289,9 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
     Route::get('/admin/backups/{filename}/download', [BackupController::class, 'download'])
         ->where('filename', '[A-Za-z0-9._-]+')->name('admin.backups.download');
     Route::post('/admin/backups/{filename}/restore', [BackupController::class, 'restoreStored'])
-        ->where('filename', '[A-Za-z0-9._-]+')->middleware('throttle:2,1')->name('admin.backups.restore');
+        ->where('filename', '[A-Za-z0-9._-]+')->middleware('throttle:backup-restore')->name('admin.backups.restore');
     Route::post('/admin/backups/restore-upload', [BackupController::class, 'restoreUploaded'])
-        ->middleware('throttle:2,1')->name('admin.backups.restore-upload');
+        ->middleware('throttle:backup-restore')->name('admin.backups.restore-upload');
     Route::delete('/admin/backups/{filename}', [BackupController::class, 'destroy'])
         ->where('filename', '[A-Za-z0-9._-]+')->name('admin.backups.destroy');
 

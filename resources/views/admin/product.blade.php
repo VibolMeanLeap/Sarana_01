@@ -1,409 +1,190 @@
 @extends('layout.admin')
+@section('page_title', 'Products')
+@section('topbar_title', 'Product catalogue')
 
 @section('content')
-
 <style>
-    .prod-page-bg {
-        background: #f3f4f6;
-        min-height: 100vh;
-        padding: 24px;
-    }
-
-    .prod-topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .prod-page-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0;
-    }
-
-    .btn-add-product {
-        background: #2563eb;
-        border: none;
-        color: #fff;
-        padding: 10px 18px;
-        border-radius: 8px;
-        font-weight: 500;
-        font-size: 14px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: background .15s ease;
-    }
-    .btn-add-product:hover {
-        background: #1d4ed8;
-        color: #fff;
-    }
-
-    .prod-card {
-        background: #fff;
-        border-radius: 14px;
-        border: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,.06);
-        padding: 24px;
-    }
-
-    .prod-search-form {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 18px;
-        flex-wrap: wrap;
-    }
-    .prod-search-form .form-select,
-    .prod-search-form .form-control {
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-        font-size: 14px;
-        height: 42px;
-    }
-    .prod-search-form .form-select {
-        min-width: 180px;
-    }
-    .prod-search-form .form-control {
-        min-width: 280px;
-        font-size: 16px;
-    }
-    .prod-search-form .btn-search {
-        border-radius: 8px;
-        background: #2563eb;
-        border: 1px solid #2563eb;
-        color: #fff;
-        font-size: 14px;
-        padding: 0 20px;
-        height: 42px;
-    }
-    .prod-search-form .btn-search:hover {
-        background: #1d4ed8;
-    }
-    .prod-search-form .btn-clear {
-        border-radius: 8px;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        color: #374151;
-        font-size: 14px;
-        padding: 0 16px;
-        height: 42px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-    }
-    .prod-search-form .btn-clear:hover {
-        background: #e5e7eb;
-        color: #111827;
-    }
-
-    .prod-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .prod-table thead th {
-        text-align: left;
-        font-size: 12px;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: .03em;
-        padding: 10px 12px;
-        border-bottom: 1px solid #e5e7eb;
-        background: transparent;
-        white-space: nowrap;
-    }
-    .prod-table tbody td {
-        padding: 12px;
-        font-size: 14px;
-        color: #111827;
-        border-bottom: 1px solid #f1f2f4;
-        vertical-align: middle;
-    }
-    .prod-table tbody tr:hover {
-        background: #f9fafb;
-    }
-
-    .prod-thumb {
-        width: 42px;
-        height: 42px;
-        border-radius: 8px;
-        object-fit: cover;
-        border: 1px solid #e5e7eb;
-        background: #f3f4f6;
-    }
-
-    .prod-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 11.5px;
-        font-weight: 600;
-    }
-    .prod-badge.active {
-        background: #dcfce7;
-        color: #15803d;
-    }
-    .prod-badge.inactive {
-        background: #fee2e2;
-        color: #b91c1c;
-    }
-
-    /* Icon-style action buttons (matching Order List / Order Item List design) */
-    .prod-action-group { display: flex; align-items: center; gap: 6px; }
-    .btn-icon-edit,
-    .btn-icon-delete {
-        background: transparent;
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        padding: 0;
-    }
-    .btn-icon-edit { color: #d97706; }
-    .btn-icon-edit:hover { background: #fef3c7; color: #b45309; }
-    .btn-icon-delete { color: #dc2626; }
-    .btn-icon-delete:hover { background: #fee2e2; color: #b91c1c; }
-
-    .prod-pagination nav p { display: none !important; }
-    .prod-pagination {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 18px;
-    }
-    .prod-pagination .pagination {
-        gap: 4px;
-    }
-    .prod-pagination .page-link {
-        border-radius: 8px !important;
-        border: 1px solid #e5e7eb;
-        color: #374151;
-        font-size: 13px;
-        min-width: 32px;
-        text-align: center;
-    }
-    .prod-pagination .page-item.active .page-link {
-        background: #2563eb;
-        border-color: #2563eb;
-        color: #fff;
-    }
-    .prod-search-form select,
-    .prod-search-form input[type="text"] {
-        max-width: 320px;
-    }
+    .cc-products{--cc-green:#176b4b;--cc-green-dark:#104d38;--cc-green-soft:#e9f4ec;--cc-green-border:#d4e7d9;--cc-ink:#20312a;--cc-muted:#748178;--cc-line:#e5eee8;background:linear-gradient(180deg,#edf5ef 0,#f5f8f5 280px,#f5f8f5 100%);border-radius:22px;padding:clamp(15px,2.1vw,27px);color:var(--cc-ink)}
+    .cc-products *{box-sizing:border-box}
+    .cc-prod-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:19px}
+    .cc-prod-kicker{font-size:10px;font-weight:850;letter-spacing:.15em;text-transform:uppercase;color:#4b8768}
+    .cc-prod-title{font-size:clamp(24px,3vw,31px);font-weight:850;letter-spacing:-.045em;margin:4px 0;color:#1d3529}
+    .cc-prod-subtitle{color:var(--cc-muted);font-size:13px;margin:0;max-width:650px}
+    .cc-prod-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .cc-prod-add{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border:0;border-radius:12px;background:var(--cc-green);color:#fff;text-decoration:none;font-size:13px;font-weight:800;box-shadow:0 7px 16px #176b4b22;transition:transform .15s ease,background .15s ease}
+    .cc-prod-add:hover{background:var(--cc-green-dark);color:#fff;transform:translateY(-1px)}
+    .cc-prod-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+    .cc-prod-stat{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px;border:1px solid var(--cc-green-border);border-radius:15px;background:linear-gradient(135deg,#fff 0,#f1f8f3 100%);box-shadow:0 5px 15px #204b3010}
+    .cc-prod-stat-label{font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:#77857b}
+    .cc-prod-stat-value{margin-top:3px;color:#1b3f2e;font-size:24px;font-weight:850;letter-spacing:-.04em;line-height:1.15}
+    .cc-prod-stat-note{font-size:10px;color:#8a968e;margin-top:3px}
+    .cc-prod-stat-icon{width:41px;height:41px;flex:0 0 41px;display:grid;place-items:center;border-radius:13px;background:#dff0e4;color:var(--cc-green);font-size:19px}
+    .cc-prod-filter{margin-bottom:16px;padding:16px 17px;border:1px solid #cfe4d4;border-radius:17px;background:linear-gradient(120deg,#e4f1e7 0,#f0f7f1 100%);box-shadow:inset 0 1px 0 #ffffffbf}
+    .cc-prod-filter-head{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+    .cc-prod-filter-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#cfe8d5;color:var(--cc-green);font-size:15px}
+    .cc-prod-filter-title{margin:0;color:#214b35;font-size:14px;font-weight:850}
+    .cc-prod-filter-hint{margin:2px 0 0;color:#688071;font-size:11px}
+    .cc-prod-filter-grid{display:grid;grid-template-columns:minmax(205px,2fr) repeat(5,minmax(118px,1fr)) auto;gap:9px;align-items:end}
+    .cc-prod-field{min-width:0}
+    .cc-prod-field label{display:block;margin:0 0 6px;color:#53705e;font-size:9px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+    .cc-products .form-control,.cc-products .form-select{width:100%;height:41px;min-width:0;border:1px solid #d7e4da;border-radius:10px;background:#fff;color:#24382c;font-size:12px;box-shadow:none}
+    .cc-products .form-control:focus,.cc-products .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}
+    .cc-prod-filter-actions{display:flex;gap:7px}
+    .cc-prod-apply,.cc-prod-reset{height:41px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border-radius:10px;font-size:11px;font-weight:800;white-space:nowrap;text-decoration:none}
+    .cc-prod-apply{border:0;background:var(--cc-green);color:white}
+    .cc-prod-apply:hover{background:var(--cc-green-dark);color:#fff}
+    .cc-prod-reset{border:1px solid #cbdacf;background:#f8fbf8;color:#496452}
+    .cc-prod-reset:hover{background:#e7f2e9;color:#176b4b}
+    .cc-prod-table-card{overflow:hidden;border:1px solid var(--cc-line);border-radius:17px;background:#fff;box-shadow:0 8px 24px #204b300c}
+    .cc-prod-table-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 18px;border-bottom:1px solid var(--cc-line);background:linear-gradient(90deg,#f1f7f2,#fff)}
+    .cc-prod-table-title{margin:0;color:#1d3d2c;font-size:15px;font-weight:850}
+    .cc-prod-table-meta{margin-top:3px;color:#7b8980;font-size:11px}
+    .cc-prod-table-wrap{overflow-x:auto}
+    .cc-prod-table{width:100%;min-width:1050px;border-collapse:separate;border-spacing:0}
+    .cc-prod-table thead th{padding:12px 13px;border-bottom:1px solid #dce9df;background:#edf5ef;color:#567362;font-size:9px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    .cc-prod-table tbody td{padding:12px 13px;border-bottom:1px solid #edf2ed;color:#2c3c32;font-size:12px;vertical-align:middle}
+    .cc-prod-table tbody tr:last-child td{border-bottom:0}
+    .cc-prod-table tbody tr:hover{background:#f6faf6}
+    .cc-prod-thumb{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;overflow:hidden;border:1px solid #e0ebe3;border-radius:12px;background:#edf5ef;color:#7ba489}
+    .cc-prod-thumb img{width:100%;height:100%;object-fit:cover}
+    .cc-prod-name{color:#244a33;font-size:12px;font-weight:850;line-height:1.35}
+    .cc-prod-meta{margin-top:3px;color:#89958d;font-size:10px}
+    .cc-prod-price{color:#1b5037;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .cc-prod-qty{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #dcebe0;border-radius:999px;background:#f2f8f3;color:#276543;font-size:10px;font-weight:850;white-space:nowrap}
+    .cc-prod-type,.cc-prod-status{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:9px;font-weight:850;white-space:nowrap}
+    .cc-prod-type.stock{background:#e8f4eb;color:#286a45}
+    .cc-prod-type.nonstock{background:#edf0f1;color:#637079}
+    .cc-prod-status.active{background:#e4f4e8;color:#237247}
+    .cc-prod-status.inactive{background:#fff0ef;color:#ad4945}
+    .cc-prod-actions-cell{display:flex;justify-content:flex-end;gap:5px}
+    .cc-prod-icon-btn{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid #e2ece5;border-radius:10px;background:#fff;color:#527461;text-decoration:none;cursor:pointer}
+    .cc-prod-icon-btn:hover{border-color:#bddac5;background:#e9f4ee;color:#176b4b}
+    .cc-prod-icon-btn.danger{color:#b65353}
+    .cc-prod-icon-btn.danger:hover{border-color:#f0caca;background:#fff0f0;color:#a53c3c}
+    .cc-prod-empty{padding:45px 20px;text-align:center;color:#829087}
+    .cc-prod-empty i{font-size:31px;color:#8ab99a}
+    .cc-prod-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 17px;border-top:1px solid #edf2ed;background:#fbfdfb}
+    .cc-prod-pagination nav p{display:none}
+    .cc-prod-pagination .pagination{gap:4px;margin:0}
+    .cc-prod-pagination .page-link{border-color:#dce8df;border-radius:9px!important;color:#3d664e;font-size:11px}
+    .cc-prod-pagination .page-item.active .page-link{border-color:#176b4b;background:#176b4b;color:#fff}
+    .cc-prod-alert{margin-bottom:13px;padding:11px 14px;border:1px solid #c8e4cf;border-radius:12px;background:#eef8f0;color:#285f3b;font-size:12px}
+    .cc-prod-alert.error{border-color:#f1cccc;background:#fff3f3;color:#a53c3c}
+    @media(max-width:1399px){.cc-prod-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cc-prod-field.search-field{grid-column:span 2}.cc-prod-filter-actions{align-self:end}}
+    @media(max-width:767px){.cc-products{padding:13px;border-radius:16px}.cc-prod-stats{grid-template-columns:1fr}.cc-prod-filter{padding:13px}.cc-prod-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-prod-field.search-field{grid-column:1/-1}.cc-prod-filter-actions{grid-column:1/-1}.cc-prod-filter-actions>*{flex:1}.cc-prod-pagination{align-items:flex-start}}
+    @media(max-width:420px){.cc-prod-filter-grid{grid-template-columns:1fr}.cc-prod-field.search-field{grid-column:auto}.cc-prod-filter-actions{grid-column:auto}}
 </style>
 
-<div class="prod-page-bg">
-
-    <div class="prod-topbar">
-        <h4 class="prod-page-title">Product List</h4>
-
-        <a href="{{ route('products.create') }}" class="btn-add-product">
-            <i class="fa fa-plus"></i> Add New Product
-        </a>
-    </div>
-
-    <div class="d-flex justify-content-end mb-3">
-        @include('admin.partials.export-actions', ['exportType' => 'products'])
-    </div>
-
-    <div class="prod-card">
-
-        <form action="{{ route('products.index') }}" method="GET" class="prod-search-form" id="searchForm">
-
-    <div class="select-wrap">
-        <select name="category" id="category" class="form-select">
-            <option value="">All Categories</option>
-            @foreach($categories as $cat)
-                <option value="{{ $cat->category_id }}"
-                    {{ request('category') == $cat->category_id ? 'selected' : '' }}>
-                    {{ $cat->category_name }}
-                </option>
-            @endforeach
-        </select>
-    </div>
-
-    <div class="search-wrap">
-        <input type="text" name="search" id="search" class="form-control"
-               placeholder="Search product..." value="{{ request('search') }}">
-    </div>
-
-    <select name="status" class="form-select" aria-label="Product status">
-        <option value="">All statuses</option>
-        <option value="Active" @selected(request('status') === 'Active')>Active</option>
-        <option value="Inactive" @selected(request('status') === 'Inactive')>Inactive</option>
-    </select>
-    <select name="product_type" class="form-select" aria-label="Inventory type">
-        <option value="">All product types</option>
-        <option value="stock" @selected(request('product_type') === 'stock')>Stock</option>
-        <option value="non-stock" @selected(request('product_type') === 'non-stock')>Non-stock</option>
-    </select>
-    <select name="sort_by" class="form-select" aria-label="Sort products by">
-        <option value="product_id" @selected(request('sort_by', 'product_id') === 'product_id')>Sort: Recently added (ID)</option>
-        <option value="product_name" @selected(request('sort_by') === 'product_name')>Product name</option>
-        <option value="price" @selected(request('sort_by') === 'price')>Selling price</option>
-        <option value="qty" @selected(request('sort_by') === 'qty')>Stock quantity</option>
-    </select>
-    <select name="sort_dir" class="form-select" aria-label="Sort direction">
-        <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option>
-        <option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option>
-    </select>
-    <button type="submit" class="btn-search">Filter</button>
-
-    @if(request()->hasAny(['search', 'category', 'status', 'product_type', 'sort_by', 'sort_dir']))
-        <a href="{{ route('products.index') }}" class="btn-clear">Clear</a>
+<div class="cc-products">
+    @if(session('success'))
+        <div class="cc-prod-alert"><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</div>
     @endif
-</form>
+    @if(session('error'))
+        <div class="cc-prod-alert error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="cc-prod-alert error"><strong>Please review:</strong> {{ $errors->first() }}</div>
+    @endif
 
-        <div class="table-responsive">
-            <table class="prod-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Image</th>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Supplier</th>
-                        <th>Price</th>
-                        <th>Qty</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th style="width:90px; text-align:right;">Action</th>
-                    </tr>
-                </thead>
+    <header class="cc-prod-head">
+        <div>
+            <div class="cc-prod-kicker">Catalogue management</div>
+            <h1 class="cc-prod-title">Products</h1>
+            <p class="cc-prod-subtitle">Manage product details, pricing, suppliers and stock visibility from one clean catalogue.</p>
+        </div>
+        <div class="cc-prod-actions">
+            @include('admin.partials.export-actions', ['exportType' => 'products'])
+            <a href="{{ route('products.create') }}" class="cc-prod-add"><i class="bi bi-plus-lg"></i> Add product</a>
+        </div>
+    </header>
+
+    <div class="cc-prod-stats">
+        <div class="cc-prod-stat">
+            <div><div class="cc-prod-stat-label">Products matching filters</div><div class="cc-prod-stat-value">{{ number_format($products->total()) }}</div><div class="cc-prod-stat-note">Total records in this result</div></div>
+            <span class="cc-prod-stat-icon"><i class="bi bi-box-seam"></i></span>
+        </div>
+        <div class="cc-prod-stat">
+            <div><div class="cc-prod-stat-label">Shown on this page</div><div class="cc-prod-stat-value">{{ number_format($products->count()) }}</div><div class="cc-prod-stat-note">{{ $products->perPage() }} rows per page</div></div>
+            <span class="cc-prod-stat-icon"><i class="bi bi-grid-3x3-gap"></i></span>
+        </div>
+        <div class="cc-prod-stat">
+            <div><div class="cc-prod-stat-label">Available categories</div><div class="cc-prod-stat-value">{{ number_format($categories->count()) }}</div><div class="cc-prod-stat-note">Used to organise the catalogue</div></div>
+            <span class="cc-prod-stat-icon"><i class="bi bi-tags"></i></span>
+        </div>
+    </div>
+
+    <section class="cc-prod-filter" aria-labelledby="ccProductFilterTitle">
+        <div class="cc-prod-filter-head">
+            <span class="cc-prod-filter-icon"><i class="bi bi-funnel-fill"></i></span>
+            <div><h2 class="cc-prod-filter-title" id="ccProductFilterTitle">Find and organise products</h2><p class="cc-prod-filter-hint">Search the catalogue, narrow by product type or status, and choose how records are sorted.</p></div>
+        </div>
+        <form action="{{ route('products.index') }}" method="GET" class="cc-prod-filter-grid" id="productFilterForm">
+            <div class="cc-prod-field search-field"><label for="productSearch">Search catalogue</label><input type="search" id="productSearch" name="search" class="form-control" placeholder="Product name, description or type..." value="{{ request('search') }}"></div>
+            <div class="cc-prod-field"><label for="productCategory">Category</label><select name="category" id="productCategory" class="form-select"><option value="">All categories</option>@foreach($categories as $cat)<option value="{{ $cat->category_id }}" @selected((string)request('category', request('category_id')) === (string)$cat->category_id)>{{ $cat->category_name }}</option>@endforeach</select></div>
+            <div class="cc-prod-field"><label for="productStatus">Status</label><select name="status" id="productStatus" class="form-select"><option value="">All statuses</option><option value="Active" @selected(request('status') === 'Active')>Active</option><option value="Inactive" @selected(request('status') === 'Inactive')>Inactive</option></select></div>
+            <div class="cc-prod-field"><label for="productType">Product type</label><select name="product_type" id="productType" class="form-select"><option value="">All types</option><option value="stock" @selected(request('product_type') === 'stock')>Stock</option><option value="non-stock" @selected(request('product_type') === 'non-stock')>Non-stock</option></select></div>
+            <div class="cc-prod-field"><label for="productSortBy">Sort by</label><select name="sort_by" id="productSortBy" class="form-select"><option value="product_id" @selected(request('sort_by', 'product_id') === 'product_id')>Recently added</option><option value="product_name" @selected(request('sort_by') === 'product_name')>Product name</option><option value="price" @selected(request('sort_by') === 'price')>Selling price</option><option value="qty" @selected(request('sort_by') === 'qty')>Stock quantity</option></select></div>
+            <div class="cc-prod-field"><label for="productSortDir">Order</label><select name="sort_dir" id="productSortDir" class="form-select"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option><option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option></select></div>
+            <div class="cc-prod-filter-actions"><button type="submit" class="cc-prod-apply"><i class="bi bi-search"></i> Apply</button><a href="{{ route('products.index') }}" class="cc-prod-reset" title="Clear all product filters" aria-label="Clear all product filters"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+        </form>
+    </section>
+
+    <section class="cc-prod-table-card">
+        <div class="cc-prod-table-head">
+            <div><h2 class="cc-prod-table-title">Product catalogue</h2><div class="cc-prod-table-meta">Showing {{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }} of {{ $products->total() }} products</div></div>
+            <span class="badge rounded-pill text-bg-light border"><i class="bi bi-shield-check text-success me-1"></i>Catalogue records</span>
+        </div>
+        <div class="cc-prod-table-wrap">
+            <table class="cc-prod-table">
+                <thead><tr><th style="width:65px">ID</th><th style="width:70px">Image</th><th>Product</th><th>Category</th><th>Supplier</th><th>Price</th><th>Quantity</th><th>Type</th><th>Status</th><th class="text-end" style="width:100px">Actions</th></tr></thead>
                 <tbody>
-                    @forelse($products as $row)
-                        <tr>
-                            <td>{{ $row->product_id }}</td>
-                           <td>
-    @if($row->image)
-        <img src="{{ asset('images/' . $row->image) }}"
-             alt="{{ $row->product_name }}"
-             class="prod-thumb">
-    @else
-        <div class="prod-thumb"></div>
-    @endif
-</td>
-                            <td>{{ $row->product_name }}</td>
-                            <td>{{ $row->category->category_name ?? '-' }}</td>
-                            <td>{{ $row->supplier->name ?? '-' }}</td>
-                            <td>${{ $row->price !== null ? number_format($row->price, 2) : '-' }}</td>
-                            <td>{{ $row->isStockTracked() ? ($row->qty ?? 0) : '—' }}</td>
-                            <td><span class="badge {{ $row->isStockTracked() ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $row->isStockTracked() ? 'Stock' : 'Non-stock' }}</span></td>
-                            <td>
-                                @if(strtolower($row->status ?? '') === 'active')
-                                    <span class="prod-badge active">Active</span>
-                                @elseif($row->status)
-                                    <span class="prod-badge inactive">{{ $row->status }}</span>
-                                @else
-                                    <span class="prod-badge inactive">-</span>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="prod-action-group">
-                                    <a href="{{ route('products.edit', $row->product_id) }}" class="btn-icon-edit" title="Edit product">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                    </a>
-
-                                    <form action="{{ route('products.destroy', $row->product_id) }}" method="POST" class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn-icon-delete btn-delete" title="Delete product">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                                <path d="M10 11v6"></path>
-                                                <path d="M14 11v6"></path>
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10" class="text-center text-muted py-4">No products found.</td>
-                        </tr>
-                    @endforelse
+                @forelse($products as $row)
+                    @php($trackedStock = $row->isStockTracked())
+                    <tr>
+                        <td class="text-muted fw-semibold">#{{ $row->product_id }}</td>
+                        <td><span class="cc-prod-thumb">@if($row->image)<img src="{{ asset('images/' . $row->image) }}" alt="{{ $row->product_name }}">@else<i class="bi bi-cup-hot"></i>@endif</span></td>
+                        <td><div class="cc-prod-name">{{ $row->product_name }}</div><div class="cc-prod-meta">Product ID {{ $row->product_id }}</div></td>
+                        <td>{{ $row->category?->category_name ?? 'Uncategorised' }}</td>
+                        <td>{{ $row->supplier?->name ?? '—' }}</td>
+                        <td class="cc-prod-price">${{ $row->price !== null ? number_format((float)$row->price, 2) : '—' }}</td>
+                        <td>@if($trackedStock)<span class="cc-prod-qty"><i class="bi bi-box-seam"></i>{{ number_format((int)($row->qty ?? 0)) }}</span>@else<span class="text-muted">Not tracked</span>@endif</td>
+                        <td><span class="cc-prod-type {{ $trackedStock ? 'stock' : 'nonstock' }}">{{ $trackedStock ? 'Stock' : 'Non-stock' }}</span></td>
+                        <td>@if(strtolower((string)($row->status ?? '')) === 'active')<span class="cc-prod-status active"><i class="bi bi-check-circle-fill me-1"></i>Active</span>@else<span class="cc-prod-status inactive"><i class="bi bi-pause-circle-fill me-1"></i>{{ $row->status ?: 'Inactive' }}</span>@endif</td>
+                        <td><div class="cc-prod-actions-cell"><a href="{{ route('products.edit', $row->product_id) }}" class="cc-prod-icon-btn" title="Edit product" aria-label="Edit {{ $row->product_name }}"><i class="bi bi-pencil-square"></i></a><form action="{{ route('products.destroy', $row->product_id) }}" method="POST" class="d-inline delete-form">@csrf @method('DELETE')<button type="button" class="cc-prod-icon-btn danger btn-delete" title="Delete product" aria-label="Delete {{ $row->product_name }}"><i class="bi bi-trash3"></i></button></form></div></td>
+                    </tr>
+                @empty
+                    <tr><td colspan="10"><div class="cc-prod-empty"><i class="bi bi-box-seam d-block mb-2"></i><div class="fw-bold text-dark">No products found</div><div class="small">Try changing the filters or add a product to your catalogue.</div><a href="{{ route('products.create') }}" class="cc-prod-add mt-3"><i class="bi bi-plus-lg"></i>Add product</a></div></td></tr>
+                @endforelse
                 </tbody>
             </table>
         </div>
-
-        <div class="prod-pagination">
-            {{ $products->links('pagination::simple-bootstrap-5') }}
-        </div>
-    </div>
-
+        <div class="cc-prod-pagination"><span class="small text-muted">Page {{ $products->currentPage() }} of {{ max(1, $products->lastPage()) }}</span>{{ $products->links('pagination::simple-bootstrap-5') }}</div>
+    </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        @if(session('success'))
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
-            });
-
-            Toast.fire({
-                icon: 'success',
-                title: "{{ session('success') }}"
-            });
-        @endif
-
-        const deleteButtons = document.querySelectorAll('.btn-delete');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                const form = this.closest('.delete-form');
-
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.cc-products .btn-delete').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const form = this.closest('.delete-form');
+            if (!form) return;
+            if (window.Swal) {
                 Swal.fire({
-                    title: 'Are you sure?',
-                    text: "Do you want delete Product !",
-                    icon: 'delete',
+                    title: 'Delete this product?',
+                    text: 'Products referenced by orders, purchases or stock history cannot be deleted.',
+                    icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            });
+                    confirmButtonColor: '#176b4b',
+                    cancelButtonColor: '#8a9690',
+                    confirmButtonText: 'Yes, delete product',
+                    cancelButtonText: 'Keep product'
+                }).then(function (result) { if (result.isConfirmed) form.submit(); });
+            } else if (window.confirm('Delete this product?')) {
+                form.submit();
+            }
         });
     });
-</script>
-<script>
-document.getElementById('search').addEventListener('keyup', function () {
-    document.getElementById('searchForm').submit();
-});
-
-document.getElementById('category').addEventListener('change', function () {
-    document.getElementById('searchForm').submit();
 });
 </script>
-
 @endsection

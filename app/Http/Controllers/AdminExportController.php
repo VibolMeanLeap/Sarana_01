@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class AdminExportController extends Controller
 {
@@ -79,6 +80,7 @@ class AdminExportController extends Controller
             'search' => ['nullable', 'string', 'max:120'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'period' => ['nullable', 'in:today,week,month'],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'from' => ['nullable', 'date'],
@@ -296,7 +298,28 @@ class AdminExportController extends Controller
         }
         if ($request->filled('order_status')) $query->where('o.order_status', $request->input('order_status'));
         if (in_array($request->input('source'), ['pos', 'website'], true)) $query->where('o.order_source', $request->input('source'));
-        $this->applyDateRange($query, 'o.order_date', $request, ['start_date', 'date_from', 'from'], ['end_date', 'date_to', 'to']);
+        if ($request->input('review_status') === 'open') {
+            $query->whereExists(function ($subquery) {
+                $subquery->selectRaw('1')->from('order_review_flags as orf')
+                    ->whereColumn('orf.order_id', 'o.order_id')->where('orf.status', 'open');
+            });
+        } elseif ($request->input('review_status') === 'clear') {
+            $query->whereNotExists(function ($subquery) {
+                $subquery->selectRaw('1')->from('order_review_flags as orf')
+                    ->whereColumn('orf.order_id', 'o.order_id')->where('orf.status', 'open');
+            });
+        }
+        if (in_array($request->input('period'), ['today', 'week', 'month'], true)) {
+            $periodStart = match ($request->input('period')) {
+                'today' => today()->toDateString(),
+                'week' => now()->startOfWeek(Carbon::MONDAY)->toDateString(),
+                'month' => now()->startOfMonth()->toDateString(),
+            };
+            $query->whereDate('o.order_date', '>=', $periodStart)
+                ->whereDate('o.order_date', '<=', today()->toDateString());
+        } else {
+            $this->applyDateRange($query, 'o.order_date', $request, ['start_date', 'date_from', 'from'], ['end_date', 'date_to', 'to']);
+        }
         $query->orderBy($this->sortColumn($request, ['order_date' => 'o.order_date', 'order_id' => 'o.order_id', 'final_price' => 'o.final_price'], 'o.order_date'), $this->sortDirection($request));
 
         return $this->report('Orders', ['Order ID', 'Queue No', 'Customer', 'Customer Phone', 'Cashier', 'Order Type', 'Source', 'Order Status', 'Payment Status', 'Subtotal (USD)', 'Discount (%)', 'Final Total (USD)', 'Order Date'], $query);
@@ -499,7 +522,7 @@ class AdminExportController extends Controller
     private function filterSummary(Request $request): string
     {
         $labels = [];
-        foreach (['search' => 'Search', 'category_id' => 'Category ID', 'category' => 'Category ID', 'product_id' => 'Product ID', 'order_id' => 'Order ID', 'supplier_id' => 'Supplier ID', 'status' => 'Status', 'payment_status' => 'Payment', 'order_status' => 'Order status', 'source' => 'Source', 'rating' => 'Rating', 'type' => 'Type', 'role' => 'Role', 'start_date' => 'From', 'date_from' => 'From', 'from' => 'From', 'end_date' => 'To', 'date_to' => 'To', 'to' => 'To'] as $key => $label) {
+        foreach (['search' => 'Search', 'category_id' => 'Category ID', 'category' => 'Category ID', 'product_id' => 'Product ID', 'order_id' => 'Order ID', 'supplier_id' => 'Supplier ID', 'status' => 'Status', 'payment_status' => 'Payment', 'order_status' => 'Order status', 'source' => 'Source', 'period' => 'Period', 'rating' => 'Rating', 'type' => 'Type', 'role' => 'Role', 'start_date' => 'From', 'date_from' => 'From', 'from' => 'From', 'end_date' => 'To', 'date_to' => 'To', 'to' => 'To'] as $key => $label) {
             if ($request->filled($key)) $labels[] = $label.': '.$request->input($key);
         }
         return $labels ? implode(' · ', array_unique($labels)) : 'All records';

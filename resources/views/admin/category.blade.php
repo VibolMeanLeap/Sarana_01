@@ -1,302 +1,48 @@
 @extends('layout.admin')
-
+@section('page_title', 'Categories')
+@section('topbar_title', 'Product categories')
 @section('content')
-
 <style>
-    .cat-page-bg {
-        background: #f3f4f6;
-        min-height: 100vh;
-        padding: 24px;
-    }
-
-    .cat-topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .cat-page-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0;
-    }
-
-    .btn-add-category {
-        background: #2563eb;
-        border: none;
-        color: #fff;
-        padding: 10px 18px;
-        border-radius: 8px;
-        font-weight: 500;
-        font-size: 14px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: background .15s ease;
-    }
-    .btn-add-category:hover {
-        background: #1d4ed8;
-        color: #fff;
-    }
-
-    .cat-card {
-        background: #fff;
-        border-radius: 14px;
-        border: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,.06);
-        padding: 24px;
-    }
-
-    .cat-search-form {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0;
-        margin-bottom: 18px;
-    }
-    .cat-search-form .form-control {
-        border-radius: 8px 0 0 8px;
-        border: 1px solid #e5e7eb;
-        font-size: 14px;
-        height: 42px;
-        flex: 0 0 auto;
-        width: 260px;
-        max-width: 260px;
-    }
-    .cat-search-form .btn-search {
-        border-radius: 0 8px 8px 0;
-        background: #2563eb;
-        border: 1px solid #2563eb;
-        color: #fff;
-        font-size: 14px;
-        padding: 0 20px;
-        height: 42px;
-        flex: 0 0 auto;
-    }
-    .cat-search-form .btn-search:hover { background: #1d4ed8; }
-    .cat-search-form .btn-clear {
-        border-radius: 8px;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        color: #374151;
-        font-size: 14px;
-        padding: 0 16px;
-        height: 42px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        margin-left: 8px;
-        white-space: nowrap;
-    }
-    .cat-search-form .btn-clear:hover { background: #e5e7eb; color: #111827; }
-
-    .cat-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-    }
-    .cat-table thead th {
-        text-align: left;
-        font-size: 12px;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: .03em;
-        padding: 10px 12px;
-        border-bottom: 1px solid #e5e7eb;
-        background: transparent;
-    }
-    .cat-table tbody td {
-        padding: 14px 12px;
-        font-size: 14px;
-        color: #111827;
-        border-bottom: 1px solid #f1f2f4;
-        vertical-align: middle;
-    }
-    .cat-table tbody tr:hover {
-        background: #f9fafb;
-    }
-
-    /* Icon-style action buttons (matching Order List / Order Item List / Product List design) */
-    .cat-action-group { display: flex; align-items: center; gap: 6px; }
-    .btn-icon-edit,
-    .btn-icon-delete {
-        background: transparent;
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        padding: 0;
-    }
-    .btn-icon-edit { color: #d97706; }
-    .btn-icon-edit:hover { background: #fef3c7; color: #b45309; }
-    .btn-icon-delete { color: #dc2626; }
-    .btn-icon-delete:hover { background: #fee2e2; color: #b91c1c; }
-
-    .class-pagination nav p { display: none !important; }
-    .class-pagination {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 18px;
-    }
-    .class-pagination .pagination {
-        gap: 4px;
-    }
-    .class-pagination .page-link {
-        border-radius: 8px !important;
-        border: 1px solid #e5e7eb;
-        color: #374151;
-        font-size: 13px;
-        min-width: 32px;
-        text-align: center;
-    }
-    .class-pagination .page-item.active .page-link {
-        background: #2563eb;
-        border-color: #2563eb;
-        color: #fff;
-    }
+    .cc-module{--g:#176b4b;--gd:#104d38;--gs:#e9f4ee;--gb:#d6e9dc;--ink:#20312a;--muted:#748178;--line:#e5eee8;background:linear-gradient(180deg,#edf5ef 0,#f5f8f5 260px,#f5f8f5 100%);border-radius:22px;padding:clamp(16px,2.2vw,28px);color:var(--ink)}
+    .cc-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}.cc-kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#4b8768}.cc-title{font-size:clamp(24px,3vw,30px);font-weight:800;letter-spacing:-.04em;margin:4px 0;color:#1d3529}.cc-subtitle{color:var(--muted);margin:0;font-size:13px}.cc-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.cc-btn-primary{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:0;border-radius:12px;background:var(--g);color:#fff;text-decoration:none;font-weight:700;box-shadow:0 7px 16px #176b4b22}.cc-btn-primary:hover{background:var(--gd);color:#fff;transform:translateY(-1px)}
+    .cc-stat{height:100%;border:1px solid var(--gb);border-radius:16px;padding:16px 18px;background:linear-gradient(135deg,#fff 0,#f2f8f3 100%);display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 5px 15px #204b3010}.cc-stat-label{font-size:12px;color:#748178;font-weight:700}.cc-stat-value{font-size:25px;font-weight:800;letter-spacing:-.04em;color:#1b3f2e}.cc-stat-icon{width:44px;height:44px;border-radius:14px;background:#dff0e4;color:var(--g);display:grid;place-items:center;font-size:20px}
+    .cc-filter{background:linear-gradient(120deg,#e4f1e7,#f0f7f1);border:1px solid #cfe4d4;border-radius:17px;padding:17px;margin:18px 0}.cc-filter-head{display:flex;align-items:center;gap:10px;margin-bottom:13px}.cc-filter-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#cfe8d5;color:#176b4b}.cc-filter-title{font-weight:800;font-size:14px;margin:0;color:#214b35}.cc-filter-hint{font-size:12px;color:#688071;margin:2px 0 0}.cc-field label{font-size:11px;font-weight:800;letter-spacing:.04em;color:#53705e;margin:0 0 6px;display:block}.cc-module .form-control,.cc-module .form-select{height:42px;border:1px solid #d7e4da;border-radius:10px;background-color:#fff;color:#24382c;font-size:13px;box-shadow:none}.cc-module .form-control:focus,.cc-module .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}.cc-btn-filter{height:42px;border:0;border-radius:10px;background:#176b4b;color:white;padding:0 17px;font-weight:700}.cc-btn-filter:hover{background:#104d38}.cc-btn-reset{height:42px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;border:1px solid #cbdacf;border-radius:10px;background:#f8fbf8;color:#496452;text-decoration:none;font-weight:700}.cc-table-card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 8px 24px #204b300c}.cc-table-head{padding:16px 19px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#f3f8f4,#fff)}.cc-table-title{font-size:15px;font-weight:800;margin:0;color:#1d3d2c}.cc-table-meta{font-size:12px;color:#7b8980}.cc-table{width:100%;border-collapse:separate;border-spacing:0}.cc-table thead th{background:#edf5ef;color:#567362;text-transform:uppercase;letter-spacing:.07em;font-size:10px;font-weight:800;padding:12px 16px;white-space:nowrap;border-bottom:1px solid #dce9df}.cc-table tbody td{padding:14px 16px;border-bottom:1px solid #edf2ed;color:#2c3c32;font-size:13px;vertical-align:middle}.cc-table tbody tr:hover{background:#f6faf6}.cc-category-name{font-weight:800;color:#244a33}.cc-category-mark{width:34px;height:34px;border-radius:11px;display:inline-grid;place-items:center;background:#e5f2e8;color:#176b4b;margin-right:10px}.cc-action{width:34px;height:34px;border:1px solid #e2ece5;border-radius:10px;background:#fff;color:#527461;display:inline-grid;place-items:center;text-decoration:none}.cc-action:hover{background:#e9f4ee;color:#176b4b;border-color:#bddac5}.cc-action.danger{color:#b65353}.cc-action.danger:hover{background:#fff0f0;border-color:#f0caca}.cc-empty{padding:46px 20px;text-align:center;color:#829087}.cc-empty i{font-size:32px;color:#8ab99a}.cc-pagination{padding:14px 18px;display:flex;justify-content:flex-end}.cc-pagination nav p{display:none}.cc-pagination .pagination{margin:0;gap:4px}.cc-pagination .page-link{border-radius:9px!important;border-color:#dce8df;color:#3d664e}.cc-pagination .page-item.active .page-link{background:#176b4b;border-color:#176b4b}.cc-alert{border-radius:12px;border:1px solid #c8e4cf;background:#eef8f0;color:#285f3b;padding:11px 14px;margin-bottom:15px;font-size:13px}.cc-alert.error{border-color:#f1cccc;background:#fff3f3;color:#a53c3c}
+    @media(max-width:767px){.cc-module{padding:14px;border-radius:16px}.cc-filter{padding:13px}.cc-table thead th,.cc-table tbody td{padding:11px 12px}}
 </style>
-
-<div class="cat-page-bg">
-
-    <div class="cat-topbar">
-        <h2 class="cat-page-title">Category List</h2>
-
-        <a href="{{ route('categories.create') }}" class="btn-add-category">
-            <i class="fa fa-plus"></i> Add New Category
-        </a>
+<div class="cc-module">
+    @if(session('success'))<div class="cc-alert"><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</div>@endif
+    @if(session('error'))<div class="cc-alert error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</div>@endif
+    <div class="cc-head">
+        <div><div class="cc-kicker">Catalogue management</div><h1 class="cc-title">Categories</h1><p class="cc-subtitle">Organise products into clear groups and keep your catalogue easy to browse.</p></div>
+        <div class="cc-actions">
+            @include('admin.partials.export-actions', ['exportType' => 'categories'])
+            <a href="{{ route('categories.create') }}" class="cc-btn-primary"><i class="bi bi-plus-lg"></i> Add category</a>
+        </div>
     </div>
-    <div class="d-flex justify-content-end mb-3">
-        @include('admin.partials.export-actions', ['exportType' => 'categories'])
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-sm-6 col-xl-4"><div class="cc-stat"><div><div class="cc-stat-label">Categories matching filters</div><div class="cc-stat-value">{{ number_format($categories->total()) }}</div></div><span class="cc-stat-icon"><i class="bi bi-collection"></i></span></div></div>
+        <div class="col-12 col-sm-6 col-xl-4"><div class="cc-stat"><div><div class="cc-stat-label">Shown on this page</div><div class="cc-stat-value">{{ number_format($categories->count()) }}</div></div><span class="cc-stat-icon"><i class="bi bi-grid-3x3-gap"></i></span></div></div>
+        <div class="col-12 col-xl-4"><div class="cc-stat"><div><div class="cc-stat-label">Catalogue organisation</div><div class="fw-bold fs-6 text-success mt-1">Clean & consistent</div><div class="small text-muted">Use simple names your team understands.</div></div><span class="cc-stat-icon"><i class="bi bi-tags"></i></span></div></div>
     </div>
-
-    <div class="cat-card">
-
-        <form action="{{ route('categories.index') }}" method="GET" class="cat-search-form">
-            <input type="text" name="search" class="form-control" placeholder="Search category..." value="{{ request('search') }}">
-            <select name="sort_by" class="form-select ms-2" style="max-width:190px;height:42px;border-radius:8px" aria-label="Sort categories">
-                <option value="category_id" @selected(request('sort_by', 'category_id') === 'category_id')>Recently added</option>
-                <option value="category_name" @selected(request('sort_by') === 'category_name')>Category name</option>
-            </select>
-            <select name="sort_dir" class="form-select ms-2" style="max-width:145px;height:42px;border-radius:8px" aria-label="Sort direction">
-                <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Descending</option>
-                <option value="asc" @selected(request('sort_dir') === 'asc')>Ascending</option>
-            </select>
-            <button class="btn-search ms-2" type="submit">Search</button>
-
-            @if(request('search'))
-                <a href="{{ route('categories.index') }}" class="btn-clear">Cancel</a>
-            @endif
+    <section class="cc-filter">
+        <div class="cc-filter-head"><span class="cc-filter-icon"><i class="bi bi-funnel"></i></span><div><h2 class="cc-filter-title">Find a category</h2><p class="cc-filter-hint">Search by name or description, then choose how results are arranged.</p></div></div>
+        <form action="{{ route('categories.index') }}" method="GET" class="row g-2 align-items-end">
+            <div class="col-12 col-lg-5 cc-field"><label for="catSearch">SEARCH</label><input id="catSearch" type="search" name="search" class="form-control" placeholder="Category name or description..." value="{{ request('search') }}"></div>
+            <div class="col-6 col-lg-3 cc-field"><label for="catSort">SORT BY</label><select id="catSort" name="sort_by" class="form-select"><option value="category_id" @selected(request('sort_by','category_id')==='category_id')>Recently added</option><option value="category_name" @selected(request('sort_by')==='category_name')>Category name</option></select></div>
+            <div class="col-6 col-lg-2 cc-field"><label for="catDir">ORDER</label><select id="catDir" name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir','desc')==='desc')>Descending</option><option value="asc" @selected(request('sort_dir')==='asc')>Ascending</option></select></div>
+            <div class="col-12 col-lg-2 d-flex gap-2"><button class="cc-btn-filter flex-grow-1" type="submit"><i class="bi bi-search me-1"></i> Search</button><a href="{{ route('categories.index') }}" class="cc-btn-reset" title="Clear filters"><i class="bi bi-arrow-counterclockwise"></i></a></div>
         </form>
-
-        <div class="table-responsive">
-            <table class="cat-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th style="width:90px; text-align:right;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($categories as $row)
-                        <tr>
-                            <td>{{ $row->category_id }}</td>
-                            <td>{{ $row->category_name }}</td>
-                            <td>{{ $row->description }}</td>
-                            <td>
-                                <div class="cat-action-group">
-                                    <a href="{{ route('categories.edit', $row->category_id) }}" class="btn-icon-edit" title="Edit category">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                    </a>
-
-                                    <form action="{{ route('categories.destroy', $row->category_id) }}" method="POST" class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn-icon-delete btn-delete" title="Delete category">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                                <path d="M10 11v6"></path>
-                                                <path d="M14 11v6"></path>
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        <div class="class-pagination">
-            {{ $categories->links('pagination::simple-bootstrap-5') }}
-        </div>
-    </div>
-
+    </section>
+    <section class="cc-table-card">
+        <div class="cc-table-head"><div><h2 class="cc-table-title">Category register</h2><div class="cc-table-meta">Showing {{ $categories->firstItem() ?? 0 }}–{{ $categories->lastItem() ?? 0 }} of {{ $categories->total() }} categories</div></div><span class="badge rounded-pill text-bg-light border"><i class="bi bi-shield-check text-success me-1"></i>Managed catalogue</span></div>
+        <div class="table-responsive"><table class="cc-table"><thead><tr><th style="width:90px">ID</th><th>Category</th><th>Description</th><th class="text-end" style="width:120px">Actions</th></tr></thead><tbody>
+            @forelse($categories as $row)
+                <tr><td class="text-muted fw-semibold">#{{ $row->category_id }}</td><td><span class="cc-category-mark"><i class="bi bi-tag-fill"></i></span><span class="cc-category-name">{{ $row->category_name }}</span></td><td class="text-muted">{{ $row->description ?: 'No description added' }}</td><td class="text-end"><div class="d-inline-flex gap-1"><a href="{{ route('categories.edit', $row->category_id) }}" class="cc-action" title="Edit category"><i class="bi bi-pencil-square"></i></a><form action="{{ route('categories.destroy', $row->category_id) }}" method="POST" onsubmit="return confirm('Delete category {{ addslashes($row->category_name) }}? Categories that still contain products cannot be deleted.');">@csrf @method('DELETE')<button type="submit" class="cc-action danger" title="Delete category"><i class="bi bi-trash3"></i></button></form></div></td></tr>
+            @empty
+                <tr><td colspan="4"><div class="cc-empty"><i class="bi bi-collection d-block mb-2"></i><div class="fw-bold text-dark">No categories found</div><div class="small">Try another search or create your first category.</div><a href="{{ route('categories.create') }}" class="cc-btn-primary mt-3"><i class="bi bi-plus-lg"></i> Add category</a></div></td></tr>
+            @endforelse
+        </tbody></table></div>
+        <div class="cc-pagination">{{ $categories->links('pagination::simple-bootstrap-5') }}</div>
+    </section>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        // 1. សម្រាប់បង្ហាញការជូនដំណឹង (Create / Edit / Delete ជោគជ័យ) រក្សាទុក 3 វិនាទី
-        @if(session('success'))
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
-            });
-
-            Toast.fire({
-                icon: 'success',
-                title: "{{ session('success') }}"
-            });
-        @endif
-
-        // 2. សម្រាប់បង្ហាញផ្ទាំងសួរមុននឹងលុប (SweetAlert2 Confirm Dialog)
-        const deleteButtons = document.querySelectorAll('.btn-delete');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                const form = this.closest('.delete-form');
-
-                Swal.fire({
-                     title: 'Are you sure?',
-                    text: "Do you want delete Category !",
-                    icon: 'delete',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit(); // បញ្ជូន Form ទៅលុបក្នុង Database បើចុច Yes
-                    }
-                });
-            });
-        });
-    });
-</script>
-
 @endsection
