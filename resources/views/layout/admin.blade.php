@@ -548,6 +548,46 @@
         }
     </style>
     @stack('styles')
+    <style id="admin-green-filter-theme">
+        :root { --cc-bg: #edf4ef; --cc-green-soft: #e4f1e8; --cc-line: #dce9df; }
+        body { background: #edf4ef; }
+        .content-area { background: linear-gradient(145deg, rgba(228,241,232,.48), rgba(247,251,248,.76)); border-radius: 22px; }
+        .content-area .card, .content-area .orders-panel, .content-area .panel {
+            background-color: #fbfefc; border-color: #dce9df;
+        }
+        .content-area .card-header { background: #edf6ef; border-bottom-color: #dce9df; }
+        .content-area .table thead th { background: #eaf4ed; color: #315d43; border-bottom-color: #d8e7dc; }
+        .content-area .table tbody tr:hover { background: #f1f8f3; }
+        .content-area form[method="GET"]:not(#ordersFilterForm),
+        .content-area form[method="get"]:not(#ordersFilterForm) {
+            padding: 15px 16px; margin-bottom: 16px; border: 1px solid #cfe2d4;
+            border-radius: 15px; background: linear-gradient(135deg, #e8f4eb 0%, #f3faf5 100%);
+            box-shadow: 0 6px 18px rgba(28, 91, 55, .055);
+        }
+        .content-area form[method="GET"]:not(#ordersFilterForm)::before,
+        .content-area form[method="get"]:not(#ordersFilterForm)::before {
+            content: "FILTERS & SEARCH"; display: block; width: 100%; flex: 0 0 100%;
+            grid-column: 1 / -1; margin: 0 0 2px; color: #286344; font-size: 10px;
+            font-weight: 900; letter-spacing: .12em; text-transform: uppercase;
+        }
+        .content-area form[method="GET"]:not(#ordersFilterForm) .form-control,
+        .content-area form[method="GET"]:not(#ordersFilterForm) .form-select,
+        .content-area form[method="get"]:not(#ordersFilterForm) .form-control,
+        .content-area form[method="get"]:not(#ordersFilterForm) .form-select {
+            background-color: #fff; border-color: #cfdfd3;
+        }
+        .content-area form[method="GET"]:not(#ordersFilterForm) label,
+        .content-area form[method="get"]:not(#ordersFilterForm) label {
+            color: #315b42; font-weight: 700;
+        }
+        .content-area .btn-outline-secondary { border-color: #bfd4c5; color: #42644f; }
+        .content-area .btn-outline-secondary:hover { background: #e2f0e6; color: #174d32; }
+        .content-area .table, .content-area .table-responsive { border-color: #dce9df; }
+        @media (max-width: 575.98px) {
+            .content-area form[method="GET"]:not(#ordersFilterForm),
+            .content-area form[method="get"]:not(#ordersFilterForm) { padding: 12px; }
+        }
+    </style>
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>

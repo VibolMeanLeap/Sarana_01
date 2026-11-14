@@ -28,9 +28,13 @@ class AdminActionCountService
         if (Schema::hasTable('orders')) {
             // Pending includes COD and online orders awaiting payment verification.
             // The Orders badge is a queue indicator: it clears when staff confirms the order.
-            $counts['orders'] = (int) Order::query()
-                ->where('order_status', 'pending')
-                ->count();
+            $orderQueue = Order::query()->where(function ($query) {
+                $query->where('order_status', 'pending');
+                if (Schema::hasTable('order_review_flags')) {
+                    $query->orWhereHas('openReviewFlags');
+                }
+            });
+            $counts['orders'] = (int) $orderQueue->count();
         }
 
         if (Schema::hasTable('delivery')) {

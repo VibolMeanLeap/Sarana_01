@@ -1,86 +1,12 @@
 @extends('layout.admin')
-
+@section('page_title', 'Manual stock adjustment')
+@section('topbar_title', 'Manual stock adjustment')
 @section('content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Inventory / Stock Logs</h5>
-        <a href="{{ route('inventory.create') }}" class="btn btn-primary btn-sm">
-            <i class="fa fa-plus"></i> Manual Adjustment
-        </a>
-    </div>
-
-    <div class="card-body">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
-        <form method="GET" class="row g-2 mb-3">
-            <div class="col-auto">
-                <select name="product_id" class="form-select form-select-sm">
-                    <option value="">All products</option>
-                    @foreach($products as $p)
-                        <option value="{{ $p->product_id }}" @selected(request('product_id') == $p->product_id)>{{ $p->product_name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-auto">
-                <select name="type" class="form-select form-select-sm">
-                    <option value="">All types</option>
-                    <option value="in" @selected(request('type') == 'in')>Stock In</option>
-                    <option value="out" @selected(request('type') == 'out')>Stock Out</option>
-                </select>
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-outline-secondary btn-sm">Filter</button>
-            </div>
-        </form>
-
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Product</th>
-                    <th>Type</th>
-                    <th>Qty</th>
-                    <th>Reason</th>
-                    <th>Note</th>
-                    <th>By</th>
-                    <th>Date</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($logs as $log)
-                    <tr>
-                        <td>{{ $log->log_id }}</td>
-                        <td>{{ $log->product->product_name ?? '-' }}</td>
-                        <td>
-                            @if($log->type === 'in')
-                                <span class="badge bg-success">In</span>
-                            @else
-                                <span class="badge bg-danger">Out</span>
-                            @endif
-                        </td>
-                        <td>{{ $log->quantity }}</td>
-                        <td>{{ ucfirst($log->reason) }}</td>
-                        <td>{{ $log->note }}</td>
-                        <td>{{ $log->user->name ?? '-' }}</td>
-                        <td>{{ optional($log->log_date ?? $log->created_at)->format('Y-m-d H:i') ?? '—' }}</td>
-                        <td class="text-end">
-                            <a href="{{ route('inventory.edit', $log->log_id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <form action="{{ route('inventory.destroy', $log->log_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this log? Stock will be reverted.')">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="9" class="text-center text-muted">No stock movements yet.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        {{ $logs->links() }}
-    </div>
-</div>
+<style>
+.cc-adjust-page{background:linear-gradient(180deg,#edf5ef,#f5f8f5);border-radius:22px;padding:clamp(16px,2.2vw,28px);min-height:calc(100vh - 140px)}.cc-adjust-wrap{max-width:850px;margin:0 auto}.cc-adjust-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}.cc-adjust-head h1{font-size:27px;font-weight:800;color:#1d3529;margin:3px 0}.cc-adjust-head p{font-size:13px;color:#748178;margin:0}.cc-adjust-card{background:#fff;border:1px solid #dfeae2;border-radius:18px;overflow:hidden;box-shadow:0 12px 32px #204b3010}.cc-adjust-card-head{padding:18px 22px;background:linear-gradient(100deg,#e6f2e9,#f7fbf7);border-bottom:1px solid #dce9df}.cc-adjust-card-head h2{font-size:16px;font-weight:800;color:#214b35;margin:0}.cc-adjust-card-body{padding:22px}.cc-adjust-page .form-label{font-size:11px;font-weight:800;color:#496553}.cc-adjust-page .form-control,.cc-adjust-page .form-select{border:1px solid #d7e4da;border-radius:10px;min-height:44px;font-size:13px}.cc-adjust-page .form-control:focus,.cc-adjust-page .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}.cc-adjust-footer{display:flex;justify-content:flex-end;gap:8px;padding:15px 22px;background:#f2f8f3;border-top:1px solid #e0ece3}.cc-adjust-save{border:0;border-radius:10px;padding:10px 17px;background:#176b4b;color:#fff;font-weight:800}.cc-adjust-cancel{border:1px solid #d5e2d8;border-radius:10px;padding:10px 17px;background:#fff;color:#476450;text-decoration:none;font-weight:700}.cc-adjust-alert{background:#fff2f2;border:1px solid #efcccc;border-radius:12px;padding:12px;margin:15px 22px;color:#a53c3c;font-size:13px}
+</style>
+<div class="cc-adjust-page"><div class="cc-adjust-wrap"><div class="cc-adjust-head"><div><div class="small text-success fw-bold text-uppercase" style="letter-spacing:.14em">Inventory operations</div><h1>Manual stock adjustment</h1><p>Record a stock correction with a clear reason and an auditable note.</p></div><a href="{{ route('inventory.index') }}" class="cc-adjust-cancel"><i class="bi bi-arrow-left me-1"></i> Back to inventory</a></div>
+<section class="cc-adjust-card"><div class="cc-adjust-card-head"><h2><i class="bi bi-sliders me-2 text-success"></i>Adjustment details</h2></div>@if($errors->any())<div class="cc-adjust-alert"><strong>Please review:</strong><ul class="mb-0 mt-1">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @if(session('error'))<div class="cc-adjust-alert">{{ session('error') }}</div>@endif
+<form action="{{ route('inventory.store') }}" method="POST">@csrf<div class="cc-adjust-card-body"><div class="row g-3"><div class="col-12"><label class="form-label" for="product_id">PRODUCT <span class="text-danger">*</span></label><select id="product_id" name="product_id" class="form-select" required><option value="">Choose a stock product</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(old('product_id')==$product->product_id)>{{ $product->product_name }} · {{ (int)$product->qty }} on hand</option>@endforeach</select></div><div class="col-12 col-md-6"><label class="form-label" for="type">MOVEMENT TYPE <span class="text-danger">*</span></label><select id="type" name="type" class="form-select" required><option value="in" @selected(old('type','in')==='in')>Stock In (+)</option><option value="out" @selected(old('type')==='out')>Stock Out (−)</option></select></div><div class="col-12 col-md-6"><label class="form-label" for="quantity">QUANTITY <span class="text-danger">*</span></label><input id="quantity" type="number" name="quantity" min="1" max="1000000" class="form-control" value="{{ old('quantity') }}" required></div><div class="col-12"><label class="form-label" for="reason">REASON <span class="text-danger">*</span></label><input id="reason" name="reason" class="form-control" maxlength="255" value="{{ old('reason') }}" placeholder="Damaged, correction, stock take..." required></div><div class="col-12"><label class="form-label" for="note">NOTE (OPTIONAL)</label><textarea id="note" name="note" class="form-control" rows="3" maxlength="2000" placeholder="Explain why this adjustment is needed..." data-optional>{{ old('note') }}</textarea></div></div></div><div class="cc-adjust-footer"><a href="{{ route('inventory.index') }}" class="cc-adjust-cancel">Cancel</a><button type="submit" class="cc-adjust-save"><i class="bi bi-check2-circle me-1"></i> Save adjustment</button></div></form>
+</section><div class="small text-muted mt-3"><i class="bi bi-shield-check text-success me-1"></i> Stock movement history is append-only. To correct a previous mistake, record a new opposite movement with a clear reason.</div></div></div>
 @endsection

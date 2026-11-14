@@ -7,9 +7,12 @@ use App\Models\Costumer;
 use App\Models\User;
 use App\Models\OrderType;
 use App\Models\PaymentMethod;
+use App\Models\OrderReviewFlag;
 use App\Services\AdminActionCountService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -23,16 +26,18 @@ class OrderController extends Controller
             'payment_status' => ['nullable', 'in:paid,unpaid'],
             'order_status' => ['nullable', 'in:pending,confirmed,preparing,ready,out_for_delivery,completed,cancelled'],
             'source' => ['nullable', 'in:pos,website'],
+            'review_status' => ['nullable', 'in:open,clear'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'period' => ['nullable', 'in:today,week,month'],
             'sort_by' => ['nullable', 'in:order_date,order_id,final_price'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'integer', 'in:10,25,50,100'],
         ]);
 
         $query = Order::query()
-            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'delivery', 'orderItems.product', 'statusHistory'])
-            ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions']);
+            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'delivery', 'orderItems.product', 'statusHistory', 'reviewFlags.relatedOrder'])
+            ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions', 'openReviewFlags']);
 
         $search = trim((string) ($validated['search'] ?? ''));
         if ($search !== '') {
@@ -65,11 +70,28 @@ class OrderController extends Controller
         if (! empty($validated['source'])) {
             $query->where('order_source', $validated['source']);
         }
-        if (! empty($validated['start_date'])) {
-            $query->whereDate('order_date', '>=', $validated['start_date']);
+        if (($validated['review_status'] ?? null) === 'open') {
+            $query->whereHas('openReviewFlags');
+        } elseif (($validated['review_status'] ?? null) === 'clear') {
+            $query->whereDoesntHave('openReviewFlags');
         }
-        if (! empty($validated['end_date'])) {
-            $query->whereDate('order_date', '<=', $validated['end_date']);
+        $period = $validated['period'] ?? null;
+        if ($period) {
+            $periodStart = match ($period) {
+                'today' => today()->toDateString(),
+                'week' => now()->startOfWeek(Carbon::MONDAY)->toDateString(),
+                'month' => now()->startOfMonth()->toDateString(),
+            };
+            $periodEnd = today()->toDateString();
+            $query->whereDate('order_date', '>=', $periodStart)
+                ->whereDate('order_date', '<=', $periodEnd);
+        } else {
+            if (! empty($validated['start_date'])) {
+                $query->whereDate('order_date', '>=', $validated['start_date']);
+            }
+            if (! empty($validated['end_date'])) {
+                $query->whereDate('order_date', '<=', $validated['end_date']);
+            }
         }
 
         $sortBy = ['order_date' => 'order_date', 'order_id' => 'order_id', 'final_price' => 'final_price'][$validated['sort_by'] ?? 'order_date'];
@@ -115,6 +137,65 @@ class OrderController extends Controller
         }
 
         return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage'));
+    }
+
+    /** Print a full order receipt for administrator reconciliation. */
+    public function receipt($orderId)
+    {
+        $order = Order::with([
+            'customer', 'cashier', 'orderType', 'paymentMethod', 'payments',
+            'orderItems.product', 'reviewFlags.relatedOrder',
+        ])->findOrFail($orderId);
+
+        return view('admin.orders.receipt', compact('order'));
+    }
+
+    /** Add an audit marker without editing, cancelling, or deleting the order. */
+    public function storeReviewFlag(Request $request, $orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        $validated = $request->validate([
+            'reason' => ['required', Rule::in([
+                'incorrect_total', 'wrong_customer', 'payment_mismatch',
+                'possible_duplicate', 'wrong_items', 'receipt_needed', 'other',
+            ])],
+            'notes' => ['required', 'string', 'min:5', 'max:2000'],
+            'related_order_id' => [
+                'nullable', 'integer', 'exists:orders,order_id',
+                Rule::notIn([(string) $order->order_id]),
+            ],
+        ]);
+
+        OrderReviewFlag::create([
+            'order_id' => $order->order_id,
+            'related_order_id' => $validated['related_order_id'] ?? null,
+            'created_by' => $request->user()?->getAuthIdentifier(),
+            'reason' => $validated['reason'],
+            'notes' => trim($validated['notes']),
+            'status' => 'open',
+        ]);
+
+        return redirect()->back()->with('success', 'Order #' . $order->order_id . ' was marked for review. The original sale was not changed.');
+    }
+
+    /** Resolve an audit marker while keeping its history available on the order. */
+    public function resolveReviewFlag(Request $request, $orderId, $flagId)
+    {
+        $order = Order::findOrFail($orderId);
+        $flag = OrderReviewFlag::query()
+            ->where('order_id', $order->order_id)
+            ->where('flag_id', $flagId)
+            ->firstOrFail();
+
+        if ($flag->status === 'open') {
+            $flag->update([
+                'status' => 'resolved',
+                'resolved_by' => $request->user()?->getAuthIdentifier(),
+                'resolved_at' => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Review marker #' . $flag->flag_id . ' was resolved. Its audit note remains attached to the order.');
     }
 
     // ============================================

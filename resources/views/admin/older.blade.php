@@ -73,12 +73,108 @@
   color: #24332b;
 }
 
+.orders-filter-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 18px;
+  border-bottom: 1px solid #edf1ee;
+}
+
+.orders-date-panel {
+  padding: 16px 18px;
+  border: 1px solid #cde4d4;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #e5f3e9 0%, #f3faf5 58%, #eaf6ee 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+.orders-filter-panel {
+  padding: 16px 18px;
+  border: 1px solid #d5e8da;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #f1f8f3 0%, #fbfefc 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+.orders-date-heading, .orders-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.orders-date-title, .orders-filter-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #1b5037;
+  font-size: 12px;
+  font-weight: 850;
+  margin: 0;
+}
+.orders-filter-title { color: #1b5037; }
+
+.orders-filter-icon {
+  width: 29px;
+  height: 29px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #176b4b;
+  background: #e0f0e5;
+  font-size: 13px;
+}
+
+.orders-period-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.orders-period-title { color: #294233; font-size: 12px; font-weight: 850; }
+.orders-period-caption { color: #617b69; font-size: 10px; margin-top: 2px; }
+.orders-period-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+.orders-period-button {
+  border: 1px solid #bcd8c5; border-radius: 999px; padding: 8px 14px;
+  background: rgba(255,255,255,.88); color: #1f6744; font-size: 11px; font-weight: 850;
+  transition: .15s ease;
+}
+.orders-period-button:hover, .orders-period-button.is-active {
+  border-color: #176b4b; background: #176b4b; color: #fff;
+  box-shadow: 0 4px 10px rgba(23,107,75,.14);
+}
+
+.orders-date-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 10px;
+}
+.orders-date-field label, .orders-filter-field label {
+  display: block;
+  margin-bottom: 5px;
+  color: #607267;
+  font-size: 10px;
+  font-weight: 800;
+}
+.orders-date-panel .form-control, .orders-filter-panel .form-control,
+.orders-filter-panel .form-select {
+  min-width: 0;
+  height: 40px;
+  border-color: #dfe9e2;
+  border-radius: 9px;
+  font-size: 12px;
+}
+
 .orders-filter {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 9px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #edf1ee;
+  gap: 10px;
 }
 
 .orders-filter .form-control,
@@ -557,12 +653,17 @@
 
   .orders-filter {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 13px;
   }
+
+  .orders-filter-stack { padding: 13px; }
+  .orders-date-panel, .orders-filter-panel { padding: 13px; }
+  .orders-date-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .orders-filter .wide-search {
     grid-column: 1/-1;
   }
+
+  .orders-date-fields { grid-template-columns: 1fr; }
 }
 </style>
 @endpush
@@ -618,45 +719,49 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
       <!-- <div class="d-flex align-items-center gap-3"><span class="small text-muted">{{ $orders->total() }} result(s)</span><a href="{{ route('admin.orders.create') }}" class="btn btn-success btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i> New order</a></div> -->
     </div>
 
-    <form action="{{ route('admin.orders.index') }}" method="GET" class="orders-filter" id="ordersFilterForm">
-      <input class="form-control search-control wide-search" type="text" name="search"
-        placeholder="Order ID, customer, phone, cashier, transaction..." value="{{ request('search') }}">
-      <select class="form-select" name="payment_status" aria-label="Payment status">
-        <option value="">All payments</option>
-        <option value="paid" @selected(request('payment_status', request('status'))==='paid' )>Paid</option>
-        <option value="unpaid" @selected(request('payment_status', request('status'))==='unpaid' )>Unpaid</option>
-      </select>
-      <select class="form-select" name="order_status" aria-label="Order status">
-        <option value="">All order statuses</option>
-        @foreach($orderStatuses as $status)
-        <option value="{{ $status }}" @selected(request('order_status')===$status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
-        @endforeach
-      </select>
-      <select class="form-select" name="source" aria-label="Order source">
-        <option value="">All sources</option>
-        <option value="pos" @selected(request('source')==='pos' )>POS</option>
-        <option value="website" @selected(request('source')==='website' )>Website</option>
-      </select>
-      <input class="form-control" type="date" name="start_date" aria-label="Start date"
-        value="{{ request('start_date') }}">
-      <input class="form-control" type="date" name="end_date" aria-label="End date" value="{{ request('end_date') }}">
-      <select class="form-select" name="sort_by" aria-label="Sort orders by">
-        <option value="order_date" @selected(request('sort_by', 'order_date' )==='order_date' )>Order date</option>
-        <option value="order_id" @selected(request('sort_by')==='order_id' )>Order number</option>
-        <option value="final_price" @selected(request('sort_by')==='final_price' )>Final total</option>
-      </select>
-      <select class="form-select" name="sort_dir" aria-label="Sort direction">
-        <option value="desc" @selected(request('sort_dir', 'desc' )==='desc' )>Descending</option>
-        <option value="asc" @selected(request('sort_dir')==='asc' )>Ascending</option>
-      </select>
-      <select class="form-select per-page-select" name="per_page" aria-label="Rows per page">
-        <option value="10" @selected(($perPage ?? 10)===10)>10 / page</option>
-        <option value="25" @selected(($perPage ?? 10)===25)>25 / page</option>
-        <option value="50" @selected(($perPage ?? 10)===50)>50 / page</option>
-        <option value="100" @selected(($perPage ?? 10)===100)>100 / page</option>
-      </select>
-      <button type="submit" class="btn btn-success">Filter</button>
-      <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary">Reset</a>
+    <form action="{{ route('admin.orders.index') }}" method="GET" id="ordersFilterForm">
+      <input type="hidden" name="period" id="ordersPeriodInput" value="{{ request('period') }}">
+      <div class="orders-filter-stack">
+        <section class="orders-date-panel" aria-labelledby="ordersDateFilterTitle">
+          <div class="orders-date-heading">
+            <h2 class="orders-date-title" id="ordersDateFilterTitle"><span class="orders-filter-icon"><i class="bi bi-calendar-range"></i></span>Date range</h2>
+            <span class="small fw-semibold" style="color:#52735e">Choose a quick period or set dates manually</span>
+          </div>
+          <div class="orders-period-row">
+            <div>
+              <div class="orders-period-title"><i class="bi bi-calendar3 me-1"></i>Quick date range</div>
+              <div class="orders-period-caption">The date preset applies to all order records and keeps your other filters.</div>
+            </div>
+            <div class="orders-period-buttons" role="group" aria-label="Quick order date range">
+              <button type="button" class="orders-period-button {{ request('period') === 'today' ? 'is-active' : '' }}" data-order-period="today"><i class="bi bi-sun me-1"></i>Today</button>
+              <button type="button" class="orders-period-button {{ request('period') === 'week' ? 'is-active' : '' }}" data-order-period="week"><i class="bi bi-calendar-week me-1"></i>This week</button>
+              <button type="button" class="orders-period-button {{ request('period') === 'month' ? 'is-active' : '' }}" data-order-period="month"><i class="bi bi-calendar3 me-1"></i>This month</button>
+            </div>
+          </div>
+          <div class="orders-date-fields">
+            <div class="orders-date-field"><label for="adminOrdersStartDate">From date</label><input class="form-control" id="adminOrdersStartDate" type="date" name="start_date" aria-label="Start date" value="{{ request('start_date') }}"></div>
+            <div class="orders-date-field"><label for="adminOrdersEndDate">To date</label><input class="form-control" id="adminOrdersEndDate" type="date" name="end_date" aria-label="End date" value="{{ request('end_date') }}"></div>
+          </div>
+        </section>
+
+        <section class="orders-filter-panel" aria-labelledby="ordersOptionFilterTitle">
+          <div class="orders-filter-heading">
+            <h2 class="orders-filter-title" id="ordersOptionFilterTitle"><span class="orders-filter-icon"><i class="bi bi-sliders"></i></span>Order filters</h2>
+            <span class="small text-muted">Refine by customer, payment, status and source</span>
+          </div>
+          <div class="orders-filter">
+            <div class="orders-filter-field wide-search"><label for="ordersSearch">Search orders</label><input id="ordersSearch" class="form-control search-control" type="text" name="search" placeholder="Order ID, customer, phone, cashier, transaction..." value="{{ request('search') }}"></div>
+            <div class="orders-filter-field"><label for="ordersPaymentStatus">Payment status</label><select id="ordersPaymentStatus" class="form-select" name="payment_status"><option value="">All payments</option><option value="paid" @selected(request('payment_status', request('status'))==='paid' )>Paid</option><option value="unpaid" @selected(request('payment_status', request('status'))==='unpaid' )>Unpaid</option></select></div>
+            <div class="orders-filter-field"><label for="ordersOrderStatus">Order status</label><select id="ordersOrderStatus" class="form-select" name="order_status"><option value="">All order statuses</option>@foreach($orderStatuses as $status)<option value="{{ $status }}" @selected(request('order_status')===$status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>@endforeach</select></div>
+            <div class="orders-filter-field"><label for="ordersSource">Order source</label><select id="ordersSource" class="form-select" name="source"><option value="">All sources</option><option value="pos" @selected(request('source')==='pos' )>POS</option><option value="website" @selected(request('source')==='website' )>Website</option></select></div>
+            <div class="orders-filter-field"><label for="ordersReviewStatus">Review marker</label><select id="ordersReviewStatus" class="form-select" name="review_status"><option value="">All orders</option><option value="open" @selected(request('review_status')==='open')>Needs attention</option><option value="clear" @selected(request('review_status')==='clear')>No open markers</option></select></div>
+            <div class="orders-filter-field"><label for="ordersSortBy">Sort by</label><select id="ordersSortBy" class="form-select" name="sort_by"><option value="order_date" @selected(request('sort_by', 'order_date' )==='order_date' )>Order date</option><option value="order_id" @selected(request('sort_by')==='order_id' )>Order number</option><option value="final_price" @selected(request('sort_by')==='final_price' )>Final total</option></select></div>
+            <div class="orders-filter-field"><label for="ordersSortDirection">Sort direction</label><select id="ordersSortDirection" class="form-select" name="sort_dir"><option value="desc" @selected(request('sort_dir', 'desc' )==='desc' )>Descending</option><option value="asc" @selected(request('sort_dir')==='asc' )>Ascending</option></select></div>
+            <div class="orders-filter-field"><label for="ordersPerPage">Rows per page</label><select id="ordersPerPage" class="form-select per-page-select" name="per_page"><option value="10" @selected(($perPage ?? 10)===10)>10 / page</option><option value="25" @selected(($perPage ?? 10)===25)>25 / page</option><option value="50" @selected(($perPage ?? 10)===50)>50 / page</option><option value="100" @selected(($perPage ?? 10)===100)>100 / page</option></select></div>
+            <div class="orders-filter-field d-flex align-items-end gap-2"><button type="submit" class="btn btn-success flex-grow-1"><i class="bi bi-funnel me-1"></i>Apply filters</button><a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary">Reset</a></div>
+          </div>
+        </section>
+      </div>
     </form>
 
     <div class="px-3 px-md-4 py-3 d-flex justify-content-end">
@@ -667,11 +772,9 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
         <thead>
           <tr>
             <th>Order</th>
-            <th>Customer</th>
-            <th>Phone</th>
+            <th>Customer / phone</th>
             <th>Cashier</th>
-            <th>Type</th>
-            <th>Source</th>
+            <th>Type / source</th>
             <th>Subtotal</th>
             <th>Discount</th>
             <th>Final</th>
@@ -679,6 +782,7 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
             <th>Payment</th>
             <th>Status</th>
             <th>Date</th>
+            <th>Review / receipt</th>
           </tr>
         </thead>
         <tbody id="ordersTableBody">
@@ -686,11 +790,11 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="8">FILTERED FINAL TOTAL <span
+            <td colspan="6">FILTERED FINAL TOTAL <span
                 class="text-muted fw-normal">(<span data-filtered-order-count>{{ number_format($filteredOrderCount ?? 0) }}</span> matching orders · all
                 pages)</span></td>
             <td class="grand-total" data-filtered-order-total>${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
-            <td colspan="4"></td>
+            <td colspan="5"></td>
           </tr>
         </tfoot>
       </table>
@@ -701,9 +805,64 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
   </section>
 </div>
 
+<div class="modal fade" id="orderReviewFlagModal" tabindex="-1" aria-labelledby="orderReviewFlagTitle" aria-hidden="true" data-order-base="{{ url('/admin/orders') }}">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius:18px;overflow:hidden">
+      <div class="modal-header" style="background:#e8f4eb;border-bottom:1px solid #d6e7da">
+        <div><div class="small fw-bold text-success text-uppercase" style="letter-spacing:.1em">Audit protection</div><h2 class="modal-title fs-5 fw-bold" id="orderReviewFlagTitle">Mark order for review</h2><div class="small text-muted" id="orderReviewFlagSubtitle">Order #—</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" id="orderReviewFlagForm" action="#">
+        @csrf
+        <div class="modal-body p-4">
+          <div class="alert alert-success py-2 small">This adds an audit marker only. It will not edit, cancel, refund, or delete the original order.</div>
+          <div class="mb-3"><label for="orderReviewReason" class="form-label fw-semibold">What needs attention?</label><select class="form-select" id="orderReviewReason" name="reason" required><option value="">Choose a reason</option><option value="incorrect_total">Incorrect total</option><option value="wrong_customer">Wrong customer details</option><option value="payment_mismatch">Payment mismatch</option><option value="possible_duplicate">Possible duplicate order</option><option value="wrong_items">Wrong or missing items</option><option value="receipt_needed">Receipt / proof needed</option><option value="other">Other issue</option></select></div>
+          <div class="mb-3"><label for="orderReviewNotes" class="form-label fw-semibold">Notes for administrator</label><textarea class="form-control" id="orderReviewNotes" name="notes" rows="4" minlength="5" maxlength="2000" required placeholder="Describe what is wrong and what should be checked..."></textarea></div>
+          <div><label for="orderReviewRelatedId" class="form-label fw-semibold">Link to another order (optional)</label><input class="form-control" id="orderReviewRelatedId" name="related_order_id" type="number" min="1" step="1" placeholder="Enter related order number"><div class="form-text">Use this to connect a replacement / corrected order. You can also open or print the receipt from the order row.</div></div>
+        </div>
+        <div class="modal-footer bg-light"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success"><i class="bi bi-flag-fill me-1"></i>Save review marker</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const reviewModal = document.getElementById('orderReviewFlagModal');
+  const reviewForm = document.getElementById('orderReviewFlagForm');
+  const reviewSubtitle = document.getElementById('orderReviewFlagSubtitle');
+  if (reviewModal && reviewForm) {
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-open-order-review]');
+      if (!trigger) return;
+      const orderId = trigger.dataset.orderId;
+      const base = reviewModal.dataset.orderBase || '/admin/orders';
+      reviewForm.action = `${base}/${encodeURIComponent(orderId)}/flags`;
+      if (reviewSubtitle) reviewSubtitle.textContent = `Order #${orderId}`;
+      reviewForm.reset();
+    });
+  }
+
+  const ordersFilterForm = document.getElementById('ordersFilterForm');
+  const ordersPeriodInput = document.getElementById('ordersPeriodInput');
+  document.querySelectorAll('[data-order-period]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (!ordersFilterForm || !ordersPeriodInput) return;
+      ordersPeriodInput.value = button.dataset.orderPeriod || '';
+      const startDate = ordersFilterForm.querySelector('[name="start_date"]');
+      const endDate = ordersFilterForm.querySelector('[name="end_date"]');
+      if (startDate) startDate.value = '';
+      if (endDate) endDate.value = '';
+      ordersFilterForm.requestSubmit();
+    });
+  });
+  ['start_date', 'end_date'].forEach((field) => {
+    ordersFilterForm?.querySelector(`[name="${field}"]`)?.addEventListener('change', () => {
+      if (ordersPeriodInput) ordersPeriodInput.value = '';
+    });
+  });
+
   const statusLabels = {
     pending: 'PEND', confirmed: 'CONF', preparing: 'PREP', ready: 'READY',
     out_for_delivery: 'DISP', completed: 'DONE', cancelled: 'CXL'

@@ -106,4 +106,15 @@ class Order extends Model
     {
         return $this->hasMany(CashTransaction::class, 'order_id', 'order_id');
     }
+
+    /** Administrator-only audit markers; these never change the sale itself. */
+    public function reviewFlags()
+    {
+        return $this->hasMany(OrderReviewFlag::class, 'order_id', 'order_id')->orderByDesc('created_at');
+    }
+
+    public function openReviewFlags()
+    {
+        return $this->hasMany(OrderReviewFlag::class, 'order_id', 'order_id')->where('status', 'open');
+    }
 }

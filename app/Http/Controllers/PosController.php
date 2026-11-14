@@ -13,6 +13,8 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Settings;
+use App\Models\StockLog;
+use App\Models\Supplier;
 use App\Services\PayWayService;
 use App\Services\TelegramOrderNotificationService;
 use App\Support\StoreDeliveryFee;
@@ -30,10 +32,16 @@ class PosController extends Controller
     public function index()
     {
         $categories = Category::query()->orderBy('category_name')->get();
+        $suppliers = Supplier::query()->orderBy('name')->get();
         $products = Product::query()
+            ->leftJoinSub($this->salesByProductQuery(), 'product_sales', function ($join) {
+                $join->on('product.product_id', '=', 'product_sales.product_id');
+            })
+            ->select('product.*')
+            ->selectRaw('COALESCE(product_sales.units_sold, 0) AS units_sold')
             ->with('category')
-            ->where('status', 'Active')
-            ->orderBy('product_name')
+            ->where('product.status', 'Active')
+            ->orderBy('product.product_name')
             ->get();
         $customers = Costumer::query()->orderBy('name')->get();
         $orderTypes = OrderType::query()->orderBy('order_name')->get();
@@ -44,8 +52,163 @@ class PosController extends Controller
         $deliveryFee = StoreDeliveryFee::current();
 
         return view('pos.dashboard', compact(
-            'categories', 'products', 'customers', 'orderTypes', 'paymentMethods', 'deliveryFee'
+            'categories', 'suppliers', 'products', 'customers', 'orderTypes', 'paymentMethods', 'deliveryFee'
         ));
+    }
+
+    /**
+     * Aggregate sold quantities from paid orders, excluding cancelled orders.
+     * Shared by the initial POS render and the catalogue-only refresh endpoint.
+     */
+    private function salesByProductQuery()
+    {
+        return DB::table('order_items')
+            ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
+            ->where('orders.is_paid', 1)
+            ->where(function ($query) {
+                $query->whereNull('orders.order_status')
+                    ->orWhere('orders.order_status', '<>', 'cancelled');
+            })
+            ->select('order_items.product_id')
+            ->selectRaw('SUM(COALESCE(order_items.quantity, 0)) AS units_sold')
+            ->groupBy('order_items.product_id');
+    }
+
+    /**
+     * Return the latest active catalogue without reloading the POS page.
+     * The browser updates only the product grid and leaves the in-progress cart intact.
+     */
+    public function refreshCatalog()
+    {
+        $products = Product::query()
+            ->leftJoinSub($this->salesByProductQuery(), 'product_sales', function ($join) {
+                $join->on('product.product_id', '=', 'product_sales.product_id');
+            })
+            ->select('product.*')
+            ->selectRaw('COALESCE(product_sales.units_sold, 0) AS units_sold')
+            ->with('category')
+            ->where('product.status', 'Active')
+            ->orderBy('product.product_name')
+            ->get()
+            ->map(function (Product $product) {
+                return [
+                    'id' => (int) $product->product_id,
+                    'name' => (string) $product->product_name,
+                    'category_id' => (string) ($product->category_id ?? 'none'),
+                    'category_name' => (string) ($product->category?->category_name ?? 'General'),
+                    'price' => (float) $product->price,
+                    'qty' => (int) $product->qty,
+                    'stock_tracked' => $product->isStockTracked(),
+                    'units_sold' => (int) ($product->units_sold ?? 0),
+                    'image_url' => $product->image ? asset('images/'.$product->image) : null,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'count' => $products->count(),
+            'products' => $products->values(),
+        ]);
+    }
+
+    /**
+     * Create a product from POS using the same fields and rules as the Product tab.
+     * Opening stock is written to the stock ledger. Product images use the existing
+     * public/images storage convention. The catalogue price is never affected by
+     * per-order price overrides.
+     */
+    public function storeQuickProduct(Request $request)
+    {
+        $request->merge([
+            'product_name' => trim((string) $request->input('product_name', '')),
+        ]);
+
+        $validated = $request->validate([
+            'product_name' => 'required|string|max:255|unique:product,product_name',
+            'category_id' => 'required|integer|exists:category,category_id',
+            'supplier_id' => 'nullable|integer|exists:suppliers,supplier_id',
+            'price' => 'required|numeric|min:0|max:99999999.99',
+            'cost' => 'required|numeric|min:0|max:99999999.99',
+            'qty' => 'required_if:product_type,stock|nullable|integer|min:0|max:2147483647',
+            'product_type' => 'required|in:stock,non-stock',
+            'status' => 'required|in:Active,Inactive',
+            'description' => 'nullable|string|max:2000',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
+        ]);
+
+        if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
+            throw ValidationException::withMessages([
+                'qty' => 'Non-stock products do not keep an inventory quantity. Set quantity to 0.',
+            ]);
+        }
+
+        $isStockTracked = $validated['product_type'] === 'stock';
+        $initialQty = $isStockTracked ? (int) ($validated['qty'] ?? 0) : 0;
+        $imageName = null;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = now()->format('YmdHis').'_'.Str::random(8).'.'.$image->getClientOriginalExtension();
+            $imageDirectory = public_path('images');
+            if (! is_dir($imageDirectory)) {
+                mkdir($imageDirectory, 0755, true);
+            }
+            $image->move($imageDirectory, $imageName);
+        }
+
+        try {
+            $product = DB::transaction(function () use ($validated, $initialQty, $imageName) {
+                $product = Product::create([
+                    'product_name' => trim($validated['product_name']),
+                    'category_id' => (int) $validated['category_id'],
+                    'supplier_id' => ! empty($validated['supplier_id']) ? (int) $validated['supplier_id'] : null,
+                    'price' => round((float) $validated['price'], 2),
+                    'cost' => round((float) $validated['cost'], 2),
+                    'qty' => $initialQty,
+                    'product_type' => $validated['product_type'],
+                    'description' => $validated['description'] ?? null,
+                    'status' => $validated['status'],
+                    'image' => $imageName,
+                ]);
+
+                if ($initialQty > 0 && $product->isStockTracked()) {
+                    StockLog::create([
+                        'product_id' => $product->product_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'IN',
+                        'quantity' => $initialQty,
+                        'reason' => 'Opening stock',
+                        'note' => 'Opening quantity recorded when product #'.$product->product_id.' was created from POS.',
+                    ]);
+                }
+
+                return $product->load(['category', 'supplier']);
+            }, 3);
+        } catch (Throwable $exception) {
+            if ($imageName && is_file(public_path('images/'.$imageName))) {
+                @unlink(public_path('images/'.$imageName));
+            }
+            throw $exception;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $product->status === 'Active'
+                ? 'Product created successfully and added to the active POS catalogue.'
+                : 'Product created successfully as inactive. It will not appear in the POS catalogue until activated.',
+            'product' => [
+                'id' => (int) $product->product_id,
+                'name' => (string) $product->product_name,
+                'category_id' => (string) ($product->category_id ?? 'none'),
+                'category_name' => (string) ($product->category?->category_name ?? 'General'),
+                'price' => (float) $product->price,
+                'qty' => (int) $product->qty,
+                'stock_tracked' => $product->isStockTracked(),
+                'units_sold' => 0,
+                'status' => (string) $product->status,
+                'image_url' => $product->image ? asset('images/'.$product->image) : null,
+            ],
+        ], 201);
     }
 
     /**
@@ -92,7 +255,17 @@ class PosController extends Controller
             'items' => 'required|array|min:1|max:50',
             'items.*.product_id' => 'required|integer|distinct|exists:product,product_id',
             'items.*.quantity' => 'required|integer|min:1|max:1000',
+            'items.*.price_override' => 'sometimes|boolean',
+            'items.*.unit_price' => 'nullable|numeric|min:0|max:99999999.99',
         ])->validate()['items'];
+
+        foreach ($items as $item) {
+            if (! empty($item['price_override']) && (! array_key_exists('unit_price', $item) || $item['unit_price'] === null || $item['unit_price'] === '')) {
+                throw ValidationException::withMessages([
+                    'cart' => 'An adjusted product price is missing. Please review the cart and try again.',
+                ]);
+            }
+        }
 
         $paymentMethod = PaymentMethod::query()->findOrFail($validated['payment_method_id']);
         $methodName = Str::lower(trim((string) $paymentMethod->payment_name));
@@ -136,6 +309,7 @@ class PosController extends Controller
                 }
 
                 $subtotal = 0.0;
+                $salePrices = [];
                 foreach ($items as $item) {
                     $product = $products->get((int) $item['product_id']);
                     $quantity = (int) $item['quantity'];
@@ -146,7 +320,12 @@ class PosController extends Controller
                         ]);
                     }
 
-                    $subtotal += (float) $product->price * $quantity;
+                    // An override is per-order only. The catalogue price is never changed.
+                    $salePrice = ! empty($item['price_override'])
+                        ? round((float) $item['unit_price'], 2)
+                        : (float) $product->price;
+                    $salePrices[$product->product_id] = $salePrice;
+                    $subtotal += $salePrice * $quantity;
                 }
 
                 $customer = null;
@@ -198,7 +377,7 @@ class PosController extends Controller
                         'order_id' => $order->order_id,
                         'product_id' => $product->product_id,
                         'quantity' => (int) $item['quantity'],
-                        'price' => (float) $product->price,
+                        'price' => $salePrices[$product->product_id] ?? (float) $product->price,
                         'unit_cost' => (float) $product->cost,
                     ]);
                 }
