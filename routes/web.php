@@ -17,6 +17,7 @@ use App\Http\Controllers\OfferController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderItemController;
 use App\Http\Controllers\PosController;
+use App\Http\Controllers\PosOrderCorrectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReviewController;
@@ -131,6 +132,15 @@ Route::middleware(['auth', 'role:cashier'])->prefix('cashier')->name('cashier.')
 
 /* Administrator-only management modules. */
 Route::middleware(['auth', 'administrator'])->group(function () {
+    // Controlled corrections for eligible completed POS cash orders.
+    Route::get('/pos/order-corrections', [PosOrderCorrectionController::class, 'index'])
+        ->name('pos.corrections.index');
+    Route::get('/pos/order-corrections/{orderId}', [PosOrderCorrectionController::class, 'edit'])
+        ->whereNumber('orderId')->name('pos.corrections.edit');
+    Route::put('/pos/order-corrections/{orderId}', [PosOrderCorrectionController::class, 'update'])
+        ->whereNumber('orderId')->name('pos.corrections.update');
+    Route::post('/pos/order-corrections/{orderId}/adjustments/{correctionId}/settle', [PosOrderCorrectionController::class, 'settleAdjustment'])
+        ->whereNumber('orderId')->whereNumber('correctionId')->name('pos.corrections.adjustments.settle');
     Route::get('/admin', [AuthContoller::class, 'dash'])->name('admin.dashboard');
 
     // AJAX endpoint for live administrator notifications and action counts.

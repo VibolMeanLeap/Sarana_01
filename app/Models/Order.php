@@ -117,4 +117,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderReviewFlag::class, 'order_id', 'order_id')->where('status', 'open');
     }
+
+    /** Full, append-only history of administrator corrections to completed POS sales. */
+    public function corrections()
+    {
+        return $this->hasMany(OrderCorrection::class, 'order_id', 'order_id')->orderByDesc('created_at');
+    }
 }

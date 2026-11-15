@@ -12,6 +12,7 @@
             <i class="bi bi-arrow-clockwise me-1"></i><span id="refreshPosBtnText">Refresh catalogue</span>
         </button>
         @if(strtolower((string) auth()->user()->role?->role_name) === 'admin')
+            <a href="{{ route('pos.corrections.index') }}" class="btn btn-pos-outline"><i class="bi bi-receipt-cutoff me-1"></i>Correct completed order</a>
             <a href="{{ route('admin.product') }}" class="btn btn-pos-outline"><i class="bi bi-box-seam me-1"></i>Manage products</a>
         @else
             <a href="{{ route('cashier.dashboard') }}" class="btn btn-pos-outline"><i class="bi bi-grid me-1"></i>Cashier workspace</a>
