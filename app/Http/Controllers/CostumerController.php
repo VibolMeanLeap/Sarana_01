@@ -6,11 +6,14 @@ use App\Models\Costumer;
 use App\Models\Order;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\CustomerPhoneNumber;
+use App\Support\AdminDateFilter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class CostumerController extends Controller
 {
@@ -42,12 +45,11 @@ class CostumerController extends Controller
         $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', 'in:active,inactive'],
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'sort_by' => ['nullable', 'in:created_at,name,user_id'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
         ]);
 
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
         $customerRole = Role::query()
             ->whereRaw('LOWER(role_name) = ?', ['customer'])
             ->first();
@@ -72,12 +74,7 @@ class CostumerController extends Controller
         if ($request->filled('status') && in_array($request->input('status'), ['active', 'inactive'], true)) {
             $query->where('status', $request->input('status'));
         }
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->input('start_date'));
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->input('end_date'));
-        }
+        AdminDateFilter::apply($query, 'created_at', $dateFilter);
         $sortColumns = ['created_at' => 'created_at', 'name' => 'name', 'user_id' => 'user_id'];
         $sortBy = $sortColumns[$request->input('sort_by')] ?? 'created_at';
         $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -89,7 +86,7 @@ class CostumerController extends Controller
         $inactiveCustomerAccounts = max(0, $totalCustomerAccounts - $activeCustomerAccounts);
 
         return view('admin.user', compact(
-            'customerAccounts', 'totalCustomerAccounts', 'activeCustomerAccounts', 'inactiveCustomerAccounts'
+            'customerAccounts', 'totalCustomerAccounts', 'activeCustomerAccounts', 'inactiveCustomerAccounts', 'dateFilter'
         ));
     }
 
@@ -130,7 +127,24 @@ class CostumerController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
-            'phone' => ['required', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($customerAccount->user_id, 'user_id')],
+            'phone' => [
+                'required', 'string', 'max:20',
+                function (string $attribute, mixed $value, \Closure $fail) use ($customerAccount): void {
+                    if (CustomerPhoneNumber::normalize((string) $value) === '') {
+                        $fail('Enter a valid phone number. For a number outside Cambodia, include the + country prefix.');
+                        return;
+                    }
+
+                    if (CustomerPhoneNumber::isUsedByUser((string) $value, (int) $customerAccount->user_id)) {
+                        $fail('This phone number is already linked to another account, including an inactive account.');
+                        return;
+                    }
+
+                    if (CustomerPhoneNumber::isUsedByPendingRegistration((string) $value)) {
+                        $fail('This phone number is currently reserved by a pending Telegram registration.');
+                    }
+                },
+            ],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($customerAccount->user_id, 'user_id')],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ]);
@@ -184,6 +198,45 @@ class CostumerController extends Controller
         return back()->with('success', 'Customer account status updated successfully.');
     }
 
+    /**
+     * Archive a customer login instead of hard-deleting it. The phone and
+     * Telegram identity are released for future registration, while the
+     * customer profile and order history remain available for audit/reporting.
+     */
+    public function archiveCustomerAccount(string $user_id)
+    {
+        $customerRole = Role::query()
+            ->whereRaw('LOWER(role_name) = ?', ['customer'])
+            ->firstOrFail();
+
+        DB::transaction(function () use ($user_id, $customerRole) {
+            $customerAccount = User::query()
+                ->where('user_id', $user_id)
+                ->where('role_id', $customerRole->role_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $oldPhone = (string) ($customerAccount->phone ?? '');
+            if ($oldPhone !== '' && (string) $customerAccount->username === $oldPhone) {
+                $customerAccount->username = 'archived-customer-'.$customerAccount->user_id.'-'.Str::lower(Str::random(6));
+            }
+
+            $customerAccount->phone = null;
+            $customerAccount->status = 'inactive';
+            $customerAccount->telegram_chat_id = null;
+            $customerAccount->telegram_verified_at = null;
+            $customerAccount->save();
+
+            // Intentionally retain the linked customer row and its phone as a
+            // historical contact so prior orders/reviews remain connected.
+        });
+
+        return redirect()->route('auth.list')->with(
+            'success',
+            'Customer account archived. Sign-in is disabled and its phone/Telegram identity are released; customer and order history are preserved. The email address remains reserved.'
+        );
+    }
+
     public function webLogin()
     {
         if (Auth::check() && strtolower((string) Auth::user()->role?->role_name) === 'customer') {
@@ -199,52 +252,20 @@ class CostumerController extends Controller
             return redirect()->intended(route('web.shop'));
         }
 
+        if (session()->has('customer_telegram_registration_id')) {
+            return redirect()->route('web.register.telegram.verify');
+        }
+
         return view('website.register.register');
     }
 
+    /** Backward-compatible entry point; registration is always Telegram-verified. */
     public function register(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone',
-            'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $customerRole = Role::query()
-            ->whereRaw('LOWER(role_name) = ?', ['customer'])
-            ->first();
-
-        if (!$customerRole) {
-            return back()->withInput()->withErrors([
-                'register_error' => 'The customer role is missing. Please import the updated demo database.',
-            ]);
-        }
-
-        $user = DB::transaction(function () use ($validated, $customerRole) {
-            $newUser = User::create([
-                'name' => $validated['name'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'],
-                'username' => $validated['phone'],
-                'password' => Hash::make($validated['password']),
-                'role_id' => $customerRole->role_id,
-                'status' => 'active',
-            ]);
-
-            Costumer::create([
-                'user_id' => $newUser->user_id,
-                'name' => $validated['name'],
-                'phone' => $validated['phone'],
-            ]);
-
-            return $newUser;
-        });
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('web.shop'))->with('success', 'Your customer account is ready. Welcome to Coffee Corner!');
+        return app(CustomerTelegramRegistrationController::class)->store(
+            $request,
+            app(\App\Services\CustomerTelegramOtpService::class)
+        );
     }
 
     public function login(Request $request)

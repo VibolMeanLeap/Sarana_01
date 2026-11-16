@@ -1,4 +1,4 @@
--- Coffee Corner Aura: Telegram order notifications + auditable fulfillment workflow
+-- SK Coffee Aura: Telegram order notifications + auditable fulfillment workflow
 -- Compatible with the existing SQL-first schema (MariaDB 10.4+).
 -- BACK UP THE DATABASE BEFORE RUNNING THIS SCRIPT.
 -- This script is additive: it does not drop, truncate, or replace existing tables.

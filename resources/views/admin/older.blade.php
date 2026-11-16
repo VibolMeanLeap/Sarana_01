@@ -782,7 +782,7 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
             <th>Payment</th>
             <th>Status</th>
             <th>Date</th>
-            <th>Review / receipt</th>
+            <th>Correction / receipt</th>
           </tr>
         </thead>
         <tbody id="ordersTableBody">
@@ -805,45 +805,9 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
   </section>
 </div>
 
-<div class="modal fade" id="orderReviewFlagModal" tabindex="-1" aria-labelledby="orderReviewFlagTitle" aria-hidden="true" data-order-base="{{ url('/admin/orders') }}">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius:18px;overflow:hidden">
-      <div class="modal-header" style="background:#e8f4eb;border-bottom:1px solid #d6e7da">
-        <div><div class="small fw-bold text-success text-uppercase" style="letter-spacing:.1em">Audit protection</div><h2 class="modal-title fs-5 fw-bold" id="orderReviewFlagTitle">Mark order for review</h2><div class="small text-muted" id="orderReviewFlagSubtitle">Order #—</div></div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form method="POST" id="orderReviewFlagForm" action="#">
-        @csrf
-        <div class="modal-body p-4">
-          <div class="alert alert-success py-2 small">This adds an audit marker only. It will not edit, cancel, refund, or delete the original order.</div>
-          <div class="mb-3"><label for="orderReviewReason" class="form-label fw-semibold">What needs attention?</label><select class="form-select" id="orderReviewReason" name="reason" required><option value="">Choose a reason</option><option value="incorrect_total">Incorrect total</option><option value="wrong_customer">Wrong customer details</option><option value="payment_mismatch">Payment mismatch</option><option value="possible_duplicate">Possible duplicate order</option><option value="wrong_items">Wrong or missing items</option><option value="receipt_needed">Receipt / proof needed</option><option value="other">Other issue</option></select></div>
-          <div class="mb-3"><label for="orderReviewNotes" class="form-label fw-semibold">Notes for administrator</label><textarea class="form-control" id="orderReviewNotes" name="notes" rows="4" minlength="5" maxlength="2000" required placeholder="Describe what is wrong and what should be checked..."></textarea></div>
-          <div><label for="orderReviewRelatedId" class="form-label fw-semibold">Link to another order (optional)</label><input class="form-control" id="orderReviewRelatedId" name="related_order_id" type="number" min="1" step="1" placeholder="Enter related order number"><div class="form-text">Use this to connect a replacement / corrected order. You can also open or print the receipt from the order row.</div></div>
-        </div>
-        <div class="modal-footer bg-light"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success"><i class="bi bi-flag-fill me-1"></i>Save review marker</button></div>
-      </form>
-    </div>
-  </div>
-</div>
-
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const reviewModal = document.getElementById('orderReviewFlagModal');
-  const reviewForm = document.getElementById('orderReviewFlagForm');
-  const reviewSubtitle = document.getElementById('orderReviewFlagSubtitle');
-  if (reviewModal && reviewForm) {
-    document.addEventListener('click', (event) => {
-      const trigger = event.target.closest('[data-open-order-review]');
-      if (!trigger) return;
-      const orderId = trigger.dataset.orderId;
-      const base = reviewModal.dataset.orderBase || '/admin/orders';
-      reviewForm.action = `${base}/${encodeURIComponent(orderId)}/flags`;
-      if (reviewSubtitle) reviewSubtitle.textContent = `Order #${orderId}`;
-      reviewForm.reset();
-    });
-  }
-
   const ordersFilterForm = document.getElementById('ordersFilterForm');
   const ordersPeriodInput = document.getElementById('ordersPeriodInput');
   document.querySelectorAll('[data-order-period]').forEach((button) => {

@@ -19,10 +19,10 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $allowedRanges = ['today', '7days', '30days', 'this_month', 'custom'];
-        $range = (string) $request->query('range', '30days');
+        $allowedRanges = ['today', 'week', 'this_month', 'all', 'custom'];
+        $range = (string) $request->query('range', 'this_month');
         if (! in_array($range, $allowedRanges, true)) {
-            $range = '30days';
+            $range = 'this_month';
         }
 
         $now = now();
@@ -36,10 +36,10 @@ class DashboardController extends Controller
                 $dateRangeLabel = 'Today';
                 break;
 
-            case '7days':
-                $start = $today->copy()->subDays(6);
+            case 'week':
+                $start = $today->copy()->startOfWeek(Carbon::MONDAY);
                 $end = $now->copy()->endOfDay();
-                $dateRangeLabel = 'Last 7 days';
+                $dateRangeLabel = 'This week';
                 break;
 
             case 'this_month':
@@ -89,11 +89,22 @@ class DashboardController extends Controller
                 }
                 break;
 
-            case '30days':
-            default:
-                $start = $today->copy()->subDays(29);
+            case 'all':
+                $earliestDates = array_filter([
+                    DB::table('orders')->min('order_date'),
+                    DB::table('purchases')->min('purchase_date'),
+                    DB::table('cash_transactions')->min('transaction_date'),
+                ]);
+                $earliestDate = $earliestDates ? min(array_map(fn ($value) => substr((string) $value, 0, 10), $earliestDates)) : null;
+                $start = $earliestDate ? Carbon::parse($earliestDate)->startOfDay() : $today->copy();
                 $end = $now->copy()->endOfDay();
-                $dateRangeLabel = 'Last 30 days';
+                $dateRangeLabel = 'All time';
+                break;
+
+            default:
+                $start = $today->copy()->startOfMonth();
+                $end = $now->copy()->endOfDay();
+                $dateRangeLabel = 'This month';
                 break;
         }
 

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\AdminDateFilter;
 use Illuminate\Support\Str;
 
 class ReportController extends Controller
@@ -84,15 +85,31 @@ class ReportController extends Controller
     private function validatedFilters(Request $request): array
     {
         $validated = $request->validate([
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'source' => ['nullable', 'in:all,pos,website'],
         ]);
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
+        $startDate = $dateFilter['from'];
+        $endDate = $dateFilter['to'] ?? now()->toDateString();
+
+        if ($dateFilter['preset'] === 'all' || $startDate === null) {
+            $candidates = array_filter([
+                DB::table('orders')->min('order_date'),
+                DB::table('purchases')->min('purchase_date'),
+                DB::table('cash_transactions')->min('transaction_date'),
+            ]);
+            $startDate = $candidates ? min(array_map(fn ($value) => substr((string) $value, 0, 10), $candidates)) : '1900-01-01';
+        }
 
         return [
-            'start_date' => $validated['start_date'] ?? now()->startOfMonth()->toDateString(),
-            'end_date' => $validated['end_date'] ?? now()->toDateString(),
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'source' => $validated['source'] ?? 'all',
+            'date_preset' => $dateFilter['preset'],
+            'date_filter' => [
+                'preset' => $dateFilter['preset'],
+                'from' => $dateFilter['preset'] === 'custom' ? $dateFilter['from'] : null,
+                'to' => $dateFilter['preset'] === 'custom' ? $dateFilter['to'] : null,
+            ],
         ];
     }
 

@@ -634,6 +634,12 @@
                         class="bi bi-receipt"></i><span>Orders</span><span class="nav-action-count"
                         data-action-count="orders" title="Orders waiting for review"
                         @if (($adminActionCounts['orders'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['orders'] ?? 0) }}{{ ($adminActionCounts['orders'] ?? 0) > 99 ? '+' : '' }}</span></a>
+                <a href="{{ route('admin.product-sales.index') }}"
+                    class="{{ request()->is('admin/product-sales*') ? 'active' : '' }}"><i
+                        class="bi bi-bar-chart-line"></i>Product sales</a>
+                <a href="{{ route('admin.order-corrections.index') }}"
+                    class="{{ request()->is('admin/order-corrections*') ? 'active' : '' }}"><i
+                        class="bi bi-journal-check"></i>Receipt corrections</a>
                 <a href="{{ route('purchase.index') }}"
                     class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i
                         class="bi bi-cart-check"></i>Purchases</a>

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\AdminDateFilter;
 use Illuminate\Validation\ValidationException;
 
 class ReviewController extends Controller
@@ -17,12 +18,11 @@ class ReviewController extends Controller
             'search' => ['nullable', 'string', 'max:120'],
             'rating' => ['nullable', 'integer', 'between:1,5'],
             'visibility' => ['nullable', 'in:pending,published'],
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'in:10,15,25,50,100'],
         ]);
 
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
         $query = Review::with(['order', 'customer'])
             ->when(!empty($validated['rating']), fn ($q) => $q->where('rating', $validated['rating']))
             ->when(($validated['visibility'] ?? null) === 'pending', fn ($q) => $q->where('is_approved', false))
@@ -36,8 +36,11 @@ class ReviewController extends Controller
                             ->orWhere('phone', 'like', "%{$term}%"));
                 });
             })
-            ->when(!empty($validated['start_date']), fn ($q) => $q->whereHas('order', fn ($order) => $order->whereDate('order_date', '>=', $validated['start_date'])))
-            ->when(!empty($validated['end_date']), fn ($q) => $q->whereHas('order', fn ($order) => $order->whereDate('order_date', '<=', $validated['end_date'])));
+            ;
+
+        if ($dateFilter['from'] || $dateFilter['to']) {
+            $query->whereHas('order', fn ($orderQuery) => AdminDateFilter::apply($orderQuery, 'order_date', $dateFilter));
+        }
 
         $statsQuery = clone $query;
         $stats = [
@@ -61,7 +64,7 @@ class ReviewController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('admin.review', compact('reviews', 'stats', 'distribution'));
+        return view('admin.review', compact('reviews', 'stats', 'distribution', 'dateFilter'));
     }
 
     public function create()

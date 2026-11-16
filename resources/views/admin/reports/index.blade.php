@@ -6,12 +6,20 @@
     <div><div class="small text-success text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Business intelligence</div><h1>Reports & analytics</h1><p>A consolidated view of sales, purchases, expenses, inventory, delivery and customer feedback.</p></div>
     <div class="d-flex flex-wrap gap-2"><a href="{{ route('reports.csv',request()->query()) }}" class="btn btn-outline-success"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export full report</a><a href="{{ route('reports.print',request()->query()) }}" target="_blank" rel="noopener" class="btn btn-cc"><i class="bi bi-file-earmark-pdf me-1"></i> Print / PDF</a></div>
 </div>
-<div class="card mb-4"><div class="card-body"><form method="GET" action="{{ route('reports.index') }}" class="row g-3 align-items-end">
-    <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Start date</label><input type="date" name="start_date" value="{{ $filters['start_date'] }}" class="form-control" required></div>
-    <div class="col-12 col-md-3"><label class="form-label small fw-semibold">End date</label><input type="date" name="end_date" value="{{ $filters['end_date'] }}" class="form-control" required></div>
-    <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Sales source</label><select name="source" class="form-select"><option value="all" @selected($filters['source']==='all')>All sources</option><option value="pos" @selected($filters['source']==='pos')>POS only</option><option value="website" @selected($filters['source']==='website')>Website only</option></select></div>
-    <div class="col-12 col-md-3 d-flex gap-2"><button class="btn btn-cc flex-grow-1"><i class="bi bi-funnel me-1"></i> Apply filters</button><a href="{{ route('reports.index') }}" class="btn btn-cc-light" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a></div>
-</form><div class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Sales, COGS and product performance follow the source filter. Purchases, operating expenses, delivery and reviews follow the selected date range.</div></div></div>
+<form method="GET" action="{{ route('reports.index') }}" class="mb-4">
+    @include('admin.partials.date-filter-panel', [
+        'dateFilter' => $filters['date_filter'],
+        'dateFromField' => 'start_date',
+        'dateToField' => 'end_date',
+        'dateFilterTitle' => 'Report date range',
+        'dateFilterHint' => 'Apply the selected period across sales, purchases, expenses, delivery and reviews.',
+    ])
+    <section class="card border-0 shadow-sm rounded-4"><div class="card-body"><div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4"><label class="form-label small fw-semibold">Sales source</label><select name="source" class="form-select"><option value="all" @selected($filters['source']==='all')>All sources</option><option value="pos" @selected($filters['source']==='pos')>POS only</option><option value="website" @selected($filters['source']==='website')>Website only</option></select></div>
+        <div class="col-12 col-md-4 d-flex gap-2"><button class="btn btn-cc flex-grow-1"><i class="bi bi-funnel me-1"></i> Apply filters</button><a href="{{ route('reports.index') }}" class="btn btn-cc-light" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+        <div class="col-12 small text-muted">Sales, COGS and product performance follow the source filter. Purchases, operating expenses, delivery and reviews follow the selected date range.</div>
+    </div></div></section>
+</form>
 
 @php($finance = $data['financial'])
 <div class="row g-3 mb-4">

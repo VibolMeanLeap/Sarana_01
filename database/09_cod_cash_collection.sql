@@ -1,4 +1,4 @@
--- Coffee Corner Aura: auditable Cash-on-Delivery collection fields
+-- SK Coffee Aura: auditable Cash-on-Delivery collection fields
 -- Compatible with MariaDB 10.4+ and MySQL versions supporting ADD COLUMN IF NOT EXISTS.
 -- BACK UP THE DATABASE BEFORE RUNNING THIS SCRIPT.
 -- Additive only: existing order/payment data is retained.

@@ -1,4 +1,4 @@
--- Coffee Corner Aura - safe schema upgrade
+-- SK Coffee Aura - safe schema upgrade
 -- Target: MariaDB 10.4+ (matches the server version in the supplied SQL dump)
 -- Run this against the existing application database (normally `sarona`).
 -- Back up the database before importing this file.

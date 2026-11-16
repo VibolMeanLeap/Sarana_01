@@ -1,4 +1,4 @@
--- Coffee Corner Aura: Stock / Non-stock product type and stock trigger upgrade.
+-- SK Coffee Aura: Stock / Non-stock product type and stock trigger upgrade.
 -- Run once in phpMyAdmin after selecting your existing application database.
 -- This script does not drop or rebuild tables and is safe to re-run.
 

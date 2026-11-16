@@ -17,11 +17,13 @@
         <div class="col-12 col-md-4"><div class="cc-p-stat"><div><div class="cc-p-stat-label">FILTERED PURCHASE OUTFLOW</div><div class="cc-p-stat-value">${{ number_format($summary['spend'], 2) }}</div></div><span class="cc-p-stat-icon"><i class="bi bi-cash-stack"></i></span></div></div>
     </div>
     <form method="GET" action="{{ route('purchase.index') }}" id="purchaseFilterForm">
-        <section class="cc-p-panel">
-            <div class="cc-p-panel-head"><span class="cc-p-panel-icon"><i class="bi bi-calendar3"></i></span><div><h2 class="cc-p-panel-title">Date range</h2><p class="cc-p-panel-hint">Choose a period or set exact dates. Purchase totals will follow this range.</p></div></div>
-            <div class="cc-preset-row"><button type="button" class="cc-preset" data-range="today">Today</button><button type="button" class="cc-preset" data-range="week">This week</button><button type="button" class="cc-preset" data-range="month">This month</button><button type="button" class="cc-preset" data-range="clear">All dates</button></div>
-            <div class="row g-2 align-items-end"><div class="col-6 col-lg-3 cc-p-field"><label for="purchaseDateFrom">FROM DATE</label><input id="purchaseDateFrom" type="date" name="date_from" value="{{ request('date_from') }}" class="form-control"></div><div class="col-6 col-lg-3 cc-p-field"><label for="purchaseDateTo">TO DATE</label><input id="purchaseDateTo" type="date" name="date_to" value="{{ request('date_to') }}" class="form-control"></div><div class="col-12 col-lg-6 small text-muted pb-2"><i class="bi bi-info-circle text-success me-1"></i> Quick ranges use your computer's local calendar dates.</div></div>
-        </section>
+        @include('admin.partials.date-filter-panel', [
+            'dateFilter' => $dateFilter,
+            'dateFromField' => 'date_from',
+            'dateToField' => 'date_to',
+            'dateFilterTitle' => 'Purchase date',
+            'dateFilterHint' => 'Filter purchase records and matching totals by purchase date.',
+        ])
         <section class="cc-p-panel secondary">
             <div class="cc-p-panel-head"><span class="cc-p-panel-icon"><i class="bi bi-funnel"></i></span><div><h2 class="cc-p-panel-title">Purchase filters</h2><p class="cc-p-panel-hint">Narrow records by product, supplier or purchase reference.</p></div></div>
             <div class="row g-2 align-items-end">
@@ -44,23 +46,4 @@
         <div class="cc-p-pagination"><div class="small text-muted">Showing {{ $purchases->firstItem() ?? 0 }}–{{ $purchases->lastItem() ?? 0 }} of {{ $purchases->total() }} records</div>{{ $purchases->onEachSide(1)->links() }}</div>
     </section>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('purchaseFilterForm');
-    const from = document.getElementById('purchaseDateFrom');
-    const to = document.getElementById('purchaseDateTo');
-    const fmt = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
-    document.querySelectorAll('.cc-preset[data-range]').forEach(button => button.addEventListener('click', () => {
-        const range = button.dataset.range;
-        const today = new Date();
-        let start = null, end = null;
-        if (range === 'today') start = end = today;
-        if (range === 'week') { start = new Date(today); start.setDate(today.getDate() - ((today.getDay()+6)%7)); end = today; }
-        if (range === 'month') { start = new Date(today.getFullYear(), today.getMonth(), 1); end = today; }
-        from.value = start ? fmt(start) : '';
-        to.value = end ? fmt(end) : '';
-        form.requestSubmit();
-    }));
-});
-</script>
 @endsection

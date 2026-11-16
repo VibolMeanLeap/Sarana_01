@@ -11,7 +11,9 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-     protected $primaryKey = 'user_id'; 
+
+    protected $primaryKey = 'user_id';
+
     protected $fillable = [
         'name',
         'role_id',
@@ -20,7 +22,9 @@ class User extends Authenticatable
         'phone',
         'username',
         'password',
-        'status'
+        'status',
+        'telegram_chat_id',
+        'telegram_verified_at',
     ];
 
     protected $hidden = [
@@ -28,9 +32,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Get the role that owns the user.
-     */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
@@ -45,7 +46,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed', // Automatically hashes passwords on save
+            'telegram_verified_at' => 'datetime',
+            'password' => 'hashed',
         ];
     }
 }

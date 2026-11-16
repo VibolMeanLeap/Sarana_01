@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('partials.locale-bootstrap')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('page_title', 'Cashier workspace') · {{ $shopSettings?->shop_name ?: config('app.name', 'Coffee Corner') }}</title>
+    <title>@yield('page_title', 'Cashier workspace') · {{ $shopSettings?->shop_name ?: config('app.name', 'SK Coffee') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -206,7 +206,7 @@
             @else
                 <span class="brand-mark"><i class="bi bi-cup-hot-fill"></i></span>
             @endif
-            <span>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }} <small class="d-block text-muted fw-normal"
+            <span>{{ $shopSettings?->shop_name ?: 'SK Coffee' }} <small class="d-block text-muted fw-normal"
                     style="font-size:10px;letter-spacing:.7px">CASHIER WORKSPACE</small></span>
         </a>
         <nav class="cashier-nav" aria-label="Cashier navigation">

@@ -19,6 +19,8 @@ use App\Http\Controllers\OrderItemController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosOrderCorrectionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductSalesAnalyticsController;
+use App\Http\Controllers\OrderCorrectionAuditController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReportController;
@@ -33,6 +35,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\LanguageController;
+Use App\Http\Controllers\CustomerTelegramRegistrationController;
 
 // Language switching: English / Khmer
 Route::post('/language', [LanguageController::class, 'update'])
@@ -72,17 +75,65 @@ Route::post('/store/payments/payway/callback', [PayWayPaymentController::class, 
 Route::post('/web/payments/payway/callback', [PayWayPaymentController::class, 'callback'])->middleware('throttle:60,1')->name('web.payments.payway.callback.legacy');
 // Telegram uses a public HTTPS webhook protected by its secret-token header and an admin ID allowlist.
 Route::post('/telegram/webhook', TelegramWebhookController::class)->middleware('throttle:120,1')->name('telegram.webhook');
-Route::get('/store/register', [CostumerController::class, 'webRegister'])->name('webRegister');
-Route::get('/store/login', [CostumerController::class, 'webLogin'])->name('webLogin');
-Route::post('/store/register/process', [CostumerController::class, 'register'])->name('register');
-Route::post('/store/login/process', [CostumerController::class, 'login'])
+// ================= CUSTOMER AUTHENTICATION =================
+
+// Customer registration page
+Route::get('/store/register', [
+    \App\Http\Controllers\CostumerController::class,
+    'webRegister'
+])->name('webRegister');
+
+// Customer login page
+Route::get('/store/login', [
+    \App\Http\Controllers\CostumerController::class,
+    'webLogin'
+])->name('webLogin');
+
+// Process customer registration
+Route::post('/store/register/process', [
+    \App\Http\Controllers\CustomerTelegramRegistrationController::class,
+    'store'
+])
+    ->middleware('throttle:5,10')
+    ->name('register');
+// Display Telegram OTP verification page
+Route::get('/store/register/verify-telegram', [
+    \App\Http\Controllers\CustomerTelegramRegistrationController::class,
+    'show'
+])->name('web.register.telegram.verify');
+
+// Verify customer login
+Route::post('/store/login/process', [
+    \App\Http\Controllers\CostumerController::class,
+    'login'
+])
     ->middleware([
         \App\Http\Middleware\ProtectLoginAttempts::class . ':phone,customer',
         'throttle:10,1',
     ])
     ->name('login');
-Route::post('/store/logout', [CostumerController::class, 'logout'])->name('logout');
 
+// Submit six-digit Telegram OTP
+Route::post('/store/register/verify-telegram', [
+    \App\Http\Controllers\CustomerTelegramRegistrationController::class,
+    'verify'
+])
+    ->middleware('throttle:5,1')
+    ->name('web.register.telegram.verify.submit');
+
+// Request a new Telegram connection link
+Route::post('/store/register/telegram/new-link', [
+    \App\Http\Controllers\CustomerTelegramRegistrationController::class,
+    'refreshLink'
+])
+    ->middleware('throttle:3,10')
+    ->name('web.register.telegram.refresh');
+
+// Customer logout
+Route::post('/store/logout', [
+    \App\Http\Controllers\CostumerController::class,
+    'logout'
+])->name('logout');
 /* Customer account pages. Customers cannot enter staff tools. */
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/store/account', [CostumerController::class, 'account'])->name('web.account');
@@ -182,6 +233,11 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
         ->whereNumber('user_id')->name('customer.accounts.edit');
     Route::put('/admin/user/{user_id}', [CostumerController::class, 'updateCustomerAccount'])
         ->whereNumber('user_id')->name('customer.accounts.update');
+        // Archive customer account and release phone/Telegram identity.
+    Route::delete('/admin/user/{user_id}/archive',
+        [CostumerController::class, 'archiveCustomerAccount'])
+        ->whereNumber('user_id')
+        ->name('customer.accounts.archive');
 
     // Legacy staff-account URLs now redirect to Settings. Cashier/Admin accounts
     // can only be edited or deactivated from the dedicated Settings workspace.
@@ -271,6 +327,14 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
     Route::delete('/admin/expense-income/{expense_income}', [CashTransactionController::class, 'destroy'])->name('expense_income.destroy');
     Route::post('/admin/accounting-category', [AccountingCategoryController::class, 'store'])->name('accounting-category.store');
     Route::delete('/admin/accounting-category/{category}', [AccountingCategoryController::class, 'destroy'])->name('accounting-category.destroy');
+
+    // Product sales intelligence (paid, non-cancelled line items).
+    Route::get('/admin/product-sales', [ProductSalesAnalyticsController::class, 'index'])->name('admin.product-sales.index');
+    Route::get('/admin/product-sales/export/csv', [ProductSalesAnalyticsController::class, 'csv'])->name('admin.product-sales.csv');
+
+    // Read-only audit of POS receipt corrections and staff-confirmed cash adjustments.
+    Route::get('/admin/order-corrections', [OrderCorrectionAuditController::class, 'index'])->name('admin.order-corrections.index');
+    Route::get('/admin/order-corrections/export/csv', [OrderCorrectionAuditController::class, 'csv'])->name('admin.order-corrections.csv');
 
     // Consolidated administrator reporting (all routes inherit auth + administrator middleware).
     Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');

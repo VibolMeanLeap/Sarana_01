@@ -19,18 +19,53 @@
     .audit-value strong{font-size:18px;color:#245b3e}
     .history-item{border-left:3px solid #74aa88;padding:0 0 18px 16px;margin-left:6px}
     .history-item:last-child{padding-bottom:0}
+
+    /* Compact correction workspace: preserve the current visual language while reducing unused space. */
+    .pos-main:has(.correction-wrap){padding:12px 18px 20px!important;max-width:1900px}
+    .correction-wrap{max-width:1740px;font-size:13px}
+    .correction-wrap .mb-4{margin-bottom:.7rem!important}
+    .correction-wrap .mb-3{margin-bottom:.45rem!important}
+    .correction-wrap .p-lg-4{padding:1rem!important}
+    .correction-wrap .correction-card.p-3{padding:.8rem!important}
+    .correction-wrap .correction-soft.p-2{padding:.6rem!important}
+    .correction-wrap .correction-hero{padding:12px 16px;border-radius:14px;box-shadow:0 5px 16px rgba(20,88,61,.10)}
+    .correction-wrap .correction-hero h2{font-size:1.05rem!important}
+    .correction-wrap .correction-hero .display-6{font-size:1.8rem!important;line-height:1.1}
+    .correction-wrap .correction-card{border-radius:13px;box-shadow:0 2px 10px rgba(22,67,43,.035)}
+    .correction-wrap .correction-soft{border-radius:11px}
+    .correction-wrap .form-label{margin-bottom:.25rem}
+    .correction-wrap .form-control,.correction-wrap .form-select{min-height:35px;padding:.38rem .65rem;font-size:13px;border-radius:8px}
+    .correction-wrap textarea.form-control{min-height:36px;resize:vertical}
+    .correction-wrap .table>:not(caption)>*>*{padding:.42rem .5rem}
+    .correction-wrap .correction-table thead th{font-size:10px}
+    .correction-wrap .correction-table tbody td{padding:.32rem .42rem}
+    .correction-wrap .correction-table .form-control,.correction-wrap .correction-table .form-select{min-height:32px;padding:.28rem .45rem}
+    .correction-wrap .correction-pill{padding:4px 8px;font-size:10px}
+    .correction-wrap .audit-value{padding:7px 9px;border-radius:8px}
+    .correction-wrap .audit-value strong{font-size:15px}
+    .correction-wrap .history-item{padding-bottom:10px;padding-left:12px}
+    .correction-wrap .btn-pos-outline,.correction-wrap .correction-btn{padding:7px 10px;border-radius:8px;font-size:12px}
+    .correction-wrap .btn-sm{font-size:11px}
+    .correction-wrap .correction-history{border:1px solid #e0eae2;background:#fff;border-radius:13px;box-shadow:0 2px 10px rgba(22,67,43,.035);padding:0 14px}
+    .correction-wrap .correction-history>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px;font-weight:800;color:#245b3e}
+    .correction-wrap .correction-history>summary::-webkit-details-marker{display:none}
+    .correction-wrap .correction-history>summary:after{content:'+';font-size:18px;line-height:1;color:#176b4b}
+    .correction-wrap .correction-history[open]>summary:after{content:'−'}
+    .correction-wrap .correction-history-body{border-top:1px solid #e7eee8;padding:12px 0 4px}
+    .correction-wrap .correction-compact-note{padding:7px 10px;margin:8px 0 0;border-radius:8px;font-size:11px;line-height:1.35}
+    @media(max-width:767px){.pos-main:has(.correction-wrap){padding:10px!important}.correction-wrap .correction-hero .text-end{text-align:left!important}.correction-wrap .correction-hero .display-6{font-size:1.5rem!important}}
 </style>
 
 <div class="correction-wrap">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-        <div>
-            <div class="mini-label mb-2">POS · Administrator control</div>
-            <h1 class="h3 fw-bold mb-1">Correct order #{{ $order->order_id }}</h1>
-            <p class="text-muted mb-0">Review the original sale, make the necessary correction and keep a permanent audit record.</p>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="mini-label mb-0">POS</span>
+            <h1 class="h5 fw-bold mb-0">Correct order #{{ $order->order_id }}</h1>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('admin.orders.receipt', $order->order_id) }}" target="_blank" rel="noopener" class="btn btn-pos-outline"><i class="bi bi-receipt me-1"></i>View current receipt</a>
-            <a href="{{ route('pos.corrections.index') }}" class="btn btn-pos-outline"><i class="bi bi-arrow-left me-1"></i>Order search</a>
+        <div class="d-flex gap-1 flex-wrap">
+            <a href="{{ $returnTo }}" class="btn btn-sm btn-pos-outline"><i class="bi bi-arrow-left me-1"></i>Back to Orders</a>
+            <a href="{{ route('admin.orders.receipt', $order->order_id) }}" target="_blank" rel="noopener" class="btn btn-sm btn-pos-outline"><i class="bi bi-receipt me-1"></i>View current receipt</a>
+            <a href="{{ route('pos.corrections.index') }}" class="btn btn-sm btn-pos-outline"><i class="bi bi-search me-1"></i>Correction search</a>
         </div>
     </div>
 
@@ -51,13 +86,12 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
                 <div class="small text-white-50 text-uppercase fw-bold mb-1">Paid · Completed · Cash POS sale</div>
-                <h2 class="h4 fw-bold mb-1">{{ $order->customer?->name ?: 'Walk-in customer' }}</h2>
+                <h2 class="h6 fw-bold mb-1">{{ $order->customer?->name ?: 'Walk-in customer' }}</h2>
                 <div class="text-white-50 small">{{ $order->customer?->phone ?: 'No customer phone' }} · {{ $order->orderType?->order_name ?: 'POS' }} · Cashier: {{ $order->cashier?->name ?: '—' }}</div>
             </div>
             <div class="text-end">
                 <div class="small text-white-50">Current recorded total</div>
                 <div class="display-6 fw-bold">${{ number_format((float) $order->final_price, 2) }}</div>
-                <span class="badge rounded-pill bg-light text-success">Order #{{ $order->order_id }}</span>
             </div>
         </div>
     </div>
@@ -78,6 +112,7 @@
                     <div class="small mb-3">Correction #{{ $pendingAdjustment->correction_id }} · Original ${{ number_format((float) $pendingAdjustment->original_total, 2) }} → corrected ${{ number_format((float) $pendingAdjustment->corrected_total, 2) }}</div>
                     <form method="POST" action="{{ route('pos.corrections.adjustments.settle', [$order->order_id, $pendingAdjustment->correction_id]) }}" class="row g-2">
                         @csrf
+                        <input type="hidden" name="return_to" value="{{ $returnTo }}">
                         <input type="hidden" name="adjustment_type" value="{{ $requiredAdjustmentType }}">
                         <div class="col-12 col-lg-8">
                             <label class="form-label small fw-semibold">Cash collection / refund confirmation note</label>
@@ -97,18 +132,19 @@
         <form method="POST" action="{{ route('pos.corrections.update', $order->order_id) }}" id="orderCorrectionForm">
             @csrf
             @method('PUT')
+            <input type="hidden" name="return_to" value="{{ $returnTo }}">
 
-            <div class="correction-card p-3 p-lg-4 mb-4">
+            <div class="correction-card p-3 mb-3">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div>
-                        <h2 class="h5 fw-bold mb-1">Correct sale details</h2>
-                        <div class="small text-muted">Edit product lines, quantity, per-order selling price, customer and discount.</div>
+                        <h2 class="h6 fw-bold mb-0">Correct sale details</h2>
+                        <div class="small text-muted">Products, quantities, prices, customer and discount.</div>
                     </div>
                     <span class="correction-pill good"><i class="bi bi-shield-lock me-1"></i>Original snapshot will be saved</span>
                 </div>
 
-                <div class="correction-soft p-3 mb-4">
-                    <div class="row g-3 align-items-end">
+                <div class="correction-soft p-2 mb-3">
+                    <div class="row g-2 align-items-end">
                         <div class="col-12 col-lg-8">
                             <label for="customer_id" class="form-label fw-semibold small">Customer</label>
                             <select name="customer_id" id="customer_id" class="form-select">
@@ -130,20 +166,20 @@
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                     <div>
                         <h3 class="h6 fw-bold mb-1">Products on corrected receipt</h3>
-                        <div class="small text-muted">Unit price is stored on this order only; product catalogue prices are not changed.</div>
+                        
                     </div>
                     <button type="button" class="btn btn-sm btn-pos-outline" id="addCorrectionItem"><i class="bi bi-plus-circle me-1"></i>Add product line</button>
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table correction-table align-middle">
+                    <table class="table table-sm correction-table align-middle mb-2">
                         <thead>
                             <tr>
-                                <th style="min-width:250px">Product</th>
-                                <th style="width:130px">Quantity</th>
-                                <th style="width:170px">Unit price (USD)</th>
-                                <th class="text-end" style="width:140px">Line total</th>
-                                <th style="width:60px"></th>
+                                <th style="min-width:220px">Product</th>
+                                <th style="width:105px">Quantity</th>
+                                <th style="width:135px">Unit price (USD)</th>
+                                <th class="text-end" style="width:115px">Line total</th>
+                                <th style="width:48px"></th>
                             </tr>
                         </thead>
                         <tbody id="correctionItemsBody">
@@ -169,20 +205,22 @@
                 </div>
 
                 <div class="d-flex justify-content-end">
-                    <div class="correction-soft p-3" style="min-width:min(100%,360px)">
+                    <div class="correction-soft p-2" style="min-width:min(100%,300px)">
                         <div class="d-flex justify-content-between mb-2"><span class="text-muted">New subtotal</span><strong id="correctionSubtotal">$0.00</strong></div>
                         <div class="d-flex justify-content-between mb-2"><span class="text-muted">Discount</span><strong id="correctionDiscount">$0.00</strong></div>
-                        <div class="d-flex justify-content-between border-top pt-2"><span class="fw-bold">Corrected total</span><strong class="fs-4 text-success" id="correctionFinalTotal">$0.00</strong></div>
+                        <div class="d-flex justify-content-between border-top pt-2"><span class="fw-bold">Corrected total</span><strong class="fs-5 text-success" id="correctionFinalTotal">$0.00</strong></div>
                         <div class="small text-muted mt-1">Current recorded total: ${{ number_format((float) $order->final_price, 2) }}</div>
                         <div id="correctionDifference" class="small fw-bold mt-2"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="correction-card p-3 p-lg-4 mb-4">
-                <h2 class="h6 fw-bold mb-3">Correction reason and confirmation</h2>
-                <div class="row g-3">
-                    <div class="col-12 col-lg-4">
+            <div class="correction-card p-3 mb-3">
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <h2 class="h6 fw-bold mb-0">Correction reason and confirmation</h2>
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-3">
                         <label for="reason" class="form-label small fw-semibold">Reason <span class="text-danger">*</span></label>
                         <select name="reason" id="reason" class="form-select" required>
                             <option value="">Choose a reason</option>
@@ -193,39 +231,31 @@
                             <option value="other" @selected(old('reason') === 'other')>Other correction</option>
                         </select>
                     </div>
-                    <div class="col-12 col-lg-8">
+                    <div class="col-12 col-md-6">
                         <label for="notes" class="form-label small fw-semibold">Explain what was wrong and what was corrected <span class="text-danger">*</span></label>
-                        <textarea name="notes" id="notes" rows="2" minlength="5" maxlength="2000" class="form-control" required placeholder="Describe the mistake and the correction...">{{ old('notes') }}</textarea>
+                        <textarea name="notes" id="notes" rows="1" minlength="5" maxlength="2000" class="form-control" required placeholder="What was wrong and what was corrected?">{{ old('notes') }}</textarea>
                     </div>
-                    <div class="col-12 col-lg-6">
+                    <div class="col-12 col-md-3">
                         <label for="confirmation" class="form-label small fw-semibold">Type CORRECT to confirm <span class="text-danger">*</span></label>
                         <input type="text" id="confirmation" name="confirmation" class="form-control text-uppercase" autocomplete="off" required pattern="CORRECT" placeholder="CORRECT">
-                        <small class="text-muted">This extra step helps prevent accidental changes to completed sales.</small>
-                    </div>
-                    <div class="col-12">
-                        <div class="alert alert-warning border-0 rounded-3 small mb-0">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                            Saving updates the current receipt and inventory. The previous receipt values remain in correction history. If the corrected total differs from the amount originally paid, an additional cash collection or refund remains pending until an administrator confirms it.
-                        </div>
                     </div>
                 </div>
-                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
-                    <a href="{{ route('pos.corrections.index') }}" class="btn btn-pos-outline">Cancel</a>
-                    <button type="submit" class="btn correction-btn" id="saveCorrectionBtn"><i class="bi bi-shield-check me-1"></i>Save order correction</button>
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 pt-2 border-top">
+                    <span class="text-muted small" title="Saving updates the receipt and inventory. Previous values remain in correction history. Any payment difference must be confirmed separately."><i class="bi bi-info-circle text-success"></i></span>
+                    <div class="d-flex gap-2">
+                        <a href="{{ $returnTo }}" class="btn btn-pos-outline">Cancel</a>
+                        <button type="submit" class="btn correction-btn" id="saveCorrectionBtn"><i class="bi bi-shield-check me-1"></i>Save order correction</button>
+                    </div>
                 </div>
             </div>
         </form>
     @endif
 
-    <div class="correction-card p-3 p-lg-4">
-        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
-            <div>
-                <h2 class="h5 fw-bold mb-1">Correction history</h2>
-                <div class="small text-muted">Original values and every subsequent correction remain recorded.</div>
-            </div>
-            <span class="correction-pill good">{{ $history->count() }} correction(s)</span>
-        </div>
-
+    <details class="correction-history">
+        <summary>
+            <span><i class="bi bi-clock-history me-2"></i>Correction history <span class="correction-pill good ms-1">{{ $history->count() }}</span></span>
+        </summary>
+        <div class="correction-history-body">
         @forelse($history as $correction)
             <div class="history-item">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -239,8 +269,8 @@
                     @endif
                 </div>
                 <div class="small text-muted mt-1">{{ $correction->created_at?->format('d M Y · h:i A') }} · By {{ $correction->createdBy?->name ?: 'Administrator' }}</div>
-                <p class="mb-2 mt-2">{{ $correction->notes }}</p>
-                <div class="row g-2 mb-2">
+                <p class="small mb-1 mt-1">{{ $correction->notes }}</p>
+                <div class="row g-2 mb-1">
                     <div class="col-6 col-md-3"><div class="audit-value"><small>Original total</small><strong>${{ number_format((float) $correction->original_total, 2) }}</strong></div></div>
                     <div class="col-6 col-md-3"><div class="audit-value"><small>Corrected total</small><strong>${{ number_format((float) $correction->corrected_total, 2) }}</strong></div></div>
                     <div class="col-6 col-md-3"><div class="audit-value"><small>Difference</small><strong>{{ (float) $correction->difference_amount > 0 ? '+' : '' }}${{ number_format((float) $correction->difference_amount, 2) }}</strong></div></div>
@@ -309,7 +339,8 @@
                 No corrections have been made to this order.
             </div>
         @endforelse
-    </div>
+        </div>
+    </details>
 </div>
 
 <script>

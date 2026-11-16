@@ -10,12 +10,14 @@ use App\Models\StockLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Support\AdminDateFilter;
 use Throwable;
 
 class OrderItemController extends Controller
 {
     public function index(Request $request)
     {
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
         $search = trim((string) $request->input('search', ''));
         $orderId = $request->input('order_id');
         $productId = $request->input('product_id');
@@ -37,8 +39,7 @@ class OrderItemController extends Controller
                         ->orWhereHas('product', fn ($productQuery) => $productQuery->where('product_name', 'like', "%{$search}%"));
                 });
             })
-            ->when($request->filled('start_date'), fn ($query) => $query->whereDate('filter_orders.order_date', '>=', $request->input('start_date')))
-            ->when($request->filled('end_date'), fn ($query) => $query->whereDate('filter_orders.order_date', '<=', $request->input('end_date')))
+            ->when(($dateFilter['from'] || $dateFilter['to']), fn ($query) => AdminDateFilter::apply($query, 'filter_orders.order_date', $dateFilter))
             ->orderBy($sortBy === 'order_date' ? 'filter_orders.order_date' : 'order_items.'.$sortBy, $sortDirection)
             ->orderByDesc('order_items.order_item_id')
             ->paginate(15)
@@ -47,7 +48,7 @@ class OrderItemController extends Controller
         $products = Product::orderBy('product_name')->get();
         $categories = \App\Models\Category::orderBy('category_name')->get();
 
-        return view('admin.older_item', compact('orderItems', 'orderId', 'products', 'categories'));
+        return view('admin.older_item', compact('orderItems', 'orderId', 'products', 'categories', 'dateFilter'));
     }
 
     // Order items are created by POS or website checkout. Manual creation is disabled

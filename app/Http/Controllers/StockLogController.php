@@ -8,6 +8,7 @@ use App\Models\StockLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Support\AdminDateFilter;
 
 class StockLogController extends Controller
 {
@@ -20,12 +21,11 @@ class StockLogController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:category,category_id'],
             'type' => ['nullable', 'in:in,out'],
             'stock_status' => ['nullable', 'in:all,healthy,low,out'],
-            'date_from' => ['nullable', 'date_format:Y-m-d'],
-            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'search' => ['nullable', 'string', 'max:120'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
         ]);
 
+        $dateFilter = AdminDateFilter::resolve($request, 'date_from', 'date_to');
         $search = trim((string) ($validated['search'] ?? ''));
         $products = Product::query()
             ->whereRaw("LOWER(TRIM(COALESCE(product_type, 'stock'))) NOT IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')")
@@ -63,8 +63,6 @@ class StockLogController extends Controller
             ->when(!empty($validated['product_id']), fn ($q) => $q->where('product_id', $validated['product_id']))
             ->when(!empty($validated['category_id']), fn ($q) => $q->whereHas('product', fn ($productQuery) => $productQuery->where('category_id', $validated['category_id'])))
             ->when(!empty($validated['type']), fn ($q) => $q->whereRaw('LOWER(type) = ?', [$validated['type']]))
-            ->when(!empty($validated['date_from']), fn ($q) => $q->whereDate('log_date', '>=', $validated['date_from']))
-            ->when(!empty($validated['date_to']), fn ($q) => $q->whereDate('log_date', '<=', $validated['date_to']))
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($nested) use ($search) {
                     $nested->where('reason', 'like', "%{$search}%")
@@ -72,6 +70,8 @@ class StockLogController extends Controller
                         ->orWhereHas('product', fn ($productQuery) => $productQuery->where('product_name', 'like', "%{$search}%"));
                 });
             });
+
+        AdminDateFilter::apply($logsQuery, 'log_date', $dateFilter);
 
         $sortDirection = $validated['sort_dir'] ?? 'desc';
         $logs = $logsQuery
@@ -87,6 +87,7 @@ class StockLogController extends Controller
             'stockItems' => $stockItems,
             'stockSummary' => $stockSummary,
             'lowStockThreshold' => self::LOW_STOCK_THRESHOLD,
+            'dateFilter' => $dateFilter,
         ]);
     }
 

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\OrderType;
 use App\Models\PaymentMethod;
 use App\Models\OrderReviewFlag;
+use App\Models\StockLog;
 use App\Services\AdminActionCountService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -37,7 +38,11 @@ class OrderController extends Controller
 
         $query = Order::query()
             ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'delivery', 'orderItems.product', 'statusHistory', 'reviewFlags.relatedOrder'])
-            ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions', 'openReviewFlags']);
+            ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions', 'openReviewFlags', 'corrections'])
+            ->withExists([
+                'corrections as has_pending_correction_adjustment' => fn ($correctionQuery) =>
+                    $correctionQuery->where('payment_adjustment_status', 'pending'),
+            ]);
 
         $search = trim((string) ($validated['search'] ?? ''));
         if ($search !== '') {
@@ -108,6 +113,21 @@ class OrderController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        // Show the same protected receipt-correction workflow used by POS,
+        // but only for orders that satisfy its eligibility rules. The edit
+        // endpoint re-checks eligibility server-side before any change is saved.
+        $orders->getCollection()->each(function (Order $order): void {
+            $blockReason = $this->receiptCorrectionBlockReason($order);
+            $hasPendingAdjustment = $blockReason === null
+                && (bool) ($order->has_pending_correction_adjustment ?? false);
+
+            $order->setAttribute('can_correct_receipt', $blockReason === null && ! $hasPendingAdjustment);
+            $order->setAttribute('can_settle_correction_adjustment', $hasPendingAdjustment);
+            $order->setAttribute('correction_block_reason', $hasPendingAdjustment
+                ? 'A previous receipt correction has a pending cash collection or refund. Open the correction workspace to confirm it before making another correction.'
+                : $blockReason);
+        });
+
         $summary = [
             'total' => Order::count(),
             'pending' => Order::where('is_paid', 0)
@@ -137,6 +157,110 @@ class OrderController extends Controller
         }
 
         return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage'));
+    }
+
+    /**
+     * Explain the same eligibility and preflight checks enforced by the POS
+     * correction workflow. Keep this list aligned with
+     * PosOrderCorrectionController::assertEligibleOrder() and its stock checks.
+     */
+    private function receiptCorrectionBlockReason(Order $order): ?string
+    {
+        if (strtolower(trim((string) $order->order_source)) !== 'pos') {
+            return 'Website orders use the storefront payment and fulfilment workflow. They cannot be corrected through the POS receipt tool.';
+        }
+
+        if (! (bool) $order->is_paid) {
+            return 'This order has not been paid. Complete and record payment before correcting a receipt.';
+        }
+
+        $status = strtolower(trim((string) $order->order_status));
+        if ($status !== 'completed') {
+            return 'This order is not completed yet. Only completed orders can be corrected.';
+        }
+
+        if (strtolower(trim((string) $order->paymentMethod?->payment_name)) !== 'cash') {
+            return 'This correction workflow supports POS cash sales only. KHQR and other payment methods need their own payment-provider refund or adjustment workflow.';
+        }
+
+        if (! $order->orderType) {
+            return 'The order type record is missing. Restore or review the order type before correcting this receipt.';
+        }
+
+        if (strtolower(trim((string) $order->orderType->order_name)) === 'delivery' || $order->delivery) {
+            return 'This is a delivery order or has a delivery record. Its fulfilment and delivery history must be adjusted through the delivery workflow.';
+        }
+
+        if ((int) ($order->payments_count ?? 0) > 0 || $order->payments->isNotEmpty()) {
+            return 'This order has an external payment record. Use the payment provider refund or adjustment process before changing the receipt.';
+        }
+
+        if ((int) ($order->cash_transactions_count ?? 0) > 0) {
+            return 'This order is already posted to the cash ledger. Reconcile its accounting entry before correcting the sale.';
+        }
+
+        if ((bool) ($order->has_pending_correction_adjustment ?? false)) {
+            // This is not permanently blocked: the row action opens the correction
+            // workspace directly to the existing collect/refund confirmation panel.
+            return null;
+        }
+
+        $items = $order->orderItems;
+        if ($items->isEmpty()) {
+            return 'This order has no original product lines. The receipt cannot be rebuilt safely.';
+        }
+
+        $productIds = $items->pluck('product_id')->map(fn ($id) => (int) $id)->unique()->values();
+        if ($productIds->contains(0) || $items->contains(fn ($item) => ! $item->product)) {
+            return 'One or more products on this receipt no longer exist. Restore or audit the product records before correcting the order.';
+        }
+
+        $stockByProduct = [];
+        foreach ($items as $item) {
+            $product = $item->product;
+            if ($product && $product->isStockTracked()) {
+                $productId = (int) $item->product_id;
+                $stockByProduct[$productId] = ($stockByProduct[$productId] ?? 0) + (int) $item->quantity;
+            }
+        }
+
+        return $this->stockCorrectionBlockReason((int) $order->order_id, $stockByProduct);
+    }
+
+    /** Return a visible explanation if original stock deductions cannot be verified. */
+    private function stockCorrectionBlockReason(int $orderId, array $expectedStock): ?string
+    {
+        if ($expectedStock === []) {
+            return null;
+        }
+
+        $candidateLogs = StockLog::query()
+            ->whereIn('product_id', array_keys($expectedStock))
+            ->whereIn('reason', ['Sale', 'Sale correction', 'Sale reversal', 'Order correction'])
+            ->where('note', 'like', '%#'.$orderId.'%')
+            ->get(['product_id', 'type', 'quantity', 'note']);
+
+        $netByProduct = [];
+        foreach ($candidateLogs as $log) {
+            $note = (string) ($log->note ?? '');
+            if (! preg_match('/#'.preg_quote((string) $orderId, '/').'(?![0-9])/u', $note)) {
+                continue;
+            }
+
+            $productId = (int) $log->product_id;
+            $type = strtolower(trim((string) $log->type));
+            $quantity = (int) $log->quantity;
+            $netByProduct[$productId] = ($netByProduct[$productId] ?? 0)
+                + ($type === 'out' ? $quantity : ($type === 'in' ? -$quantity : 0));
+        }
+
+        foreach ($expectedStock as $productId => $quantity) {
+            if ((int) ($netByProduct[(int) $productId] ?? 0) !== (int) $quantity) {
+                return 'The stock movement history does not match the products on this receipt. Audit the stock history first; automatic correction is disabled to protect inventory.';
+            }
+        }
+
+        return null;
     }
 
     /** Print a full order receipt for administrator reconciliation. */

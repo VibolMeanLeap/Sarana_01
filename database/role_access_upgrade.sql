@@ -1,4 +1,4 @@
--- Coffee Corner role-access patch for an existing imported sarona database.
+-- SK Coffee role-access patch for an existing imported sarona database.
 -- Run this in phpMyAdmin if you already imported an earlier demo dump.
 -- The index check handles both the original UNIQUE role_id index and the newer
 -- non-unique idx_users_role_id index. It is safe to run more than once.

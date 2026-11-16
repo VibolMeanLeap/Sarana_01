@@ -35,3 +35,12 @@ Schedule::call(function (): void {
     ->timezone((string) config('backup.timezone', 'Asia/Phnom_Penh'))
     ->name('sk-coffee-daily-backup')
     ->withoutOverlapping();
+
+// Remove abandoned, unverified Telegram customer registration drafts.
+Schedule::call(function (): void {
+    \App\Models\CustomerTelegramRegistration::query()
+        ->where('created_at', '<', now()->subMinutes(30))
+        ->delete();
+})->everyTenMinutes()
+    ->name('cleanup-expired-customer-telegram-registrations')
+    ->withoutOverlapping();

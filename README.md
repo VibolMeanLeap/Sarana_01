@@ -1,8 +1,8 @@
-# Coffee Corner Aura
+# SK Coffee Aura
 
 **Coffee Shop Management System · Laravel 13 · POS · Online Ordering · Inventory · Delivery · Finance · English / Khmer**
 
-Coffee Corner Aura (also referred to in the repository as **Sarana 01** / **SK Coffee**) is a Laravel-based coffee shop management application. It combines a customer-facing storefront, staff point of sale (POS), order and delivery workflows, product and inventory management, purchasing, finance reports, customer service, store settings, and administrator tools.
+SK Coffee Aura (also referred to in the repository as **Sarana 01** / **SK Coffee**) is a Laravel-based coffee shop management application. It combines a customer-facing storefront, staff point of sale (POS), order and delivery workflows, product and inventory management, purchasing, finance reports, customer service, store settings, and administrator tools.
 
 > **Project status:** This is an actively developed academic / graduation-demo project. Use a local or staging database and sandbox payment credentials for demonstrations. Complete the security, backup, payment, and deployment checks before using it with real customer data or payments.
 
@@ -69,7 +69,7 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - Cashier order queue and order-status workflow.
 - Stock-tracked products are checked and deducted according to the configured stock rules; non-stock products are not deducted from inventory.
 
-> **Important:** Cash on Delivery is a *payment method*, not an order type. For a home-delivery COD order, choose **Order type: Delivery** and **Payment method: Cash on Delivery**. A walk-in or takeaway COD selection is not a delivery order and does not receive delivery-stage controls.
+> **Important:** Cash on Delivery is a _payment method_, not an order type. For a home-delivery COD order, choose **Order type: Delivery** and **Payment method: Cash on Delivery**. A walk-in or takeaway COD selection is not a delivery order and does not receive delivery-stage controls.
 
 ### Admin dashboard and management
 
@@ -113,12 +113,12 @@ Fields described as optional (for example order notes, review comments, COD coll
 
 ## Roles and access
 
-| Role | Typical access |
-|---|---|
+| Role              | Typical access                                                                                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Administrator** | Admin dashboard, orders/delivery, settings, staff management, inventory, purchasing, customer service, reviews, finance, exports, and backups. |
-| **Cashier** | POS and cashier order-processing workspace. No administrator-only management or backup access. |
-| **Customer** | Public storefront, own account, checkout, own order tracking/history, review submission, and own customer inbox. |
-| **Guest** | Public storefront browsing and contact form; customer account and checkout features require sign-in. |
+| **Cashier**       | POS and cashier order-processing workspace. No administrator-only management or backup access.                                                 |
+| **Customer**      | Public storefront, own account, checkout, own order tracking/history, review submission, and own customer inbox.                               |
+| **Guest**         | Public storefront browsing and contact form; customer account and checkout features require sign-in.                                           |
 
 Role-protected routes use Laravel authentication and the project's role/administrator middleware. Grant the Administrator role only to trusted accounts. Backup routes are inside the administrator-protected route group.
 
@@ -236,19 +236,19 @@ The repository contains historical Laravel migrations that do not fully represen
 2. Import `database/sarona_demo.sql` as the base demo schema/data. Review and sanitize demo records before publishing the SQL file to a public repository.
 3. Apply the additive SQL scripts to that database in this order:
 
-   | Order | Script | Purpose |
-   |---:|---|---|
-   | 1 | `database/role_access_upgrade.sql` | Compatibility update for role access/indexes on older imported databases. |
-   | 2 | `database/01_upgrade_schema.sql` | Order source/status fields, order notes, sale-time item cost, payment support, and related schema updates. |
-   | 3 | `database/03_stock_nonstock_finance_upgrade.sql` | Stock/Non-stock normalization and stock deduction trigger update. |
-   | 4 | `database/04_telegram_order_fulfillment.sql` | Order status history and Telegram order-notification support. |
-   | 5 | `database/05_google_sign_in.sql` | Optional Google account-linking field/index. |
-   | 6 | `database/06_customer_reviews_moderation.sql` | Customer review approval flag. |
-   | 7 | `database/07_pos_delivery_workflow.sql` | POS delivery/order-channel support and Cash on Delivery payment method. |
-   | 8 | `database/08_storefront_customer_service.sql` | Store contact/enquiry table. |
-   | 9 | `database/09_cod_cash_collection.sql` | COD amount, collection timestamp, collector, and collection-note fields. |
-   | 10 | `database/10_store_inbox_replies.sql` | Customer/admin conversation replies and inbox support. |
-   | 11 | `database/11_admin_delivery_fee_settings.sql` | Editable delivery-fee column in Store Settings. |
+    | Order | Script                                           | Purpose                                                                                                    |
+    | ----: | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+    |     1 | `database/role_access_upgrade.sql`               | Compatibility update for role access/indexes on older imported databases.                                  |
+    |     2 | `database/01_upgrade_schema.sql`                 | Order source/status fields, order notes, sale-time item cost, payment support, and related schema updates. |
+    |     3 | `database/03_stock_nonstock_finance_upgrade.sql` | Stock/Non-stock normalization and stock deduction trigger update.                                          |
+    |     4 | `database/04_telegram_order_fulfillment.sql`     | Order status history and Telegram order-notification support.                                              |
+    |     5 | `database/05_google_sign_in.sql`                 | Optional Google account-linking field/index.                                                               |
+    |     6 | `database/06_customer_reviews_moderation.sql`    | Customer review approval flag.                                                                             |
+    |     7 | `database/07_pos_delivery_workflow.sql`          | POS delivery/order-channel support and Cash on Delivery payment method.                                    |
+    |     8 | `database/08_storefront_customer_service.sql`    | Store contact/enquiry table.                                                                               |
+    |     9 | `database/09_cod_cash_collection.sql`            | COD amount, collection timestamp, collector, and collection-note fields.                                   |
+    |    10 | `database/10_store_inbox_replies.sql`            | Customer/admin conversation replies and inbox support.                                                     |
+    |    11 | `database/11_admin_delivery_fee_settings.sql`    | Editable delivery-fee column in Store Settings.                                                            |
 
 4. `database/02_audit_stock_balance.sql` is a **read-only audit query**, not a schema upgrade. Run it separately when you want to compare product quantities with recorded stock movements. It does not repair or change stock.
 5. Run `php artisan optimize:clear` after applying schema updates.
@@ -278,7 +278,7 @@ The `.env.example` template provides core application, database, Telegram, and c
 ### Core application and database
 
 ```dotenv
-APP_NAME="Coffee Corner Aura"
+APP_NAME="SK Coffee Aura"
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
@@ -426,13 +426,13 @@ The administrator sidebar includes **Admin → Backups & restore** at `/admin/ba
 
 ### What a backup contains
 
-| Included item | Source path / archive content |
-|---|---|
-| Configured database | `database.sql` logical dump created with `mysqldump` / compatible client |
-| Product/shop images | `public/images` |
-| Other public uploads | `public/uploads` |
-| Public Laravel storage files | `storage/app/public` |
-| Backup metadata and integrity records | `manifest.json` |
+| Included item                         | Source path / archive content                                            |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| Configured database                   | `database.sql` logical dump created with `mysqldump` / compatible client |
+| Product/shop images                   | `public/images`                                                          |
+| Other public uploads                  | `public/uploads`                                                         |
+| Public Laravel storage files          | `storage/app/public`                                                     |
+| Backup metadata and integrity records | `manifest.json`                                                          |
 
 The database export includes routines, triggers, and events as requested by the MySQL dump command. Only the configured database is exported; this is not a complete database-server backup.
 
@@ -463,11 +463,11 @@ The PHP ZIP extension is required for both creating and restoring ZIP archives. 
 5. Save the file and restart Apache.
 6. Verify command-line PHP too, because CLI and Apache may use different `php.ini` files:
 
-   ```cmd
-   php --ini
-   php -m | findstr /i zip
-   D:\Xamm\php\php.exe -r "var_dump(extension_loaded('zip'));"
-   ```
+    ```cmd
+    php --ini
+    php -m | findstr /i zip
+    D:\Xamm\php\php.exe -r "var_dump(extension_loaded('zip'));"
+    ```
 
 If the website still reports ZIP disabled, check the `php.ini` loaded by Apache separately from the one shown by `php --ini`.
 
@@ -492,10 +492,10 @@ If error `10106` occurs, first run the same `mysqldump.exe` command directly fro
 
 Laravel defines two scheduler events in `routes/console.php`:
 
-| Event | Default time | Default behavior |
-|---|---:|---|
-| Daily backup | `02:00` | Creates a full backup with type `scheduled`. |
-| Retention cleanup | `03:15` | Deletes generated backup ZIP files older than `BACKUP_RETENTION_DAYS` (30 days by default). |
+| Event             | Default time | Default behavior                                                                            |
+| ----------------- | -----------: | ------------------------------------------------------------------------------------------- |
+| Daily backup      |      `02:00` | Creates a full backup with type `scheduled`.                                                |
+| Retention cleanup |      `03:15` | Deletes generated backup ZIP files older than `BACKUP_RETENTION_DAYS` (30 days by default). |
 
 Each event has a unique name and uses `withoutOverlapping()` to avoid concurrent runs. **Laravel does not run the scheduler by itself.** The operating system must invoke `php artisan schedule:run` every minute.
 
@@ -573,9 +573,9 @@ Telegram is an additional notification/management channel; the Admin Orders page
 4. Add trusted numeric Telegram user IDs to `TELEGRAM_ADMIN_IDS`.
 5. Generate a random webhook secret:
 
-   ```bash
-   php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
-   ```
+    ```bash
+    php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+    ```
 
 6. Configure the `.env` values and run `php artisan optimize:clear`.
 7. Register the webhook at `https://YOUR-DOMAIN/telegram/webhook` with Telegram's `setWebhook` method and the same secret in the `secret_token` property. The Laravel endpoint validates the Telegram secret header before processing updates.
@@ -625,12 +625,12 @@ The database remains the source of truth. Notifications are a convenience layer;
 
 ### Admin action badge meaning
 
-| Admin area | Count represents |
-|---|---|
-| Orders | Orders awaiting fulfillment (pending status). |
-| Delivery | Deliveries not yet delivered or cancelled. |
-| Inventory/stock | Active stock-tracked products with quantity at or below zero. |
-| Reviews | Reviews awaiting administrator approval. |
+| Admin area         | Count represents                                                          |
+| ------------------ | ------------------------------------------------------------------------- |
+| Orders             | Orders awaiting fulfillment (pending status).                             |
+| Delivery           | Deliveries not yet delivered or cancelled.                                |
+| Inventory/stock    | Active stock-tracked products with quantity at or below zero.             |
+| Reviews            | Reviews awaiting administrator approval.                                  |
 | Customer enquiries | Unread enquiries and unread customer replies on unresolved conversations. |
 
 ## Inventory and finance rules
@@ -647,35 +647,35 @@ The database remains the source of truth. Notifications are a convenience layer;
 
 Exact route definitions are in `routes/web.php`. Main paths include:
 
-| Area | Path | Access |
-|---|---|---|
-| Staff login | `/` | Public login page |
-| Language switch | `POST /language` | Session locale (`en` or `km`) |
-| Admin dashboard | `/admin` | Administrator |
-| POS | `/pos` | Administrator / Cashier |
-| Cashier workspace | `/cashier` | Cashier |
-| Storefront shop | `/store/shop` | Public |
-| Storefront about | `/store/about` | Public |
-| Storefront shipping | `/store/shipping` | Public |
-| Storefront contact | `/store/contact` | Public |
-| Storefront product | `/store/product/{productId}` | Public |
-| Storefront cart | `/store/cart` | Public cart |
-| Customer login | `/store/login` | Public |
-| Customer registration | `/store/register` | Public |
-| Customer account | `/store/account` | Customer |
-| Customer inbox | `/store/inbox` | Customer |
-| Customer checkout | `/store/checkout` | Customer |
-| Customer order tracking | `/store/orders/{orderId}` | Owner customer account |
-| PayWay callback | `POST /store/payments/payway/callback` | Provider callback |
-| Telegram webhook | `POST /telegram/webhook` | Telegram secret + configured user checks |
-| Admin orders | `/admin/orders` | Administrator |
-| Admin delivery register | `/admin/delivery` | Administrator |
-| Customer enquiries | `/admin/customer-service` | Administrator |
-| Admin reviews | `/admin/reviews` | Administrator |
-| Inventory | `/admin/inventory` | Administrator |
-| Store settings | `/admin/meanleap/setting` | Administrator |
-| Finance | `/admin/expense-income` | Administrator |
-| Backup & restore | `/admin/backups` | Administrator |
+| Area                    | Path                                   | Access                                   |
+| ----------------------- | -------------------------------------- | ---------------------------------------- |
+| Staff login             | `/`                                    | Public login page                        |
+| Language switch         | `POST /language`                       | Session locale (`en` or `km`)            |
+| Admin dashboard         | `/admin`                               | Administrator                            |
+| POS                     | `/pos`                                 | Administrator / Cashier                  |
+| Cashier workspace       | `/cashier`                             | Cashier                                  |
+| Storefront shop         | `/store/shop`                          | Public                                   |
+| Storefront about        | `/store/about`                         | Public                                   |
+| Storefront shipping     | `/store/shipping`                      | Public                                   |
+| Storefront contact      | `/store/contact`                       | Public                                   |
+| Storefront product      | `/store/product/{productId}`           | Public                                   |
+| Storefront cart         | `/store/cart`                          | Public cart                              |
+| Customer login          | `/store/login`                         | Public                                   |
+| Customer registration   | `/store/register`                      | Public                                   |
+| Customer account        | `/store/account`                       | Customer                                 |
+| Customer inbox          | `/store/inbox`                         | Customer                                 |
+| Customer checkout       | `/store/checkout`                      | Customer                                 |
+| Customer order tracking | `/store/orders/{orderId}`              | Owner customer account                   |
+| PayWay callback         | `POST /store/payments/payway/callback` | Provider callback                        |
+| Telegram webhook        | `POST /telegram/webhook`               | Telegram secret + configured user checks |
+| Admin orders            | `/admin/orders`                        | Administrator                            |
+| Admin delivery register | `/admin/delivery`                      | Administrator                            |
+| Customer enquiries      | `/admin/customer-service`              | Administrator                            |
+| Admin reviews           | `/admin/reviews`                       | Administrator                            |
+| Inventory               | `/admin/inventory`                     | Administrator                            |
+| Store settings          | `/admin/meanleap/setting`              | Administrator                            |
+| Finance                 | `/admin/expense-income`                | Administrator                            |
+| Backup & restore        | `/admin/backups`                       | Administrator                            |
 
 Use the application navigation where possible; some legacy route names/paths are retained for compatibility. Legacy GET requests under `/web` redirect to the canonical `/store` storefront path.
 
@@ -924,4 +924,4 @@ Before publishing, confirm that you or your project team have the rights to lice
 
 ---
 
-**Coffee Corner Aura** — manage the shop, serve customers, and keep every order accountable.
+**SK Coffee Aura** — manage the shop, serve customers, and keep every order accountable.

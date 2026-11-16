@@ -18,13 +18,19 @@
         <div class="col-6 col-xl-3"><div class="cc-s-stat danger"><div><div class="cc-s-stat-label">OUT OF STOCK</div><div class="cc-s-stat-value">{{ number_format($stockSummary->out_of_stock ?? 0) }}</div></div><span class="cc-s-stat-icon"><i class="bi bi-box2"></i></span></div></div>
     </div>
     <section class="cc-s-filter"><div class="cc-s-filter-head"><span class="cc-s-filter-icon"><i class="bi bi-funnel"></i></span><div><h2 class="cc-s-filter-title">Inventory & movement filters</h2><p class="cc-s-filter-hint">Product and category filters apply to both sections. Date and movement type apply to stock history.</p></div></div>
-        <form method="GET" action="{{ route('inventory.index') }}" class="row g-2 align-items-end" id="inventoryFilterForm">
+        <form method="GET" action="{{ route('inventory.index') }}" id="inventoryFilterForm">
+            @include('admin.partials.date-filter-panel', [
+                'dateFilter' => $dateFilter,
+                'dateFromField' => 'date_from',
+                'dateToField' => 'date_to',
+                'dateFilterTitle' => 'Stock movement date',
+                'dateFilterHint' => 'The selected period filters movement history only; current stock quantities remain live.',
+            ])
+            <div class="row g-2 align-items-end">
             <div class="col-12 col-md-4 col-xl-3 cc-s-field"><label for="filterProduct">PRODUCT</label><select name="product_id" id="filterProduct" class="form-select"><option value="">All products</option>@foreach($products as $p)<option value="{{ $p->product_id }}" @selected(request('product_id')==$p->product_id)>{{ $p->product_name }}</option>@endforeach</select></div>
             <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterCategory">CATEGORY</label><select name="category_id" id="filterCategory" class="form-select"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id')==$category->category_id)>{{ $category->category_name }}</option>@endforeach</select></div>
             <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterStockStatus">STOCK LEVEL</label><select name="stock_status" id="filterStockStatus" class="form-select"><option value="all" @selected(request('stock_status','all')==='all')>All levels</option><option value="healthy" @selected(request('stock_status')==='healthy')>Healthy stock</option><option value="low" @selected(request('stock_status')==='low')>Low stock</option><option value="out" @selected(request('stock_status')==='out')>Out of stock</option></select></div>
             <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterType">MOVEMENT</label><select name="type" id="filterType" class="form-select"><option value="">All movements</option><option value="in" @selected(request('type')==='in')>Stock In</option><option value="out" @selected(request('type')==='out')>Stock Out</option></select></div>
-            <div class="col-6 col-md-4 col-xl-1 cc-s-field"><label for="filterFrom">FROM</label><input id="filterFrom" type="date" name="date_from" class="form-control" value="{{ request('date_from') }}"></div>
-            <div class="col-6 col-md-4 col-xl-1 cc-s-field"><label for="filterTo">TO</label><input id="filterTo" type="date" name="date_to" class="form-control" value="{{ request('date_to') }}"></div>
         </div>
         <div class="row g-2 align-items-end mt-1">
             <div class="col-12 col-md-7 col-xl-6 cc-s-field"><label for="filterSearch">SEARCH</label><input id="filterSearch" type="search" name="search" class="form-control" value="{{ request('search') }}" placeholder="Product name, movement reason or note"></div>

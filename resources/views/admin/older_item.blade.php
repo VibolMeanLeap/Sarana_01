@@ -75,16 +75,26 @@
 
     <div class="oi-card">
 
-        <form action="{{ route('admin.older_items') }}" method="GET" class="row g-2 align-items-end mb-3">
+        <form action="{{ route('admin.older_items') }}" method="GET" class="mb-3">
             @if($orderId && !request('order_id')) <input type="hidden" name="order_id" value="{{ $orderId }}"> @endif
-            <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Search</label><input type="text" name="search" class="form-control form-control-sm" placeholder="Order ID or product..." value="{{ request('search') }}"></div>
-            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Order ID</label><input type="number" min="1" name="order_id" class="form-control form-control-sm" value="{{ request('order_id', $orderId) }}" placeholder="Any order"></div>
-            <div class="col-6 col-md-3"><label class="form-label small fw-semibold">Product</label><select name="product_id" class="form-select form-select-sm"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>{{ $product->product_name }}</option>@endforeach</select></div>
-            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Category</label><select name="category_id" class="form-select form-select-sm"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id') == $category->category_id)>{{ $category->category_name }}</option>@endforeach</select></div>
-            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select></div>
-            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">From date</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
-            <div class="col-6 col-md-2"><label class="form-label small fw-semibold">To date</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
-            <div class="col-auto"><button class="btn btn-primary btn-sm" type="submit">Apply filters</button><a href="{{ route('admin.older_items') }}" class="btn btn-outline-secondary btn-sm">Reset</a></div>
+            @include('admin.partials.date-filter-panel', [
+                'dateFilter' => $dateFilter,
+                'dateFromField' => 'start_date',
+                'dateToField' => 'end_date',
+                'dateFilterTitle' => 'Order date',
+                'dateFilterHint' => 'Filter line items using the parent order date.',
+            ])
+            <section class="border rounded-3 bg-light p-3">
+                <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i class="bi bi-funnel me-1"></i>Order item filters</div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-3"><label class="form-label small fw-semibold">Search</label><input type="text" name="search" class="form-control form-control-sm" placeholder="Order ID or product..." value="{{ request('search') }}"></div>
+                    <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Order ID</label><input type="number" min="1" name="order_id" class="form-control form-control-sm" value="{{ request('order_id', $orderId) }}" placeholder="Any order"></div>
+                    <div class="col-6 col-md-3"><label class="form-label small fw-semibold">Product</label><select name="product_id" class="form-select form-select-sm"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>{{ $product->product_name }}</option>@endforeach</select></div>
+                    <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Category</label><select name="category_id" class="form-select form-select-sm"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id') == $category->category_id)>{{ $category->category_name }}</option>@endforeach</select></div>
+                    <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select></div>
+                    <div class="col-12"><button class="btn btn-success btn-sm" type="submit">Apply filters</button> <a href="{{ route('admin.older_items', $orderId ? ['order_id' => $orderId] : []) }}" class="btn btn-outline-secondary btn-sm">Reset</a></div>
+                </div>
+            </section>
         </form>
         @if($orderId)
             <div class="alert alert-info py-2 small d-flex justify-content-between align-items-center">

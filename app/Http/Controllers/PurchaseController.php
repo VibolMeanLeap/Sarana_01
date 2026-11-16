@@ -11,6 +11,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Support\AdminDateFilter;
 
 class PurchaseController extends Controller
 {
@@ -20,13 +21,12 @@ class PurchaseController extends Controller
             'search' => ['nullable', 'string', 'max:120'],
             'product_id' => ['nullable', 'integer', 'exists:product,product_id'],
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,supplier_id'],
-            'date_from' => ['nullable', 'date_format:Y-m-d'],
-            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'sort_by' => ['nullable', 'in:purchase_date,purchase_id,quantity,cost_price'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'in:10,15,25,50,100'],
         ]);
 
+        $dateFilter = AdminDateFilter::resolve($request, 'date_from', 'date_to');
         $search = trim((string) ($validated['search'] ?? ''));
         $query = Purchase::with(['supplier', 'product', 'user'])
             ->when($search !== '', function ($query) use ($search) {
@@ -38,8 +38,8 @@ class PurchaseController extends Controller
             })
             ->when(!empty($validated['product_id']), fn ($q) => $q->where('product_id', $validated['product_id']))
             ->when(!empty($validated['supplier_id']), fn ($q) => $q->where('supplier_id', $validated['supplier_id']))
-            ->when(!empty($validated['date_from']), fn ($q) => $q->whereDate('purchase_date', '>=', $validated['date_from']))
-            ->when(!empty($validated['date_to']), fn ($q) => $q->whereDate('purchase_date', '<=', $validated['date_to']));
+            ;
+        AdminDateFilter::apply($query, 'purchase_date', $dateFilter);
 
         $summaryQuery = clone $query;
         $summary = [
@@ -60,7 +60,7 @@ class PurchaseController extends Controller
         $products = Product::whereRaw("LOWER(TRIM(COALESCE(product_type, 'stock'))) NOT IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')")
             ->orderBy('product_name')->get();
 
-        return view('admin.purchase', compact('purchases', 'suppliers', 'products', 'summary'));
+        return view('admin.purchase', compact('purchases', 'suppliers', 'products', 'summary', 'dateFilter'));
     }
 
     public function create()

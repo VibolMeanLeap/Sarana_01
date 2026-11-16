@@ -48,14 +48,35 @@
               <div style="color:#294233;font-size:11px;font-weight:850;line-height:1.25">{{ $row->order_date?->format('d M Y') ?: '—' }}</div>
               <div style="display:flex;align-items:center;gap:4px;margin-top:4px;color:#839087;font-size:10px;line-height:1.2"><i class="bi bi-clock" aria-hidden="true"></i><span>{{ $row->order_date?->format('h:i A') ?: '—' }}</span></div>
             </td>
-            <td class="text-nowrap" data-order-review-cell="{{ $row->order_id }}">
-              @if(($row->open_review_flags_count ?? 0) > 0)
-                <span class="badge rounded-pill text-bg-warning mb-1"><i class="bi bi-flag-fill me-1"></i>{{ $row->open_review_flags_count }} open</span><br>
-              @else
-                <span class="badge rounded-pill" style="background:#e8f4eb;color:#24613e">Clear</span><br>
-              @endif
-              <button type="button" class="btn btn-sm btn-outline-success mt-1" data-open-order-review data-order-id="{{ $row->order_id }}" data-bs-toggle="modal" data-bs-target="#orderReviewFlagModal"><i class="bi bi-flag me-1"></i>Mark</button>
-              <a class="btn btn-sm btn-link px-1 mt-1" href="{{ route('admin.orders.receipt', $row->order_id) }}" target="_blank" rel="noopener"><i class="bi bi-receipt me-1"></i>Receipt</a>
+            <td class="text-nowrap" data-order-actions-cell="{{ $row->order_id }}">
+              <div class="d-flex flex-wrap align-items-center gap-1">
+                @if(($row->open_review_flags_count ?? 0) > 0)
+                  <span class="badge rounded-pill text-bg-warning"><i class="bi bi-flag-fill me-1"></i>{{ $row->open_review_flags_count }} open review(s)</span>
+                @else
+                  <span class="badge rounded-pill" style="background:#e8f4eb;color:#24613e">No open reviews</span>
+                @endif
+
+                @if($row->can_correct_receipt ?? false)
+                  <a class="btn btn-sm btn-success" href="{{ route('pos.corrections.edit', ['orderId' => $row->order_id, 'return_to' => request()->getRequestUri()]) }}" title="Open the same protected receipt-correction workflow used in POS">
+                    <i class="bi bi-receipt-cutoff me-1"></i>{{ (int) ($row->corrections_count ?? 0) > 0 ? 'Review / correct' : 'Correct receipt' }}
+                  </a>
+                  @if((int) ($row->corrections_count ?? 0) > 0)
+                    <span class="small text-success" title="{{ (int) $row->corrections_count }} previous correction(s)"><i class="bi bi-clock-history"></i><span class="ms-1">{{ (int) $row->corrections_count }}</span></span>
+                  @endif
+                @elseif($row->can_settle_correction_adjustment ?? false)
+                  <a class="btn btn-sm btn-outline-warning" href="{{ route('pos.corrections.edit', ['orderId' => $row->order_id, 'return_to' => request()->getRequestUri()]) }}" title="{{ $row->correction_block_reason ?: 'Confirm the pending cash collection or refund' }}">
+                    <i class="bi bi-cash-coin me-1"></i>Confirm cash adjustment
+                  </a>
+                  <i class="bi bi-info-circle text-warning" title="{{ $row->correction_block_reason ?: 'Cash adjustment requires confirmation' }}" aria-label="Adjustment information"></i>
+                @else
+                  <span class="badge rounded-pill text-bg-light border text-secondary" title="{{ $row->correction_block_reason ?: 'Correction eligibility could not be verified. Review payment and inventory history.' }}">
+                    <i class="bi bi-lock-fill me-1"></i>Correction unavailable
+                  </span>
+                  <i class="bi bi-info-circle text-muted" title="{{ $row->correction_block_reason ?: 'Correction eligibility could not be verified. Review payment and inventory history.' }}" aria-label="Why correction is unavailable"></i>
+                @endif
+
+                <a class="btn btn-sm btn-outline-secondary px-2" href="{{ route('admin.orders.receipt', $row->order_id) }}" target="_blank" rel="noopener" title="View receipt"><i class="bi bi-printer"></i></a>
+              </div>
             </td>
           </tr>
           <tr class="order-items-detail d-none" id="order-items-{{ $row->order_id }}">

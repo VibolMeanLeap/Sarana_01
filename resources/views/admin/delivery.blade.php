@@ -66,36 +66,24 @@
             </div>@include('admin.partials.export-actions', ['exportType' => 'deliveries'])
         </div>
         <div class="card-body">
-            <form method="GET" action="{{ route('delivery.index') }}" class="row g-2 align-items-end mb-3">
-                <div class="col-12 col-lg-3"><label class="form-label small fw-semibold">Search</label><input type="search"
-                        name="search" value="{{ request('search') }}" class="form-control form-control-sm"
-                        placeholder="Delivery, order, customer or address"></div>
-                <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Fulfillment status</label><select
-                        name="status" class="form-select form-select-sm">
-                        <option value="">All statuses</option>
-                        @foreach (['pending' => 'Pending', 'confirmed' => 'Confirmed', 'preparing' => 'Preparing', 'ready' => 'Ready', 'out_for_delivery' => 'Out for delivery', 'delivered' => 'Delivered', 'cancelled' => 'Cancelled'] as $value => $label)
-                            <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">From</label><input type="date"
-                        name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm"></div>
-                <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">To</label><input type="date"
-                        name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm"></div>
-                <div class="col-6 col-lg-1"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir"
-                        class="form-select form-select-sm">
-                        <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest</option>
-                        <option value="asc" @selected(request('sort_dir') === 'asc')>Oldest</option>
-                    </select></div>
-                <div class="col-6 col-lg-1"><label class="form-label small fw-semibold">Rows</label><select name="per_page"
-                        class="form-select form-select-sm">
-                        @foreach ([10, 15, 25, 50, 100] as $size)
-                            <option value="{{ $size }}" @selected((string) request('per_page', 15) === (string) $size)>{{ $size }}</option>
-                        @endforeach
-                    </select></div>
-                <div class="col-12 col-lg-1 d-flex gap-1"><button class="btn btn-cc btn-sm flex-grow-1">Apply</button><a
-                        href="{{ route('delivery.index') }}" class="btn btn-outline-secondary btn-sm"><i
-                            class="bi bi-arrow-counterclockwise"></i></a></div>
+            <form method="GET" action="{{ route('delivery.index') }}" class="mb-3">
+                @include('admin.partials.date-filter-panel', [
+                    'dateFilter' => $dateFilter,
+                    'dateFromField' => 'start_date',
+                    'dateToField' => 'end_date',
+                    'dateFilterTitle' => 'Order date',
+                    'dateFilterHint' => 'Filter delivery records by the linked order date.',
+                ])
+                <section class="border rounded-3 bg-light-subtle p-3">
+                    <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i class="bi bi-funnel me-1"></i>Delivery filters</div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-lg-4"><label class="form-label small fw-semibold">Search</label><input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Delivery, order, customer or address"></div>
+                        <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Fulfillment status</label><select name="status" class="form-select form-select-sm"><option value="">All statuses</option>@foreach (['pending' => 'Pending', 'confirmed' => 'Confirmed', 'preparing' => 'Preparing', 'ready' => 'Ready', 'out_for_delivery' => 'Out for delivery', 'delivered' => 'Delivered', 'cancelled' => 'Cancelled'] as $value => $label)<option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>@endforeach</select></div>
+                        <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Sort</label><select name="sort_dir" class="form-select form-select-sm"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest</option></select></div>
+                        <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Rows</label><select name="per_page" class="form-select form-select-sm">@foreach ([10, 15, 25, 50, 100] as $size)<option value="{{ $size }}" @selected((string) request('per_page', 15) === (string) $size)>{{ $size }}</option>@endforeach</select></div>
+                        <div class="col-6 col-lg-2 d-flex gap-1"><button class="btn btn-cc btn-sm flex-grow-1">Apply</button><a href="{{ route('delivery.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+                    </div>
+                </section>
             </form>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">

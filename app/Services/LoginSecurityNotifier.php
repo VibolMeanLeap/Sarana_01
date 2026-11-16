@@ -52,7 +52,7 @@ class LoginSecurityNotifier
             : 'Staff login (Admin / Cashier)';
 
         $messageLines = [
-            '🔐 COFFEE CORNER AURA — LOGIN SECURITY ALERT',
+            '🔐 SK Coffee AURA — LOGIN SECURITY ALERT',
             '',
             'Possible credential-guessing activity was detected.',
             'Portal: '.$audienceLabel,

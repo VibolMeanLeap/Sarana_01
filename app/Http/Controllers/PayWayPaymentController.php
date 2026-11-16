@@ -252,7 +252,7 @@ class PayWayPaymentController extends Controller
                 // resurrect a cancelled order. Preserve evidence for manual reconciliation.
                 if ($order->order_status === 'cancelled' || $lockedPayment->status === 'cancelled') {
                     $lockedPayment->update(['status' => 'review_required']);
-                    Log::alert('ABA approved a transaction linked to a cancelled Coffee Corner order; manual review is required.', [
+                    Log::alert('ABA approved a transaction linked to a cancelled SK Coffee order; manual review is required.', [
                         'payment_id' => $lockedPayment->id,
                         'order_id' => $order->order_id,
                         'tran_id' => $lockedPayment->tran_id,

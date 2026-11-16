@@ -170,7 +170,7 @@
                 class="bi bi-person-check"></i></span>
         <h1 class="customer-login-title mb-2">Welcome back</h1>
         <p class="customer-login-sub mb-0">Sign in to track your orders and enjoy a smoother checkout at
-            {{ $shopSettings?->shop_name ?: 'Coffee Corner' }}.</p>
+            {{ $shopSettings?->shop_name ?: 'SK Coffee' }}.</p>
     </div>
     @if (session('error'))
         <div class="alert alert-danger py-2 small">{{ session('error') }}</div>

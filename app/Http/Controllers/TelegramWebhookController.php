@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\TelegramOrderNotification;
+use App\Services\CustomerTelegramOtpService;
 use App\Services\OrderFulfillmentService;
 use App\Services\TelegramBotService;
 use App\Services\TelegramOrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -19,13 +21,94 @@ class TelegramWebhookController extends Controller
         Request $request,
         TelegramBotService $telegram,
         OrderFulfillmentService $fulfillment,
-        TelegramOrderNotificationService $notifications
+        TelegramOrderNotificationService $notifications,
+        CustomerTelegramOtpService $customerTelegramOtp
     ): JsonResponse {
         $secret = (string) config('services.telegram.webhook_secret');
         $providedSecret = (string) $request->header('X-Telegram-Bot-Api-Secret-Token', '');
 
         if ($secret === '' || $providedSecret === '' || ! hash_equals($secret, $providedSecret)) {
             return response()->json(['ok' => false], 403);
+        }
+
+        // Customer account verification starts with /start, then requires the
+        // user's own Telegram contact before an OTP can be issued.
+        $incomingMessage = $request->input('message');
+        if (is_array($incomingMessage)) {
+            $chatId = (string) data_get($incomingMessage, 'chat.id', '');
+            $chatType = (string) data_get($incomingMessage, 'chat.type', '');
+            $senderId = (string) data_get($incomingMessage, 'from.id', '');
+            $isBot = (bool) data_get($incomingMessage, 'from.is_bot', false);
+            $messageText = trim((string) ($incomingMessage['text'] ?? ''));
+
+            if ($chatType === 'private' && $chatId !== '' && $senderId !== ''
+                && hash_equals($chatId, $senderId) && ! $isBot) {
+
+                // A request_contact button creates a contact update. The service
+                // verifies contact.user_id equals the message sender before
+                // comparing the phone with the website registration.
+                $sharedContact = $incomingMessage['contact'] ?? null;
+                if (is_array($sharedContact)) {
+                    try {
+                        $customerTelegramOtp->handleTelegramContact(
+                            $chatId,
+                            $senderId,
+                            (string) ($sharedContact['phone_number'] ?? ''),
+                            isset($sharedContact['user_id']) ? (string) $sharedContact['user_id'] : null
+                        );
+                    } catch (Throwable $exception) {
+                        Log::notice('Customer Telegram phone verification was rejected.', [
+                            'exception' => $exception::class,
+                            'message' => $exception->getMessage(),
+                        ]);
+
+                        $notice = $exception instanceof RuntimeException
+                            ? $exception->getMessage()
+                            : 'We could not verify your phone number right now. Please return to the SK Coffee website and try again.';
+
+                        $replyMarkup = str_contains($notice, 'Share my phone number button')
+                            ? $customerTelegramOtp->phoneRequestKeyboard()
+                            : ['remove_keyboard' => true];
+
+                        $this->sendCustomerNoticeSafely(
+                            $telegram,
+                            $chatId,
+                            $notice,
+                            $replyMarkup
+                        );
+                    }
+
+                    return response()->json(['ok' => true]);
+                }
+
+                if (preg_match('/^\/start(?:@[A-Za-z0-9_]+)?(?:\s+([A-Za-z0-9_-]{20,80}))?$/', $messageText, $matches)) {
+                    $linkToken = (string) ($matches[1] ?? '');
+
+                    if ($linkToken === '') {
+                        $this->sendCustomerNoticeSafely(
+                            $telegram,
+                            $chatId,
+                            'Welcome to SK Coffee. Please open the private Telegram link shown on the website registration page to connect your account.'
+                        );
+                    } else {
+                        try {
+                            $customerTelegramOtp->handleTelegramStart($linkToken, $chatId);
+                        } catch (Throwable $exception) {
+                            Log::notice('Customer Telegram verification start was rejected.', [
+                                'exception' => $exception::class,
+                                'message' => $exception->getMessage(),
+                            ]);
+                            $this->sendCustomerNoticeSafely(
+                                $telegram,
+                                $chatId,
+                                'This registration link is invalid, expired, or already used. Return to the SK Coffee website and generate a new Telegram link.'
+                            );
+                        }
+                    }
+                }
+            }
+
+            return response()->json(['ok' => true]);
         }
 
         $callback = $request->input('callback_query');
@@ -109,6 +192,19 @@ class TelegramWebhookController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+
+    private function sendCustomerNoticeSafely(TelegramBotService $telegram, string $chatId, string $text, array $replyMarkup = []): void
+    {
+        try {
+            $telegram->sendMessage($chatId, $text, $replyMarkup);
+        } catch (Throwable $exception) {
+            Log::warning('Telegram customer verification notice could not be delivered.', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     private function answerSafely(TelegramBotService $telegram, string $callbackId, string $text, bool $showAlert = false): void

@@ -2,7 +2,7 @@
 @section('page_title', 'Staff sign in')
 @section('content')
     @php
-        $shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
+        $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
         $logoPath = $shopSettings?->logo ? public_path('uploads/' . $shopSettings->logo) : null;
     @endphp
     <style>
@@ -482,7 +482,7 @@
                     data-login-wait-label="{{ app()->getLocale() === 'km' ? 'សូមរង់ចាំ' : 'Please wait' }}">
                     @csrf
                     <div class="mb-3">
-                    @include('partials.login-lockout-script')
+                        @include('partials.login-lockout-script')
                         <label for="login-username" class="auth-label">Staff username</label>
                         <div class="auth-field"><i class="bi bi-person field-icon"></i><input id="login-username"
                                 value="{{ old('name') }}" type="text" name="name" class="form-control auth-input"

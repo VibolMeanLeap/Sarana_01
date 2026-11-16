@@ -17,7 +17,7 @@
     </div>
     <div class="d-flex flex-column gap-2 align-items-stretch">
         <nav class="aura-range-pills" aria-label="{{ __('Date range presets') }}">
-            @foreach ([ 'today' => 'Today', '7days' => 'Last 7 days', '30days' => 'Last 30 days', 'this_month' => 'This month', 'custom' => 'Custom' ] as $rangeKey => $rangeLabel)
+            @foreach ([ 'today' => 'Today', 'week' => 'This week', 'this_month' => 'This month', 'all' => 'All time', 'custom' => 'Custom' ] as $rangeKey => $rangeLabel)
                 <a href="{{ route('admin.dashboard', ['range' => $rangeKey]) }}" class="{{ $range === $rangeKey ? 'active' : '' }}" @if($range === $rangeKey) aria-current="page" @endif>{{ __($rangeLabel) }}</a>
             @endforeach
         </nav>

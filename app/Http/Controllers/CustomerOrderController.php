@@ -587,7 +587,7 @@ class CustomerOrderController extends Controller
     {
         $nameParts = preg_split('/\s+/', trim((string) ($customer?->name ?? 'Customer')), 2) ?: ['Customer'];
         $lineItems = $order->orderItems()->with('product')->get()->take(10)->map(fn ($item) => [
-            'name' => (string) ($item->product?->product_name ?? 'Coffee Corner item'),
+            'name' => (string) ($item->product?->product_name ?? 'SK Coffee item'),
             'quantity' => (int) $item->quantity,
             'price' => (float) $item->price,
         ])->values()->all();

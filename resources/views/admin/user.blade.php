@@ -23,17 +23,27 @@
 </div>
 <div class="card overflow-hidden">
     <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div><h2 class="h5 fw-bold mb-1">Website customer accounts</h2><p class="small text-muted mb-0">Only users assigned the Customer role appear here. Administrator and Cashier accounts are managed in Settings.</p></div>
+        <div><h2 class="h5 fw-bold mb-1">Website customer accounts</h2><p class="small text-muted mb-0">Only users assigned the Customer role appear here. Administrator and Cashier accounts are managed in Settings. Setting an account to inactive keeps its phone reserved; use Archive &amp; release phone when a number should be reused.</p></div>
         <span class="badge rounded-pill text-bg-light">{{ $customerAccounts->total() }} accounts</span>
     </div>
     <div class="card-body border-bottom">
-        <form method="GET" action="{{ route('auth.list') }}" class="row g-2 align-items-end">
-            <div class="col-12 col-lg-4"><label for="customerSearch" class="form-label small fw-semibold">Search customers</label><input id="customerSearch" type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name, phone, email or username"></div>
-            <div class="col-6 col-lg-2"><label for="customerStatus" class="form-label small fw-semibold">Status</label><select id="customerStatus" name="status" class="form-select"><option value="">All statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="inactive" @selected(request('status') === 'inactive')>Inactive</option></select></div>
-            <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Registered from</label><input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control"></div>
-            <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Registered to</label><input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control"></div>
-            <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Sort</label><input type="hidden" name="sort_by" value="created_at"><select name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select></div>
-            <div class="col-12 d-flex gap-2"><button class="btn btn-cc" type="submit"><i class="bi bi-search me-1"></i>Filter</button><a href="{{ route('auth.list') }}" class="btn btn-cc-light" title="Clear filters">Reset</a></div>
+        <form method="GET" action="{{ route('auth.list') }}" class="mb-3">
+            @include('admin.partials.date-filter-panel', [
+                'dateFilter' => $dateFilter,
+                'dateFromField' => 'start_date',
+                'dateToField' => 'end_date',
+                'dateFilterTitle' => 'Registration date',
+                'dateFilterHint' => 'Filter website customer accounts by registration date.',
+            ])
+            <section class="border rounded-3 bg-light p-3">
+                <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i class="bi bi-funnel me-1"></i>Account filters</div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-lg-4"><label for="customerSearch" class="form-label small fw-semibold">Search customers</label><input id="customerSearch" type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name, phone, email or username"></div>
+                    <div class="col-6 col-lg-2"><label for="customerStatus" class="form-label small fw-semibold">Status</label><select id="customerStatus" name="status" class="form-select"><option value="">All statuses</option><option value="active" @selected(request('status') === 'active')>Active</option><option value="inactive" @selected(request('status') === 'inactive')>Inactive</option></select></div>
+                    <div class="col-6 col-lg-2"><label class="form-label small fw-semibold">Sort</label><input type="hidden" name="sort_by" value="created_at"><select name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option><option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option></select></div>
+                    <div class="col-12 col-lg-2 d-flex gap-2"><button class="btn btn-cc flex-grow-1" type="submit">Filter</button><a href="{{ route('auth.list') }}" class="btn btn-cc-light">Reset</a></div>
+                </div>
+            </section>
         </form>
     </div>
     <div class="table-responsive">
@@ -57,6 +67,12 @@
                                     <option value="inactive" @selected($account->status !== 'active')>Inactive</option>
                                 </select>
                                 <button type="submit" class="btn btn-sm btn-outline-success" title="Save account status"><i class="bi bi-check2"></i></button>
+                            </form>
+                            <form method="POST" action="{{ route('customer.accounts.archive', $account->user_id) }}" class="d-inline" onsubmit="return confirm('Archive this customer account? Sign-in will be disabled and the phone/Telegram identity released. Existing customer and order history will be preserved. The email remains reserved.');">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Archive account and release phone" {{ empty($account->phone) ? 'disabled' : '' }}>
+                                    <i class="bi bi-archive me-1"></i>Archive &amp; release phone
+                                </button>
                             </form>
                         </div>
                     </td>

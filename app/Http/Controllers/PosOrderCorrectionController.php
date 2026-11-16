@@ -62,8 +62,10 @@ class PosOrderCorrectionController extends Controller
         ));
     }
 
-    public function edit(int $orderId)
+    public function edit(Request $request, int $orderId)
     {
+        $returnTo = $this->safeOrdersReturnUrl($request->query('return_to'));
+
         $order = Order::query()
             ->with([
                 'customer',
@@ -81,7 +83,7 @@ class PosOrderCorrectionController extends Controller
         } catch (ValidationException $exception) {
             $message = collect($exception->errors())->flatten()->first()
                 ?: 'This order is not eligible for correction.';
-            return redirect()->route('pos.corrections.index')->with('error', $message);
+            return redirect()->to($returnTo)->with('error', $message);
         }
 
         $usedProductIds = $order->orderItems->pluck('product_id')->map(fn ($id) => (int) $id)->all();
@@ -106,6 +108,19 @@ class PosOrderCorrectionController extends Controller
         $history = $order->corrections;
         $pendingAdjustment = $history->firstWhere('payment_adjustment_status', 'pending');
 
+        // When there is no pending cash adjustment, preflight the original lines
+        // and stock ledger before showing an editable receipt. This makes the
+        // Orders tab's eligibility message match the actual correction screen.
+        if (! $pendingAdjustment) {
+            try {
+                $this->assertCorrectionItemsReady($order);
+            } catch (ValidationException $exception) {
+                $message = collect($exception->errors())->flatten()->first()
+                    ?: 'This order is not ready for automatic receipt correction.';
+                return redirect()->to($returnTo)->with('error', $message);
+            }
+        }
+
         $initialItems = old('items', $order->orderItems->map(fn (OrderItem $item) => [
             'product_id' => (int) $item->product_id,
             'quantity' => (int) $item->quantity,
@@ -119,7 +134,8 @@ class PosOrderCorrectionController extends Controller
                 'history',
                 'pendingAdjustment',
                 'initialItems',
-                'productOptions'
+                'productOptions',
+                'returnTo'
             ),
             $this->checkoutLayoutData()
         ));
@@ -128,6 +144,7 @@ class PosOrderCorrectionController extends Controller
     public function update(Request $request, int $orderId)
     {
         $validated = $request->validate([
+            'return_to' => ['nullable', 'string', 'max:2048'],
             'customer_id' => ['nullable', 'integer', 'exists:customer,customer_id'],
             'discount' => ['required', 'numeric', 'min:0', 'max:100'],
             'reason' => ['required', Rule::in([
@@ -148,6 +165,7 @@ class PosOrderCorrectionController extends Controller
             'items.min' => 'A corrected order must contain at least one product.',
             'items.*.product_id.distinct' => 'Each product may appear only once. Combine quantities for duplicate products.',
         ]);
+        $returnTo = $this->safeOrdersReturnUrl($validated['return_to'] ?? null);
 
         try {
             $correctionId = DB::transaction(function () use ($validated, $orderId): int {
@@ -415,16 +433,21 @@ class PosOrderCorrectionController extends Controller
             );
         }
 
-        return redirect()->route('pos.corrections.edit', $orderId)
-            ->with('success', 'Order #'.$orderId.' was corrected and its original values were saved in the correction history.'.$this->adjustmentMessage($correctionId));
+        return redirect()->route('pos.corrections.edit', [
+            'orderId' => $orderId,
+            'return_to' => $returnTo,
+        ])->with('success', 'Order #'.$orderId.' was corrected and its original values were saved in the correction history.'.$this->adjustmentMessage($correctionId));
     }
 
     public function settleAdjustment(Request $request, int $orderId, int $correctionId)
     {
         $validated = $request->validate([
+            'return_to' => ['nullable', 'string', 'max:2048'],
             'adjustment_type' => ['required', Rule::in(['collected', 'refunded'])],
             'payment_adjustment_note' => ['required', 'string', 'min:5', 'max:1000'],
         ]);
+
+        $returnTo = $this->safeOrdersReturnUrl($validated['return_to'] ?? null);
 
         $result = DB::transaction(function () use ($validated, $orderId, $correctionId) {
             $order = Order::query()->where('order_id', $orderId)->lockForUpdate()->firstOrFail();
@@ -470,8 +493,10 @@ class PosOrderCorrectionController extends Controller
             return true;
         }, 3);
 
-        return redirect()->route('pos.corrections.edit', $orderId)
-            ->with('success', 'Cash adjustment marked as confirmed. The confirmation note was added to the audit history.');
+        return redirect()->route('pos.corrections.edit', [
+            'orderId' => $orderId,
+            'return_to' => $returnTo,
+        ])->with('success', 'Cash adjustment marked as confirmed. The confirmation note was added to the audit history.');
     }
 
     /**
@@ -504,6 +529,64 @@ class PosOrderCorrectionController extends Controller
         return compact('customers', 'orderTypes', 'paymentMethods', 'deliveryFee');
     }
 
+    /**
+     * Restrict the return destination to the Orders tab on this application.
+     * This preserves filters without accepting an arbitrary external redirect.
+     */
+    private function safeOrdersReturnUrl(?string $candidate): string
+    {
+        if (! is_string($candidate) || $candidate === '' || str_starts_with($candidate, '//')) {
+            return '/admin/orders';
+        }
+
+        $parts = parse_url($candidate);
+        if (! is_array($parts) || isset($parts['scheme']) || isset($parts['host'])) {
+            return '/admin/orders';
+        }
+
+        if (($parts['path'] ?? '') !== '/admin/orders') {
+            return '/admin/orders';
+        }
+
+        return $candidate;
+    }
+
+    /** Check the existing receipt lines and inventory ledger before exposing the edit form. */
+    private function assertCorrectionItemsReady(Order $order): void
+    {
+        $items = $order->orderItems;
+        if ($items->isEmpty()) {
+            throw ValidationException::withMessages([
+                'items' => 'This completed order has no original line items to correct.',
+            ]);
+        }
+
+        $productIds = $items->pluck('product_id')->map(fn ($id) => (int) $id)->unique()->values();
+        if ($productIds->contains(0)) {
+            throw ValidationException::withMessages([
+                'items' => 'One or more products no longer exist. No receipt changes can be made until the product records are reviewed.',
+            ]);
+        }
+
+        $products = Product::query()->whereIn('product_id', $productIds)->get()->keyBy('product_id');
+        if ($products->count() !== $productIds->count()) {
+            throw ValidationException::withMessages([
+                'items' => 'One or more products on this receipt no longer exist. Restore or audit the product records before correcting this order.',
+            ]);
+        }
+
+        $stockByProduct = [];
+        foreach ($items as $item) {
+            $product = $products->get((int) $item->product_id);
+            if ($product && $product->isStockTracked()) {
+                $productId = (int) $item->product_id;
+                $stockByProduct[$productId] = ($stockByProduct[$productId] ?? 0) + (int) $item->quantity;
+            }
+        }
+
+        $this->assertStockLedgerMatchesOrder((int) $order->order_id, $stockByProduct);
+    }
+
     private function eligibleOrdersQuery(): Builder
     {
         return Order::query()
@@ -530,7 +613,11 @@ class PosOrderCorrectionController extends Controller
             throw ValidationException::withMessages(['order' => 'This first correction workflow supports completed Cash sales only. KHQR and other payment methods must use their own refund or adjustment workflow.']);
         }
 
-        if (strtolower(trim((string) $order->orderType?->order_name)) === 'delivery' || $order->delivery()->exists()) {
+        if (! $order->orderType) {
+            throw ValidationException::withMessages(['order' => 'This order has no valid order-type record. Restore or review the order type before correcting the receipt.']);
+        }
+
+        if (strtolower(trim((string) $order->orderType->order_name)) === 'delivery' || $order->delivery()->exists()) {
             throw ValidationException::withMessages(['order' => 'Delivery orders cannot be corrected here because their fulfillment and delivery records need a separate adjustment workflow.']);
         }
 

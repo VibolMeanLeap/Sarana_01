@@ -2,6 +2,10 @@
 @section('content')
 @include("admin.message.message")
 <div class="container-fluid py-4">
+    <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+        <div><strong>Customer Directory</strong> contains POS/walk-in profiles and historical order contacts. Website phone-number ownership and login access are managed in <strong>Customer Accounts</strong>.</div>
+        <a href="{{ route('auth.list') }}" class="btn btn-sm btn-outline-primary">Open Customer Accounts <i class="bi bi-arrow-right ms-1"></i></a>
+    </div>
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-3">

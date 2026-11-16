@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Services\OrderFulfillmentService;
 use App\Support\StoreDeliveryFee;
+use App\Support\AdminDateFilter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -36,16 +37,13 @@ class DeliveryController extends Controller
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', 'in:pending,confirmed,preparing,ready,out_for_delivery,delivered,cancelled'],
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'in:10,15,25,50,100'],
         ]);
 
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
         $query = Delivery::with(['order.customer', 'order.orderType', 'order.paymentMethod'])
             ->when(!empty($validated['status']), fn ($q) => $q->where('status', $validated['status']))
-            ->when(!empty($validated['start_date']), fn ($q) => $q->whereHas('order', fn ($order) => $order->whereDate('order_date', '>=', $validated['start_date'])))
-            ->when(!empty($validated['end_date']), fn ($q) => $q->whereHas('order', fn ($order) => $order->whereDate('order_date', '<=', $validated['end_date'])))
             ->when(!empty($validated['search']), function ($q) use ($validated) {
                 $term = trim($validated['search']);
                 $q->where(function ($nested) use ($term) {
@@ -56,6 +54,12 @@ class DeliveryController extends Controller
                             ->orWhere('phone', 'like', "%{$term}%"));
                 });
             });
+
+        if ($dateFilter['from'] || $dateFilter['to']) {
+            $query->whereHas('order', function ($orderQuery) use ($dateFilter) {
+                AdminDateFilter::apply($orderQuery, 'order_date', $dateFilter);
+            });
+        }
 
         $summary = [
             'count' => (clone $query)->count(),
@@ -74,7 +78,7 @@ class DeliveryController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('admin.delivery', compact('deliveries', 'summary'));
+        return view('admin.delivery', compact('deliveries', 'summary', 'dateFilter'));
     }
 
     public function create()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\StoreContactMessage;
 use App\Models\StoreContactReply;
 use App\Services\AdminActionCountService;
+use App\Support\AdminDateFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,9 +15,10 @@ class AdminCustomerServiceController extends Controller
 {
     public function index(Request $request): View
     {
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
         $messages = $this->conversationQuery($request)
             ->paginate(25)
-            ->appends($request->only(['q', 'status']));
+            ->appends($request->only(['q', 'status', 'date_preset', 'start_date', 'end_date']));
 
         $messages->setPath(route('admin.customer-service.index'));
 
@@ -40,7 +42,8 @@ class AdminCustomerServiceController extends Controller
             'messages',
             'contactMessage',
             'counts',
-            'lastReplyId'
+            'lastReplyId',
+            'dateFilter'
         ));
     }
 
@@ -49,7 +52,7 @@ class AdminCustomerServiceController extends Controller
     {
         $messages = $this->conversationQuery($request)
             ->paginate(25)
-            ->appends($request->only(['q', 'status']));
+            ->appends($request->only(['q', 'status', 'date_preset', 'start_date', 'end_date']));
 
         $messages->setPath(route('admin.customer-service.index'));
 
@@ -214,6 +217,9 @@ class AdminCustomerServiceController extends Controller
             ])
             ->orderByDesc('updated_at')
             ->orderByDesc('id');
+
+        $dateFilter = AdminDateFilter::resolve($request, 'start_date', 'end_date');
+        AdminDateFilter::apply($query, 'created_at', $dateFilter);
 
         if ($request->filled('status') && in_array($request->input('status'), ['new', 'in_progress', 'resolved'], true)) {
             $query->where('status', $request->input('status'));

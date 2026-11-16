@@ -6,8 +6,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
+use App\Support\AdminDateFilter;
 
 class AdminExportController extends Controller
 {
@@ -78,13 +77,15 @@ class AdminExportController extends Controller
     {
         $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
-            'period' => ['nullable', 'in:today,week,month'],
-            'date_from' => ['nullable', 'date_format:Y-m-d'],
-            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'staff_id' => ['nullable', 'regex:/^(website|[1-9][0-9]*)$/'],
+        ]);
+
+        // Validate every legacy date-field alias used by the admin tabs, while
+        // applying the same Today / Week / Month / All / Custom presets everywhere.
+        AdminDateFilter::resolve($request, 'start_date', 'end_date', [
+            'from' => ['date_from', 'from'],
+            'to' => ['date_to', 'to'],
+            'preset' => ['period'],
         ]);
     }
 
@@ -269,8 +270,18 @@ class AdminExportController extends Controller
         } elseif ($request->input('status') === 'expired') {
             $query->whereDate('o.end_date', '<', $today);
         }
-        if ($request->filled('date_from')) $query->whereDate('o.start_date', '>=', $request->input('date_from'));
-        if ($request->filled('date_to')) $query->whereDate('o.end_date', '<=', $request->input('date_to'));
+        $dateFilter = AdminDateFilter::resolve($request, 'date_from', 'date_to', [
+            'preset' => ['period'],
+        ]);
+        // Offer date filters use schedule overlap, not offer creation dates.
+        if ($dateFilter['from'] && $dateFilter['to']) {
+            $query->whereDate('o.start_date', '<=', $dateFilter['to'])
+                ->whereDate('o.end_date', '>=', $dateFilter['from']);
+        } elseif ($dateFilter['from']) {
+            $query->whereDate('o.end_date', '>=', $dateFilter['from']);
+        } elseif ($dateFilter['to']) {
+            $query->whereDate('o.start_date', '<=', $dateFilter['to']);
+        }
         $query->orderBy($this->sortColumn($request, ['offer_id' => 'o.offer_id', 'start_date' => 'o.start_date', 'end_date' => 'o.end_date', 'discount' => 'o.discount'], 'o.start_date'), $this->sortDirection($request));
 
         return $this->report('Promotional Offers', ['Offer ID', 'Product', 'Category', 'Regular Price (USD)', 'Discount (%)', 'Offer Price (USD)', 'Start Date', 'End Date'], $query);
@@ -281,9 +292,10 @@ class AdminExportController extends Controller
         $query = DB::table('orders as o')
             ->leftJoin('customer as c', 'c.customer_id', '=', 'o.customer_id')
             ->leftJoin('users as u', 'u.user_id', '=', 'o.cashier_id')
+            ->leftJoin('role as staff_role', 'staff_role.role_id', '=', 'u.role_id')
             ->leftJoin('order_type as ot', 'ot.order_type_id', '=', 'o.order_type_id')
             ->leftJoin('payment_method as pm', 'pm.payment_method_id', '=', 'o.payment_method_id')
-            ->select(['o.order_id as Order_ID', 'o.waiting_num as Queue_No', 'c.name as Customer', 'c.phone as Customer_Phone', 'u.name as Cashier', 'ot.order_name as Order_Type', 'o.order_source as Source', 'o.order_status as Order_Status', 'o.payment_status as Payment_Status', 'o.total_amount as Subtotal', 'o.discount as Discount_Percent', 'o.final_price as Final_Total', 'o.order_date as Order_Date'])
+            ->select(['o.order_id as Order_ID', 'o.waiting_num as Queue_No', 'c.name as Customer', 'c.phone as Customer_Phone', DB::raw("CASE WHEN o.cashier_id IS NULL THEN 'Website / customer checkout' ELSE CONCAT(COALESCE(u.name, 'Staff'), ' · ', COALESCE(staff_role.role_name, 'Staff')) END as Created_Handled_By"), 'ot.order_name as Order_Type', 'o.order_source as Source', 'o.order_status as Order_Status', 'o.payment_status as Payment_Status', 'o.total_amount as Subtotal', 'o.discount as Discount_Percent', 'o.final_price as Final_Total', 'o.order_date as Order_Date'])
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
                 $q->where(fn ($w) => $w->where('o.order_id', 'like', "%{$term}%")
@@ -298,6 +310,11 @@ class AdminExportController extends Controller
         }
         if ($request->filled('order_status')) $query->where('o.order_status', $request->input('order_status'));
         if (in_array($request->input('source'), ['pos', 'website'], true)) $query->where('o.order_source', $request->input('source'));
+        if ($request->input('staff_id') === 'website') {
+            $query->whereNull('o.cashier_id');
+        } elseif ($request->filled('staff_id') && ctype_digit((string) $request->input('staff_id'))) {
+            $query->where('o.cashier_id', (int) $request->input('staff_id'));
+        }
         if ($request->input('review_status') === 'open') {
             $query->whereExists(function ($subquery) {
                 $subquery->selectRaw('1')->from('order_review_flags as orf')
@@ -309,20 +326,10 @@ class AdminExportController extends Controller
                     ->whereColumn('orf.order_id', 'o.order_id')->where('orf.status', 'open');
             });
         }
-        if (in_array($request->input('period'), ['today', 'week', 'month'], true)) {
-            $periodStart = match ($request->input('period')) {
-                'today' => today()->toDateString(),
-                'week' => now()->startOfWeek(Carbon::MONDAY)->toDateString(),
-                'month' => now()->startOfMonth()->toDateString(),
-            };
-            $query->whereDate('o.order_date', '>=', $periodStart)
-                ->whereDate('o.order_date', '<=', today()->toDateString());
-        } else {
-            $this->applyDateRange($query, 'o.order_date', $request, ['start_date', 'date_from', 'from'], ['end_date', 'date_to', 'to']);
-        }
+        $this->applyDateRange($query, 'o.order_date', $request, ['start_date', 'date_from', 'from'], ['end_date', 'date_to', 'to']);
         $query->orderBy($this->sortColumn($request, ['order_date' => 'o.order_date', 'order_id' => 'o.order_id', 'final_price' => 'o.final_price'], 'o.order_date'), $this->sortDirection($request));
 
-        return $this->report('Orders', ['Order ID', 'Queue No', 'Customer', 'Customer Phone', 'Cashier', 'Order Type', 'Source', 'Order Status', 'Payment Status', 'Subtotal (USD)', 'Discount (%)', 'Final Total (USD)', 'Order Date'], $query);
+        return $this->report('Orders', ['Order ID', 'Queue No', 'Customer', 'Customer Phone', 'Created By Staff', 'Order Type', 'Source', 'Order Status', 'Payment Status', 'Subtotal (USD)', 'Discount (%)', 'Final Total (USD)', 'Order Date'], $query);
     }
 
     private function orderItems(Request $request): array
@@ -471,19 +478,17 @@ class AdminExportController extends Controller
 
     private function applyDateRange(Builder $query, string $column, Request $request, array $fromKeys = ['date_from', 'start_date', 'from'], array $toKeys = ['date_to', 'end_date', 'to']): void
     {
-        $from = $this->firstFilled($request, $fromKeys);
-        $to = $this->firstFilled($request, $toKeys);
-        if ($from) $query->whereDate($column, '>=', $from);
-        if ($to) $query->whereDate($column, '<=', $to);
+        $fromField = $fromKeys[0] ?? 'date_from';
+        $toField = $toKeys[0] ?? 'date_to';
+        $dateFilter = AdminDateFilter::resolve($request, $fromField, $toField, [
+            'from' => array_values(array_slice($fromKeys, 1)),
+            'to' => array_values(array_slice($toKeys, 1)),
+            'preset' => ['period'],
+        ]);
+
+        AdminDateFilter::apply($query, $column, $dateFilter);
     }
 
-    private function firstFilled(Request $request, array $keys): ?string
-    {
-        foreach ($keys as $key) {
-            if ($request->filled($key)) return (string) $request->input($key);
-        }
-        return null;
-    }
 
     private function sortColumn(Request $request, array $allowed, string $default): mixed
     {
@@ -522,7 +527,7 @@ class AdminExportController extends Controller
     private function filterSummary(Request $request): string
     {
         $labels = [];
-        foreach (['search' => 'Search', 'category_id' => 'Category ID', 'category' => 'Category ID', 'product_id' => 'Product ID', 'order_id' => 'Order ID', 'supplier_id' => 'Supplier ID', 'status' => 'Status', 'payment_status' => 'Payment', 'order_status' => 'Order status', 'source' => 'Source', 'period' => 'Period', 'rating' => 'Rating', 'type' => 'Type', 'role' => 'Role', 'start_date' => 'From', 'date_from' => 'From', 'from' => 'From', 'end_date' => 'To', 'date_to' => 'To', 'to' => 'To'] as $key => $label) {
+        foreach (['search' => 'Search', 'category_id' => 'Category ID', 'category' => 'Category ID', 'product_id' => 'Product ID', 'order_id' => 'Order ID', 'supplier_id' => 'Supplier ID', 'status' => 'Status', 'payment_status' => 'Payment', 'order_status' => 'Order status', 'source' => 'Source', 'staff_id' => 'Staff ID', 'date_preset' => 'Date range', 'period' => 'Period', 'rating' => 'Rating', 'type' => 'Type', 'role' => 'Role', 'start_date' => 'From', 'date_from' => 'From', 'from' => 'From', 'end_date' => 'To', 'date_to' => 'To', 'to' => 'To'] as $key => $label) {
             if ($request->filled($key)) $labels[] = $label.': '.$request->input($key);
         }
         return $labels ? implode(' · ', array_unique($labels)) : 'All records';

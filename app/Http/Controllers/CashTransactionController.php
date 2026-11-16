@@ -7,6 +7,7 @@ use App\Models\CashTransaction;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\AdminDateFilter;
 use Illuminate\Validation\ValidationException;
 
 class CashTransactionController extends Controller
@@ -14,16 +15,15 @@ class CashTransactionController extends Controller
     public function index(Request $request)
     {
         $filters = $request->validate([
-            'from' => ['nullable', 'date_format:Y-m-d'],
-            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'category_id' => ['nullable', 'integer', 'exists:accounting_category,id'],
             'search' => ['nullable', 'string', 'max:120'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'integer', 'in:15,25,50,100'],
         ]);
 
-        $fromDate = $filters['from'] ?? null;
-        $toDate = $filters['to'] ?? null;
+        $dateFilter = AdminDateFilter::resolve($request, 'from', 'to');
+        $fromDate = $dateFilter['from'];
+        $toDate = $dateFilter['to'];
 
         // Revenue is calculated from verified paid orders only.
         $paidOrders = Order::query()->where('is_paid', 1);
@@ -93,7 +93,7 @@ class CashTransactionController extends Controller
             'net_cash_flow' => $netCashFlow,
         ];
 
-        return view('admin.expense_income', compact('summary', 'transactions', 'categories', 'perPage', 'fromDate', 'toDate'));
+        return view('admin.expense_income', compact('summary', 'transactions', 'categories', 'perPage', 'fromDate', 'toDate', 'dateFilter'));
     }
 
     public function create()

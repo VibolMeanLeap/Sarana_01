@@ -55,8 +55,11 @@ return [
 
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'group_chat_id' => env('TELEGRAM_GROUP_CHAT_ID'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        // Cambodia default country calling code; international +numbers are preserved.
+        'phone_country_code' => env('TELEGRAM_PHONE_COUNTRY_CODE', '855'),
         'admin_ids' => array_values(array_filter(array_map(
             'trim',
             explode(',', (string) env('TELEGRAM_ADMIN_IDS', ''))

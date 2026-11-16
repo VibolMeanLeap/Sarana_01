@@ -1,4 +1,4 @@
--- Coffee Corner Aura: add an editable home delivery fee to Store Settings.
+-- SK Coffee Aura: add an editable home delivery fee to Store Settings.
 -- Safe to run more than once. Run this against the application's selected database.
 
 SET @cc_has_delivery_fee := (

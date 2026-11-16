@@ -1,4 +1,4 @@
--- Coffee Corner Aura: customer/store conversation replies
+-- SK Coffee Aura: customer/store conversation replies
 -- BACK UP THE DATABASE BEFORE RUNNING THIS SCRIPT.
 -- The original store_contact_messages table and its existing enquiry records are untouched.
 

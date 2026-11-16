@@ -371,24 +371,24 @@
             </div>
             <span class="badge text-bg-light">{{ number_format($transactions->total()) }} records</span>
         </div>
-        <form method="GET" action="{{ route('expense_income.index') }}" class="finance-filter">
-            <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search note or ID" aria-label="Search transactions">
-            <select name="category_id" class="form-select">
-                <option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(request('category_id')==$category->id)>{{ $category->name }}</option>@endforeach
-            </select>
-            <input type="date" name="from" value="{{ request('from') }}" class="form-control" aria-label="From date">
-            <input type="date" name="to" value="{{ request('to') }}" class="form-control" aria-label="To date">
-            <select name="sort_dir" class="form-select">
-                <option value="desc" @selected(request('sort_dir', 'desc' )==='desc' )>Newest first</option>
-                <option value="asc" @selected(request('sort_dir')==='asc' )>Oldest first</option>
-            </select>
-            <select name="per_page" class="form-select">
-                <option value="15" @selected(($perPage ?? 15)===15)>15 / page</option>
-                <option value="25" @selected(($perPage ?? 15)===25)>25 / page</option>
-                <option value="50" @selected(($perPage ?? 15)===50)>50 / page</option>
-                <option value="100" @selected(($perPage ?? 15)===100)>100 / page</option>
-            </select>
-            <button type="submit" class="btn btn-success">Apply filters</button><a href="{{ route('expense_income.index') }}" class="btn btn-outline-secondary">Reset</a>
+        <form method="GET" action="{{ route('expense_income.index') }}" class="mb-3">
+            @include('admin.partials.date-filter-panel', [
+                'dateFilter' => $dateFilter,
+                'dateFromField' => 'from',
+                'dateToField' => 'to',
+                'dateFilterTitle' => 'Transaction date',
+                'dateFilterHint' => 'The date range filters the ledger and financial summary above.',
+            ])
+            <section class="border rounded-3 p-3 bg-light-subtle">
+                <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i class="bi bi-funnel me-1"></i>Ledger filters</div>
+                <div class="finance-filter">
+                    <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search note or ID" aria-label="Search transactions">
+                    <select name="category_id" class="form-select"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(request('category_id')==$category->id)>{{ $category->name }}</option>@endforeach</select>
+                    <select name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir', 'desc' )==='desc' )>Newest first</option><option value="asc" @selected(request('sort_dir')==='asc' )>Oldest first</option></select>
+                    <select name="per_page" class="form-select"><option value="15" @selected(($perPage ?? 15)===15)>15 / page</option><option value="25" @selected(($perPage ?? 15)===25)>25 / page</option><option value="50" @selected(($perPage ?? 15)===50)>50 / page</option><option value="100" @selected(($perPage ?? 15)===100)>100 / page</option></select>
+                    <button type="submit" class="btn btn-success">Apply filters</button><a href="{{ route('expense_income.index') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </section>
         </form>
         <div class="finance-table-wrap">
             <table class="finance-table">

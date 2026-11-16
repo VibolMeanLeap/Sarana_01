@@ -1,4 +1,4 @@
-/* Coffee Corner Aura shared form feedback */
+/* SK Coffee Aura shared form feedback */
 .form-control.is-invalid,
 .form-select.is-invalid,
 .form-check-input.is-invalid,
@@ -10,7 +10,7 @@ textarea.is-invalid,
 .ord-form-control.is-invalid,
 .oi-form-control.is-invalid {
     border-color: #dc3545 !important;
-    box-shadow: 0 0 0 .19rem rgba(220, 53, 69, .12) !important;
+    box-shadow: 0 0 0 0.19rem rgba(220, 53, 69, 0.12) !important;
 }
 
 .form-control.is-invalid:focus,
@@ -19,34 +19,38 @@ input.is-invalid:focus,
 select.is-invalid:focus,
 textarea.is-invalid:focus {
     border-color: #dc3545 !important;
-    box-shadow: 0 0 0 .22rem rgba(220, 53, 69, .16) !important;
+    box-shadow: 0 0 0 0.22rem rgba(220, 53, 69, 0.16) !important;
 }
 
 .cc-invalid-feedback,
 .invalid-feedback.cc-validation-message {
     display: block;
     width: 100%;
-    margin-top: .35rem;
+    margin-top: 0.35rem;
     color: #b42332;
-    font-size: .78rem;
+    font-size: 0.78rem;
     line-height: 1.45;
 }
 
 .cc-validation-summary {
     margin: 0 0 1rem;
-    padding: .8rem 1rem;
+    padding: 0.8rem 1rem;
     border: 1px solid #f2c4c8;
-    border-radius: .8rem;
+    border-radius: 0.8rem;
     background: #fff5f5;
     color: #8f1d2c;
-    font-size: .88rem;
+    font-size: 0.88rem;
 }
 
 .cc-field-invalid {
-    animation: cc-invalid-pulse .22s ease-out;
+    animation: cc-invalid-pulse 0.22s ease-out;
 }
 
 @keyframes cc-invalid-pulse {
-    from { transform: translateX(-2px); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(-2px);
+    }
+    to {
+        transform: translateX(0);
+    }
 }

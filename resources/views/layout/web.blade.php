@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @include('partials.locale-bootstrap')
-    <title>@yield('web_title', $shopSettings?->shop_name ?: 'Coffee Corner')</title>
+    <title>@yield('web_title', $shopSettings?->shop_name ?: 'SK Coffee')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -828,7 +828,7 @@
                         style="width:36px;height:36px;background-color:var(--light-green-bg);color:var(--primary-green)"><i
                             class="bi bi-cup-hot-fill fs-5"></i></span>
                 @endif
-                {{ $shopSettings?->shop_name ?: 'Coffee Corner' }}
+                {{ $shopSettings?->shop_name ?: 'SK Coffee' }}
             </a>
 
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#cleanNav">
@@ -959,7 +959,7 @@
                                 <i class="bi bi-cup-hot-fill"></i>
                             @endif
                         </span>
-                        <span>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</span>
+                        <span>{{ $shopSettings?->shop_name ?: 'SK Coffee' }}</span>
                     </a>
                     <p class="store-footer-copy">Good coffee, thoughtful service and an easier way to enjoy your
                         favourites.
@@ -1025,7 +1025,7 @@
 
                 <iframe class="store-footer-map-frame"
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3878.10731613387!2d102.95597197485266!3d13.590255086785147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x311ae751f409e2a3%3A0x3dbffb38eb34a012!2sBuild%20Bright%20University%2C%20Banteay%20Meanchey%20Campus!5e0!3m2!1sen!2skh!4v1794181749150!5m2!1sen!2skh"
-                    title="Coffee Corner Google Maps Location" loading="lazy" allowfullscreen
+                    title="SK Coffee Google Maps Location" loading="lazy" allowfullscreen
                     referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
 
@@ -1041,7 +1041,7 @@
             {{-- End Google Maps Location --}}
             <div class="store-footer-bottom">
                 <div class="store-footer-bottom">
-                    <span>© {{ date('Y') }} <strong>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</strong>.
+                    <span>© {{ date('Y') }} <strong>{{ $shopSettings?->shop_name ?: 'SK Coffee' }}</strong>.
                         All rights
                         reserved.</span>
                     @if ($shopSettings?->exchange_rate)

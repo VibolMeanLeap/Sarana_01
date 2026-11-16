@@ -110,6 +110,13 @@
             <div class="cs-inbox-heading"><h2><i class="bi bi-chat-square-text-fill text-success me-2"></i>Inbox</h2><span><span data-cs-count="total">{{ number_format($counts['total']) }}</span> conversations</span></div>
             <div class="cs-search-wrap">
                 <form method="GET" action="{{ route('admin.customer-service.index') }}" id="csSearchForm">
+                    @include('admin.partials.date-filter-panel', [
+                        'dateFilter' => $dateFilter,
+                        'dateFromField' => 'start_date',
+                        'dateToField' => 'end_date',
+                        'dateFilterTitle' => 'Enquiry date',
+                        'dateFilterHint' => 'Filter conversations by the date the customer first contacted the shop.',
+                    ])
                     <input type="hidden" name="status" id="csStatusFilter" value="{{ request('status') }}">
                     <div class="cs-search-input"><i class="bi bi-search"></i><input type="search" name="q" value="{{ request('q') }}" placeholder="Search customers or messages…" aria-label="Search conversations"></div>
                     <div class="cs-filter-tabs" aria-label="Filter conversations">

@@ -7,11 +7,13 @@ use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use App\Support\AdminDateFilter;
 
 class OfferController extends Controller
 {
     public function index(Request $request)
     {
+        $dateFilter = AdminDateFilter::resolve($request, 'date_from', 'date_to');
         $today = now()->toDateString();
         $offersQuery = Offer::with(['product', 'product.category'])
             ->when($request->filled('product_id'), fn ($query) => $query->where('product_id', $request->input('product_id')))
@@ -28,8 +30,16 @@ class OfferController extends Controller
         } elseif ($request->input('status') === 'expired') {
             $offersQuery->whereDate('end_date', '<', $today);
         }
-        if ($request->filled('date_from')) $offersQuery->whereDate('start_date', '>=', $request->input('date_from'));
-        if ($request->filled('date_to')) $offersQuery->whereDate('end_date', '<=', $request->input('date_to'));
+        // Include offers whose scheduled window overlaps the selected period.
+        // This way an offer active today is still found even if it started earlier.
+        if ($dateFilter['from'] && $dateFilter['to']) {
+            $offersQuery->whereDate('start_date', '<=', $dateFilter['to'])
+                ->whereDate('end_date', '>=', $dateFilter['from']);
+        } elseif ($dateFilter['from']) {
+            $offersQuery->whereDate('end_date', '>=', $dateFilter['from']);
+        } elseif ($dateFilter['to']) {
+            $offersQuery->whereDate('start_date', '<=', $dateFilter['to']);
+        }
 
         $sortBy = in_array($request->input('sort_by'), ['start_date', 'end_date', 'discount', 'offer_id'], true) ? $request->input('sort_by') : 'start_date';
         $sortDirection = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -44,7 +54,7 @@ class OfferController extends Controller
 
         $products = Product::orderBy('product_name')->get();
         $categories = \App\Models\Category::orderBy('category_name')->get();
-        return view('admin.Offer', compact('offers', 'products', 'categories'));
+        return view('admin.Offer', compact('offers', 'products', 'categories', 'dateFilter'));
     }
 
     public function create()

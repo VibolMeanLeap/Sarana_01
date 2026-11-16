@@ -1,14 +1,16 @@
 # Patch notes
 
-## 2026-11-07 – Coffee Corner Aura review patch
+## 2026-11-07 – SK Coffee Aura review patch
 
 ### Added
+
 - Website ordering controller and shop/cart/checkout/order views.
 - PayWay payment model and service.
 - Order status workflow controller.
 - Additive MariaDB schema upgrade and read-only stock audit query.
 
 ### Updated
+
 - POS checkout payment-state handling.
 - Order and order-item models/controllers.
 - Product stock adjustments and append-only stock-log writing.
@@ -19,6 +21,7 @@
 - Database foreign-key rules that could cascade-delete historical records are changed to `SET NULL` or `RESTRICT`; staff accounts with history are deactivated instead of deleted.
 
 ### Safety notes
+
 - No `.env`, credentials, production keys, database dumps, vendor directory, or user data are included in this patch ZIP.
 - No automatic stock correction or destructive migration is included.
 - Card payments and paid-order refunds are not implemented.
