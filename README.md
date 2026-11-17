@@ -1,10 +1,10 @@
 # SK Coffee Aura
 
-**Coffee Shop Management System · Laravel 13 · POS · Online Ordering · Inventory · Delivery · Finance · English / Khmer**
+**Coffee Shop Management System · Laravel 13 · POS · Online Ordering · Inventory · Delivery · Finance · Sales Analytics · Audit Trail · Telegram OTP · English / Khmer**
 
 SK Coffee Aura (also referred to in the repository as **Sarana 01** / **SK Coffee**) is a Laravel-based coffee shop management application. It combines a customer-facing storefront, staff point of sale (POS), order and delivery workflows, product and inventory management, purchasing, finance reports, customer service, store settings, and administrator tools.
 
-> **Project status:** This is an actively developed academic / graduation-demo project. Use a local or staging database and sandbox payment credentials for demonstrations. Complete the security, backup, payment, and deployment checks before using it with real customer data or payments.
+> **Project status:** This is an actively developed academic / graduation-demo project. This README was updated on **17 November 2026** to document the recent customer Telegram verification, POS correction/audit, product-sales analytics, admin navigation, and security-hardening work. Use a local or staging database and sandbox payment credentials for demonstrations. Complete the security, backup, payment, and deployment checks before using it with real customer data or payments.
 
 ---
 
@@ -12,6 +12,12 @@ SK Coffee Aura (also referred to in the repository as **Sarana 01** / **SK Coffe
 
 - [Overview](#overview)
 - [Features](#features)
+- [Customer Telegram OTP and phone verification](#customer-telegram-otp-and-phone-verification)
+- [POS receipt corrections and audit](#pos-receipt-corrections-and-audit)
+- [Product sales analytics](#product-sales-analytics)
+- [POS price and discount audit](#pos-price-and-discount-audit)
+- [Admin navigation and date filters](#admin-navigation-and-date-filters)
+- [Security hardening](#security-hardening)
 - [Roles and access](#roles-and-access)
 - [Technology stack](#technology-stack)
 - [Requirements](#requirements)
@@ -51,6 +57,8 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - Storefront home/shop pages, product catalogue, product details, categories, and active offers.
 - Session-based shopping cart with quantity updates and item removal.
 - Customer registration, login, logout, account page, and order history.
+- Customer registration protected by Telegram account linking, phone-contact verification, and a one-time six-digit OTP before a new account is activated.
+- Temporary registration records are kept separate from active customer login accounts until verification succeeds.
 - Checkout for store pickup or home delivery.
 - Delivery fee shown during checkout and on the shipping-information page.
 - Optional ABA PayWay KHQR checkout when valid merchant credentials and a reachable HTTPS callback are configured.
@@ -68,6 +76,9 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - COD orders remain **Unpaid** until the delivery handoff is completed and the exact amount is collected.
 - Cashier order queue and order-status workflow.
 - Stock-tracked products are checked and deducted according to the configured stock rules; non-stock products are not deducted from inventory.
+- POS receipt correction for eligible completed, paid, cash POS orders, with original/corrected snapshots, correction reason, staff attribution, stock reconciliation, and cash-adjustment confirmation.
+- Server-side price-override and discount permissions; cashier overrides/discounts are blocked by default, while authorized administrator adjustments require a reason and are written to the order audit history.
+- Quick catalogue-product creation from POS is administrator-only after the security-hardening patch.
 
 > **Important:** Cash on Delivery is a _payment method_, not an order type. For a home-delivery COD order, choose **Order type: Delivery** and **Payment method: Cash on Delivery**. A walk-in or takeaway COD selection is not a delivery order and does not receive delivery-stage controls.
 
@@ -88,7 +99,75 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - Store profile/settings, including the editable **Home delivery fee (USD)** value.
 - Review moderation and approval.
 - Income/expense and business reports, with supported CSV and print exports.
+- **Product Sales Analytics** with date presets/custom range, product/category breakdown, quantities sold, item sales subtotal, order source, staff filters, and CSV export.
+- **Order Correction Audit** showing receipt correction history, staff member, before/after receipt details, correction reason, and recorded cash adjustments.
+- **POS Price & Discount Audit** showing recorded POS price overrides and discounts, the acting staff member, reason, order reference, date, and adjustment type.
+- Shared date-filter controls across supported reporting tabs: Today, This week, This month, All time, and a custom date range.
+- The Orders tab can filter POS orders by the administrator/cashier recorded as the order staff actor; website orders can be shown separately when no POS staff actor is attached.
+- Collapsible administrator sidebar groups for workspace, catalogue, customers/support, sales/audit, inventory/operations, and administration.
+- **Customer Accounts** archive action that disables login and releases the account phone/Telegram identity while preserving customer/order history; email remains reserved.
 - Administrator-only **Backups & restore** workspace (see [Backup and restore](#backup-and-restore)).
+
+### Customer Telegram OTP and phone verification
+
+- The customer submits the normal website registration form first. Laravel stores a temporary registration draft; it does not create an active customer login account at this point.
+- The customer opens a short-lived, one-use Telegram deep link and presses **Start** in a private chat with the configured bot.
+- The bot asks the customer to share their Telegram phone contact using Telegram's contact-sharing action.
+- The webhook checks that the shared contact belongs to the Telegram user who sent it, then compares the normalized phone number with the phone number entered on the website. Cambodian local and `+855` formats are normalized for comparison.
+- Only after phone ownership is confirmed does the bot send a six-digit OTP. The customer enters that code on the website verification page; the active account is created after successful verification.
+- OTP values are stored as hashes, are time-limited, and have a limited number of verification attempts. Telegram connection links and temporary registration drafts also expire.
+- The same Telegram webhook handles private customer registration messages and administrator-group fulfillment callbacks. Register both `message` and `callback_query` in Telegram `allowed_updates`.
+- Customer account archival is not a hard delete: the login identity can be disabled and the phone/Telegram identity released while the historical customer profile and orders remain available for reporting. The email remains reserved according to the account-archive workflow.
+
+Keep `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and `TELEGRAM_WEBHOOK_SECRET` private. The webhook must use a public HTTPS URL and the configured Telegram secret header. See [Telegram notifications and fulfillment](#telegram-notifications-and-fulfillment).
+
+### POS receipt corrections and audit
+
+- The Orders tab links eligible receipts to the POS correction workspace instead of relying on a simple status-marking action.
+- The correction workflow records the original and corrected receipt snapshots, staff actor, timestamp, reason/notes, changed line items, and any cash collection/refund adjustment supported by the existing correction schema.
+- Stock changes are reconciled through the correction workflow; users should not manually edit order-item rows to imitate a correction.
+- The **Order Correction Audit** page reads the existing `order_corrections` history and provides receipt-level review of who changed a receipt and what was recorded.
+- A correction may be restricted when an order is not a completed/paid POS cash order, is a delivery order, has an external payment record, has a cash-ledger transaction, or has missing/unverifiable item or stock history. The Orders page displays the detected reason where the eligibility check can determine one.
+- If a correction has a pending cash adjustment, confirm/settle that adjustment through the dedicated workflow before attempting another correction.
+- The correction screen provides a **Back to Orders** link and carries the originating Orders URL/query string so the user can return to the previous date/staff/status filters.
+- The compact correction UI reduces unused space but does not change the underlying accounting or stock rules.
+
+### Product sales analytics
+
+- The **Product Sales Analytics** page aggregates saved `order_items` quantities against their parent orders and products.
+- Date presets and a custom date range are available, with filters for product, category, order source, and staff where the data supports the filter.
+- POS orders use `orders.cashier_id` to identify the staff account recorded on the order. Website orders normally have no POS staff actor and can be filtered separately.
+- The report includes units sold, affected orders, product/category rankings, item sales value, and supported daily sales trends/CSV export.
+- The documented sales view counts paid, non-cancelled orders. Item sales subtotal is calculated from recorded item quantity and item price before order-level discount; it can differ from the final amount paid on the whole order.
+- Product corrections are reflected using the currently saved order items. This is not a separate immutable snapshot of every historical product-line edit unless the correction history is consulted.
+
+### POS price and discount audit
+
+- Authorized POS price overrides and discount events are recorded in `order_status_history` using the event types `pos_price_override` and `pos_discount_applied`.
+- The **POS Price & Discount Audit** page displays the events recorded by the POS audit handler, including order reference, staff identity, event type, timestamp, and available reason/adjustment details. It supports date, staff, and event-type filtering and CSV export where installed.
+- A price-override event is written only when the submitted selling price differs from the catalogue price. A discount event is written when a non-zero discount is applied.
+- These records are prospective: events made before the audit logging patch was installed are not automatically reconstructed or backfilled.
+- The audit history is an application audit record; it does not independently prove that physical cash was received or that a refund was paid. Reconcile cash against the cash drawer/payment records.
+
+### Admin navigation and date filters
+
+- The administrator sidebar uses collapsible groups to organize related destinations, including Customers & Support and Sales & Audit. The current page's group is expanded/highlighted according to the installed sidebar layout.
+- Supported date-bearing admin pages use the shared date-filter panel with **Today**, **This week**, **This month**, **All time**, and custom From/To dates.
+- The Orders page uses the shared date-filter UI while retaining its order-specific filters such as status, payment, staff, source, and page size. Legacy `period` query links remain supported by the Orders date-filter update.
+- Product, Category, Supplier, and walk-in Customer Directory lists do not receive invented date filters when their underlying schema does not provide a reliable creation timestamp.
+- The customer registration form uses a consolidated validation-feedback area to avoid showing the same validation warning in multiple places.
+
+### Security hardening
+
+The recent security patch adds server-side enforcement for three areas:
+
+1. **Image uploads:** image input is validated as an image, a server-generated filename is used, and a safe extension is selected from the validated image content. The patch also includes Apache `.htaccess` rules to prevent script execution in the configured public image/upload directories.
+2. **POS price/discount authorization:** cashier price overrides and discounts are rejected by the server by default. Authorized administrator overrides/discounts require a reason and are written to the POS audit history. The user interface is not the security boundary; authorization is checked in the request handler.
+3. **Quick product creation:** catalogue product creation from the POS quick-product endpoint is administrator-only; a cashier cannot bypass the interface by directly submitting the endpoint.
+
+The Apache `.htaccess` protection does not configure Nginx. Nginx deployments must add equivalent server-level rules preventing PHP/script execution in public upload directories. Existing uploaded files should be reviewed separately because adding upload validation does not retroactively sanitize old files.
+
+The patch's default cashier discount allowance is 0%. The administrator/cashier limits are configurable in `config/pos.php`; use the environment variables documented below to set the business policy. Review the configured limits before enabling the POS for staff.
 
 ### Customer enquiries and replies
 
@@ -116,7 +195,7 @@ Fields described as optional (for example order notes, review comments, COD coll
 | Role              | Typical access                                                                                                                                 |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Administrator** | Admin dashboard, orders/delivery, settings, staff management, inventory, purchasing, customer service, reviews, finance, exports, and backups. |
-| **Cashier**       | POS and cashier order-processing workspace. No administrator-only management or backup access.                                                 |
+| **Cashier**       | POS and cashier order-processing workspace. No administrator-only management or backup access; quick catalogue-product creation and POS price overrides/discounts are blocked by default. |
 | **Customer**      | Public storefront, own account, checkout, own order tracking/history, review submission, and own customer inbox.                               |
 | **Guest**         | Public storefront browsing and contact form; customer account and checkout features require sign-in.                                           |
 
@@ -249,9 +328,13 @@ The repository contains historical Laravel migrations that do not fully represen
     |     9 | `database/09_cod_cash_collection.sql`            | COD amount, collection timestamp, collector, and collection-note fields.                                   |
     |    10 | `database/10_store_inbox_replies.sql`            | Customer/admin conversation replies and inbox support.                                                     |
     |    11 | `database/11_admin_delivery_fee_settings.sql`    | Editable delivery-fee column in Store Settings.                                                            |
+    |    12 | `database/12_customer_telegram_otp.sql`          | Temporary customer registration/Telegram OTP storage for the verification workflow.                       |
+    |    13 | `database/13_customer_telegram_phone_verification.sql` | Telegram contact/phone ownership verification fields for pending customer registrations.              |
+    |    14 | `database/14_customer_account_phone_release.sql` | Supports releasing a phone/Telegram login identity when an account is archived while preserving history. |
 
 4. `database/02_audit_stock_balance.sql` is a **read-only audit query**, not a schema upgrade. Run it separately when you want to compare product quantities with recorded stock movements. It does not repair or change stock.
-5. Run `php artisan optimize:clear` after applying schema updates.
+5. Apply scripts 12–14 only when those files are present in the checkout and have not already been applied. They belong to the Telegram OTP/customer-account upgrade series; back up first and inspect the SQL before running it on an existing database.
+6. Run `php artisan optimize:clear` after applying schema updates.
 
 The delivery-fee upgrade also has a Laravel migration at `database/migrations/2026_11_09_000001_add_delivery_fee_to_settings_table.php` for installations with a healthy migration history. Use **either** the SQL script `11_admin_delivery_fee_settings.sql` or that migration; do not apply both. For this project's SQL-first setup, the SQL script is the recommended method.
 
@@ -332,12 +415,14 @@ Configure the same redirect URI in the Google OAuth client settings. Test custom
 
 ```dotenv
 TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_USERNAME=
 TELEGRAM_GROUP_CHAT_ID=
 TELEGRAM_WEBHOOK_SECRET=
 TELEGRAM_ADMIN_IDS=
+TELEGRAM_PHONE_COUNTRY_CODE=855
 ```
 
-`TELEGRAM_ADMIN_IDS` is a comma-separated list of numeric Telegram user IDs authorized to perform Telegram fulfillment actions. Keep the bot token, private group chat ID, webhook secret, and administrator IDs out of source control.
+`TELEGRAM_ADMIN_IDS` is a comma-separated list of numeric Telegram user IDs authorized to perform Telegram fulfillment actions. `TELEGRAM_BOT_USERNAME` is used to build customer registration deep links; `TELEGRAM_PHONE_COUNTRY_CODE` defaults to `855` for Cambodian local-number normalization. Keep the bot token, private group chat ID, webhook secret, and administrator IDs out of source control. The webhook `allowed_updates` must include both `message` and `callback_query` for customer OTP and group fulfillment buttons.
 
 ### Delivery fee fallback
 
@@ -346,6 +431,18 @@ WEB_DELIVERY_FEE=2.00
 ```
 
 The administrator-saved Store Settings value takes precedence after the delivery-fee column exists and a value has been saved. The environment value is used when the database value is `NULL` / not yet configured. The setting affects new delivery orders only.
+
+### POS price and discount limits
+
+The security-hardening patch reads the POS limits from `config/pos.php`. The cashier discount limit defaults to `0` (no cashier discount). Set explicit limits in `.env` to match your store policy; the values below are an example policy, not a requirement:
+
+```dotenv
+# Example policy: administrator discount up to 30%; cashier discount disabled.
+POS_ADMIN_MAX_DISCOUNT_PERCENT=30
+POS_CASHIER_MAX_DISCOUNT_PERCENT=0
+```
+
+After changing these values, run `php artisan optimize:clear`. Administrator price overrides and discounts must include a reason and are recorded in POS audit history when the installed audit handler processes the sale.
 
 ### Backup and restore settings
 
@@ -582,6 +679,10 @@ Telegram is an additional notification/management channel; the Admin Orders page
 
 Telegram actions are restricted to configured administrators and update the shared order/delivery records. A Telegram outage does not mean an order was not saved: verify the order in Admin → Orders and inspect `storage/logs/laravel.log` for notification errors.
 
+For customer registration, the bot also handles private `/start` deep links and phone-contact sharing. The contact must belong to the same Telegram sender, and the normalized Telegram phone must match the number supplied on the website before an OTP is sent. A new customer account is not activated until the OTP is verified. Keep the bot username configured and ensure the webhook accepts `message` as well as `callback_query`.
+
+Changing `APP_KEY` invalidates signatures on already-sent Telegram fulfillment buttons. If the key must be rotated, refresh/regenerate existing Telegram order messages using the application workflow so their buttons are signed with the current key. Do not rotate `APP_KEY` casually on a live system because it can also invalidate encrypted application data and sessions.
+
 If a bot token has appeared in a URL, log, screenshot, public issue, or repository, revoke it with BotFather and replace it in `.env`. Removing it from the latest commit does not invalidate an exposed token.
 
 ## Order and delivery workflows
@@ -662,6 +763,10 @@ Exact route definitions are in `routes/web.php`. Main paths include:
 | Storefront cart         | `/store/cart`                          | Public cart                              |
 | Customer login          | `/store/login`                         | Public                                   |
 | Customer registration   | `/store/register`                      | Public                                   |
+| Registration processing | `POST /store/register/process`          | Public, throttled                         |
+| Telegram OTP page        | `/store/register/verify-telegram`       | Temporary registration session           |
+| Telegram OTP submission | `POST /store/register/verify-telegram`  | Temporary registration session, throttled |
+| Telegram link refresh    | `POST /store/register/telegram/new-link`| Temporary registration session, throttled |
 | Customer account        | `/store/account`                       | Customer                                 |
 | Customer inbox          | `/store/inbox`                         | Customer                                 |
 | Customer checkout       | `/store/checkout`                      | Customer                                 |
@@ -669,6 +774,9 @@ Exact route definitions are in `routes/web.php`. Main paths include:
 | PayWay callback         | `POST /store/payments/payway/callback` | Provider callback                        |
 | Telegram webhook        | `POST /telegram/webhook`               | Telegram secret + configured user checks |
 | Admin orders            | `/admin/orders`                        | Administrator                            |
+| Product Sales Analytics | `/admin/product-sales`                 | Administrator                            |
+| Order Correction Audit  | `/admin/order-corrections`              | Administrator                            |
+| POS Price & Discount Audit | `/admin/pos-price-discount-audit`      | Administrator                            |
 | Admin delivery register | `/admin/delivery`                      | Administrator                            |
 | Customer enquiries      | `/admin/customer-service`              | Administrator                            |
 | Admin reviews           | `/admin/reviews`                       | Administrator                            |
@@ -703,6 +811,7 @@ Useful validation commands:
 
 ```bash
 composer check-platform-reqs
+composer audit
 php artisan optimize:clear
 php artisan route:list
 php artisan schedule:list
@@ -713,10 +822,20 @@ php artisan test
 
 - [ ] Administrator and cashier login work; cashier cannot access administrator-only routes.
 - [ ] Customer registration/login and customer-owned order access work.
+- [ ] Telegram registration requires sharing the same Telegram account phone number as the website registration and a valid, unexpired OTP before account activation.
+- [ ] Expired/used Telegram links and reused OTPs are rejected; a wrong contact does not receive an OTP.
+- [ ] Archiving a customer account releases the intended phone/Telegram identity while preserving customer/order history and reserving the email as documented.
 - [ ] Product browsing, cart updates, and checkout work.
 - [ ] Website and POS orders save the correct items, totals, source, and payment state.
 - [ ] KHQR is marked paid only after server-side PayWay verification.
 - [ ] POS Delivery + COD appears in Admin → Orders and remains unpaid until final cash handoff.
+- [ ] Eligible completed POS cash receipts open the POS correction workflow; ineligible orders display the correct reason.
+- [ ] Receipt corrections preserve original/corrected snapshots, stock reconciliation, staff attribution, reason, cash adjustment, and Back to Orders filter context.
+- [ ] Product Sales Analytics totals match the underlying paid, non-cancelled order items for the selected date/source/staff filters.
+- [ ] Order Correction Audit shows correction records and POS Price & Discount Audit shows only events recorded after its logging patch is installed.
+- [ ] Cashiers cannot create quick products, override prices, or apply discounts above their configured limit through a direct HTTP request.
+- [ ] Administrator price overrides/discounts require a reason and create the expected `order_status_history` audit event.
+- [ ] Disguised/non-image uploads are rejected and valid image uploads receive server-generated safe filenames.
 - [ ] Wrong COD amount or missing confirmation is rejected; correct amount records collector/time/note.
 - [ ] Delivery stage changes update the admin stepper and customer tracking page.
 - [ ] New website orders appear in Admin → Orders and can produce in-app notifications while the admin page is open.
@@ -729,12 +848,39 @@ php artisan test
 - [ ] Stock products reduce quantity; Non-stock products do not.
 - [ ] Finance totals do not double-count paid orders or inventory purchases.
 - [ ] English/Khmer switching works across Admin, Cashier, POS, and storefront without a visible English-to-Khmer flash.
+- [ ] Collapsible admin navigation expands the group containing the current page and all grouped links remain permission-protected.
+- [ ] Shared date filters (Today, This week, This month, All time, and custom range) behave consistently across supported reporting tabs and exports.
+- [ ] Orders staff filter separates the selected administrator/cashier from website orders and preserves the selection in exports where supported.
 - [ ] Backup creation produces a private ZIP with database dump, manifest, and expected uploaded files.
 - [ ] A stored backup can be restored in a disposable environment and a `pre_restore` backup is created first.
 - [ ] Daily backup and retention events appear in `php artisan schedule:list` and run when the OS scheduler is enabled.
 - [ ] Telegram notification and webhook work with the current bot token and group/supergroup chat ID.
 
 Static syntax checks are not a substitute for browser/database/payment testing. Test with a backed-up or disposable database and sandbox payment credentials.
+
+## Security controls and production hardening
+
+### Controls added by the recent security patch
+
+- Validate uploaded image content and allowed image formats; use server-generated filenames rather than trusting client-supplied names/extensions.
+- Prevent script execution in public upload directories using Apache `.htaccess` rules where Apache is used. Add equivalent Nginx rules for Nginx deployments.
+- Enforce POS price-override and discount permissions on the server, not only by hiding controls in the UI.
+- Keep cashier discounts disabled by default (`POS_CASHIER_MAX_DISCOUNT_PERCENT=0`) unless a deliberate policy is configured.
+- Restrict POS quick-product creation to administrators.
+- Require a reason for authorized administrator price/discount adjustments and record the event in `order_status_history` using `pos_price_override` or `pos_discount_applied`.
+- Keep customer Telegram OTP, phone-contact ownership verification, one-use registration links, and attempt limits enabled.
+
+### Additional checks still required before production
+
+The source review identified other areas that should be reviewed separately; the recent three-part hardening patch does not automatically resolve them:
+
+- Apply spreadsheet-safe escaping to all CSV exports, especially free-text customer names, correction notes, and reasons, to mitigate CSV formula injection.
+- Add suitable throttling and abuse controls to payment polling/retry endpoints while preserving provider callback verification.
+- Configure trusted proxies to the actual reverse-proxy/tunnel addresses; do not blindly trust forwarded client IP headers from arbitrary sources.
+- Run `composer audit` against the current `composer.lock`, update vulnerable dependencies within compatible version constraints, and run regression tests after updates.
+- Configure HTTPS, secure session cookies, `APP_DEBUG=false`, least-privilege database credentials, private backups, and server-level upload execution restrictions for the actual hosting stack.
+
+Do not treat the checklist as proof of a completed penetration test. Test authorization and payment/business logic in a disposable environment with dedicated test accounts and sandbox payment credentials. Do not run load tests or destructive tests against a public demo/production instance without a separately controlled test plan.
 
 ## GitHub and security checklist
 
@@ -799,11 +945,12 @@ If the remote rejects the push, inspect and reconcile the incoming commits. Do n
 ### Route not found
 
 ```bash
+php artisan route:clear
 php artisan optimize:clear
 php artisan route:list
 ```
 
-Confirm the route exists in `routes/web.php` and the controller import/name is correct.
+Confirm the route exists in `routes/web.php`, the route name is unique, the controller import is correct, and the action method actually exists (for example, the Telegram registration form POST route invokes `CustomerTelegramRegistrationController::store`, while the verification GET route invokes `show`).
 
 ### SQL table or column not found
 
@@ -879,6 +1026,14 @@ Laravel only registers scheduler events; Windows Task Scheduler or Linux cron mu
 - Run `php artisan optimize:clear` after environment changes and inspect `storage/logs/laravel.log` locally.
 - If a token is exposed in logs or source control, revoke it with BotFather and configure a new token.
 
+### POS price/discount audit appears empty
+
+The **POS Price & Discount Audit** page reads `order_status_history` events `pos_price_override` and `pos_discount_applied`. Only adjustments recorded after the POS audit-logging code was installed are visible; older sales are not automatically backfilled. A price event is expected only when the sale price differs from the product catalogue price, and a discount event is expected only for a non-zero discount. Check the selected date/staff/event filters and inspect `order_status_history` with a read-only query if the page remains empty.
+
+### POS image upload is blocked or a file cannot be displayed
+
+Confirm the upload is a valid supported image (JPEG, PNG, GIF, or WEBP), check PHP upload limits and writable image directories, and inspect `storage/logs/laravel.log`. The included `.htaccess` execution restriction applies to Apache; configure equivalent Nginx rules if the application is served by Nginx. Do not remove upload validation to make an unsupported file pass.
+
 ### Views or Blade changes do not appear
 
 ```bash
@@ -898,7 +1053,12 @@ Run the read-only query in `database/02_audit_stock_balance.sql`, review the rel
 - `database/sarona_demo.sql` is a base demo snapshot and requires the documented SQL upgrade scripts for newer workflows. Sanitize demo data before any public release.
 - Historical COGS may be approximate where sale-time unit cost was not originally recorded.
 - AJAX updates use timed polling, not WebSockets or guaranteed push delivery. The database is authoritative; a badge/toast is not a durable message queue.
-- The browser-side Khmer translator translates approved exact UI strings. It is not a general-purpose translator for all arbitrary/dynamic content; the Backup & restore page needs its specific dictionary entries to be merged to be fully localized.
+- The browser-side Khmer translator translates approved exact UI strings. It is not a general-purpose translator for all arbitrary/dynamic content; newly added UI phrases must be merged into both `lang/km.json` and `public/assets/lang/km-ui.json` where appropriate.
+- Product Sales Analytics uses the currently saved order items and item-price subtotal before order-level discounts; it can differ from net amount collected. Historical item edits are not necessarily reconstructed as a line-by-line time series.
+- Order Correction Audit and POS Price & Discount Audit can only display events that the relevant audit handlers actually recorded. Legacy activity that was never logged cannot be recreated reliably.
+- POS receipt correction is intentionally restricted to eligible order/payment/stock states. Website, external-payment, delivery, ledger-linked, unpaid, or unverifiable orders may require their own workflow rather than direct POS receipt correction.
+- The POS Price & Discount Audit is an application audit trail, not independent proof of physical cash collection or refund payment. Reconcile with cash and provider records.
+- The recent upload and POS authorization hardening patch does not by itself complete the outstanding CSV-export, payment-throttling, trusted-proxy, or dependency-audit work listed above.
 - Backup archives protect the configured database and three managed upload locations, not the full server/application deployment. Keep separate secure copies of source, environment settings, and infrastructure configuration.
 - A failed database import may partially change the target database; use the `pre_restore` safety archive to recover.
 - Telegram and ABA PayWay require valid external configuration and reachable HTTPS endpoints for callbacks/webhooks.
@@ -924,4 +1084,4 @@ Before publishing, confirm that you or your project team have the rights to lice
 
 ---
 
-**SK Coffee Aura** — manage the shop, serve customers, and keep every order accountable.
+**SK Coffee Aura** — manage the shop, serve customers, secure operations, and keep every order accountable.
