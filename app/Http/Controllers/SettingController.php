@@ -6,12 +6,13 @@ use App\Models\Role;
 use App\Models\Settings;
 use App\Models\User;
 use App\Support\StoreDeliveryFee;
+use App\Support\SecurePublicImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class SettingController extends Controller
 {
@@ -251,7 +252,7 @@ class SettingController extends Controller
             'tel' => ['nullable', 'string', 'max:50'],
             'exchange_rate' => ['required', 'numeric', 'gt:0', 'max:1000000'],
             'delivery_fee' => ['required', 'numeric', 'min:0', 'max:99999999'],
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:max_width=6000,max_height=6000'],
         ], [
             'shop_name.required' => 'Please enter the shop name.',
             'exchange_rate.required' => 'Please enter the USD to KHR exchange rate.',
@@ -273,25 +274,21 @@ class SettingController extends Controller
         $shop->exchange_rate = $validated['exchange_rate'];
         $shop->delivery_fee = round((float) $validated['delivery_fee'], 2);
 
+        $newLogo = null;
         if ($request->hasFile('logo')) {
-            $uploadDirectory = public_path('uploads');
-            if (! is_dir($uploadDirectory)) {
-                mkdir($uploadDirectory, 0755, true);
-            }
-
-            $extension = strtolower($request->file('logo')->getClientOriginalExtension());
-            $filename = Str::uuid()->toString().'.'.$extension;
-            $request->file('logo')->move($uploadDirectory, $filename);
-            $shop->logo = $filename;
+            $newLogo = SecurePublicImageUpload::store($request->file('logo'), 'uploads', 'logo');
+            $shop->logo = $newLogo;
         }
 
-        $shop->save();
+        try {
+            $shop->save();
+        } catch (Throwable $exception) {
+            SecurePublicImageUpload::delete('uploads', $newLogo);
+            throw $exception;
+        }
 
-        if ($request->hasFile('logo') && $oldLogo && basename($oldLogo) === $oldLogo) {
-            $oldLogoPath = public_path('uploads/'.$oldLogo);
-            if (is_file($oldLogoPath)) {
-                @unlink($oldLogoPath);
-            }
+        if ($newLogo && $oldLogo && $oldLogo !== $newLogo) {
+            SecurePublicImageUpload::delete('uploads', $oldLogo);
         }
     }
 }

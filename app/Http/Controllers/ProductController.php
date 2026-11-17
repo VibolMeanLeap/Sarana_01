@@ -7,9 +7,9 @@ use App\Models\Product;
 use App\Models\Offer;
 use App\Models\StockLog;
 use App\Models\Supplier;
+use App\Support\SecurePublicImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Throwable;
 
 class ProductController extends Controller
@@ -69,7 +69,7 @@ class ProductController extends Controller
             'product_type' => 'required|in:stock,non-stock',
             'status' => 'required|in:Active,Inactive',
             'description' => 'nullable|string|max:2000',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096|dimensions:max_width=6000,max_height=6000',
         ]);
 
         if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
@@ -77,28 +77,32 @@ class ProductController extends Controller
         }
         $validated['qty'] = ($validated['product_type'] ?? 'stock') === 'non-stock' ? 0 : (int) ($validated['qty'] ?? 0);
 
+        $imageName = null;
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = now()->format('YmdHis').'_' . Str::random(8).'.'.$image->getClientOriginalExtension();
-            $image->move(public_path('images'), $imageName);
+            $imageName = SecurePublicImageUpload::store($request->file('image'), 'images');
             $validated['image'] = $imageName;
         }
 
         $initialQty = (int) $validated['qty'];
-        $product = DB::transaction(function () use ($validated, $initialQty) {
-            $product = Product::create($validated);
-            if ($initialQty > 0 && $product->isStockTracked()) {
-                StockLog::create([
-                    'product_id' => $product->product_id,
-                    'user_id' => auth()->id(),
-                    'type' => 'IN',
-                    'quantity' => $initialQty,
-                    'reason' => 'Opening stock',
-                    'note' => 'Opening quantity recorded when product #'.$product->product_id.' was created.',
-                ]);
-            }
-            return $product;
-        });
+        try {
+            $product = DB::transaction(function () use ($validated, $initialQty) {
+                $product = Product::create($validated);
+                if ($initialQty > 0 && $product->isStockTracked()) {
+                    StockLog::create([
+                        'product_id' => $product->product_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'IN',
+                        'quantity' => $initialQty,
+                        'reason' => 'Opening stock',
+                        'note' => 'Opening quantity recorded when product #'.$product->product_id.' was created.',
+                    ]);
+                }
+                return $product;
+            }, 3);
+        } catch (\Throwable $exception) {
+            SecurePublicImageUpload::delete('images', $imageName);
+            throw $exception;
+        }
 
         return redirect()->route('products.index')->with('success', $product->isStockTracked() && $initialQty > 0 ? 'Product created and opening stock was recorded.' : 'Product created successfully.');
     }
@@ -124,7 +128,7 @@ class ProductController extends Controller
             'product_type' => 'required|in:stock,non-stock',
             'status' => 'required|in:Active,Inactive',
             'description' => 'nullable|string|max:2000',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096|dimensions:max_width=6000,max_height=6000',
         ]);
 
         if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
@@ -133,11 +137,10 @@ class ProductController extends Controller
         $validated['qty'] = ($validated['product_type'] ?? 'stock') === 'non-stock' ? 0 : (int) ($validated['qty'] ?? 0);
 
         $oldImage = $product->image;
+        $newImageName = null;
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = now()->format('YmdHis').'_' . Str::random(8).'.'.$image->getClientOriginalExtension();
-            $image->move(public_path('images'), $imageName);
-            $validated['image'] = $imageName;
+            $newImageName = SecurePublicImageUpload::store($request->file('image'), 'images');
+            $validated['image'] = $newImageName;
         }
 
         $newQty = (int) $validated['qty'];
@@ -189,16 +192,18 @@ class ProductController extends Controller
             }, 3);
 
             if ($saved === false) {
+                SecurePublicImageUpload::delete('images', $newImageName);
                 return back()->withInput()->withErrors([
                     'product_type' => 'Product type cannot be changed when stock remains or sales, purchases, or stock movements exist. Preserve the inventory history and create a new product with the correct type.',
                 ]);
             }
         } catch (Throwable $exception) {
+            SecurePublicImageUpload::delete('images', $newImageName);
             return back()->withInput()->with('error', 'Product update failed. No quantity adjustment was saved.');
         }
 
-        if ($request->hasFile('image') && $oldImage && $oldImage !== $validated['image'] && file_exists(public_path('images/'.$oldImage))) {
-            @unlink(public_path('images/'.$oldImage));
+        if ($newImageName && $oldImage && $oldImage !== $newImageName) {
+            SecurePublicImageUpload::delete('images', $oldImage);
         }
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully. Any stock quantity change was recorded in the inventory log.');

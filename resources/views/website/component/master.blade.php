@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('web_title', 'Customer account') · {{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</title>
+    <title>@yield('web_title', 'Customer account') · {{ $shopSettings?->shop_name ?: 'SK Coffee' }}</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -152,7 +152,7 @@
             @else
                 <span class="p-2 rounded-circle me-2 d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;background-color:var(--light-green-bg);color:var(--primary-green)"><i class="bi bi-cup-hot-fill fs-5"></i></span>
             @endif
-            {{ $shopSettings?->shop_name ?: 'Coffee Corner' }}
+            {{ $shopSettings?->shop_name ?: 'SK Coffee' }}
         </a>
     </header>
 

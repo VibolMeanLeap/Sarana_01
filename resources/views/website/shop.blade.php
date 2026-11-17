@@ -519,7 +519,7 @@
             </div>
             <div class="p-3 p-lg-3 d-flex flex-column flex-grow-1">
               <div class="small text-success fw-semibold mb-1">
-                {{ $product->category->category_name ?? 'Coffee Corner' }}</div>
+                {{ $product->category->category_name ?? 'SK Coffee' }}</div>
               <h3 class="h6 shop-product-name mb-2"><a class="text-decoration-none text-reset"
                   href="{{ route('web.product.show', $product->product_id) }}">{{ $product->product_name }}</a></h3>
               <p class="small text-muted flex-grow-1 mb-3">

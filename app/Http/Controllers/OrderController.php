@@ -10,7 +10,7 @@ use App\Models\PaymentMethod;
 use App\Models\OrderReviewFlag;
 use App\Models\StockLog;
 use App\Services\AdminActionCountService;
-use Carbon\Carbon;
+use App\Support\AdminDateFilter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -28,8 +28,10 @@ class OrderController extends Controller
             'order_status' => ['nullable', 'in:pending,confirmed,preparing,ready,out_for_delivery,completed,cancelled'],
             'source' => ['nullable', 'in:pos,website'],
             'review_status' => ['nullable', 'in:open,clear'],
+            'date_preset' => ['nullable', 'in:today,week,month,all,custom'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            // Keep legacy period URLs working while new links use date_preset.
             'period' => ['nullable', 'in:today,week,month'],
             'sort_by' => ['nullable', 'in:order_date,order_id,final_price'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
@@ -80,24 +82,16 @@ class OrderController extends Controller
         } elseif (($validated['review_status'] ?? null) === 'clear') {
             $query->whereDoesntHave('openReviewFlags');
         }
-        $period = $validated['period'] ?? null;
-        if ($period) {
-            $periodStart = match ($period) {
-                'today' => today()->toDateString(),
-                'week' => now()->startOfWeek(Carbon::MONDAY)->toDateString(),
-                'month' => now()->startOfMonth()->toDateString(),
-            };
-            $periodEnd = today()->toDateString();
-            $query->whereDate('order_date', '>=', $periodStart)
-                ->whereDate('order_date', '<=', $periodEnd);
-        } else {
-            if (! empty($validated['start_date'])) {
-                $query->whereDate('order_date', '>=', $validated['start_date']);
-            }
-            if (! empty($validated['end_date'])) {
-                $query->whereDate('order_date', '<=', $validated['end_date']);
-            }
-        }
+        // Use the same shared date-preset resolver as Product Sales, Reports,
+        // Receipt Corrections, and the other admin list pages. Legacy ?period=
+        // links remain supported for existing bookmarks.
+        $dateFilter = AdminDateFilter::resolve(
+            $request,
+            'start_date',
+            'end_date',
+            ['preset' => ['period']]
+        );
+        AdminDateFilter::apply($query, 'order_date', $dateFilter);
 
         $sortBy = ['order_date' => 'order_date', 'order_id' => 'order_id', 'final_price' => 'final_price'][$validated['sort_by'] ?? 'order_date'];
         $sortDirection = $validated['sort_dir'] ?? 'desc';
@@ -156,7 +150,7 @@ class OrderController extends Controller
             ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
         }
 
-        return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage'));
+        return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage', 'dateFilter'));
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\Delivery;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
+use App\Support\SecurePublicImageUpload;
 use App\Models\OrderType;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
@@ -50,9 +51,16 @@ class PosController extends Controller
             ->orderBy('payment_method_id')
             ->get();
         $deliveryFee = StoreDeliveryFee::current();
+        $isAdmin = strtolower((string) auth()->user()?->role?->role_name) === 'admin';
+        $maxDiscountPercent = (float) config(
+            $isAdmin ? 'pos.admin_max_discount_percent' : 'pos.cashier_max_discount_percent',
+            $isAdmin ? 100 : 0
+        );
+        $maxDiscountPercent = min(100, max(0, $maxDiscountPercent));
 
         return view('pos.dashboard', compact(
-            'categories', 'suppliers', 'products', 'customers', 'orderTypes', 'paymentMethods', 'deliveryFee'
+            'categories', 'suppliers', 'products', 'customers', 'orderTypes', 'paymentMethods',
+            'deliveryFee', 'isAdmin', 'maxDiscountPercent'
         ));
     }
 
@@ -119,6 +127,8 @@ class PosController extends Controller
      */
     public function storeQuickProduct(Request $request)
     {
+        abort_unless(strtolower((string) auth()->user()?->role?->role_name) === 'admin', 403, 'Only administrators can add catalogue products.');
+
         $request->merge([
             'product_name' => trim((string) $request->input('product_name', '')),
         ]);
@@ -133,7 +143,7 @@ class PosController extends Controller
             'product_type' => 'required|in:stock,non-stock',
             'status' => 'required|in:Active,Inactive',
             'description' => 'nullable|string|max:2000',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096|dimensions:max_width=6000,max_height=6000',
         ]);
 
         if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
@@ -147,13 +157,7 @@ class PosController extends Controller
         $imageName = null;
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = now()->format('YmdHis').'_'.Str::random(8).'.'.$image->getClientOriginalExtension();
-            $imageDirectory = public_path('images');
-            if (! is_dir($imageDirectory)) {
-                mkdir($imageDirectory, 0755, true);
-            }
-            $image->move($imageDirectory, $imageName);
+            $imageName = SecurePublicImageUpload::store($request->file('image'), 'images');
         }
 
         try {
@@ -185,9 +189,7 @@ class PosController extends Controller
                 return $product->load(['category', 'supplier']);
             }, 3);
         } catch (Throwable $exception) {
-            if ($imageName && is_file(public_path('images/'.$imageName))) {
-                @unlink(public_path('images/'.$imageName));
-            }
+            SecurePublicImageUpload::delete('images', $imageName);
             throw $exception;
         }
 
@@ -230,6 +232,7 @@ class PosController extends Controller
             'order_type_id' => 'required|integer|exists:order_type,order_type_id',
             'payment_method_id' => 'required|integer|exists:payment_method,payment_method_id',
             'discount' => 'nullable|numeric|min:0|max:100',
+            'discount_reason' => 'nullable|string|max:500',
         ]);
 
         $orderType = OrderType::query()->findOrFail($validated['order_type_id']);
@@ -257,13 +260,45 @@ class PosController extends Controller
             'items.*.quantity' => 'required|integer|min:1|max:1000',
             'items.*.price_override' => 'sometimes|boolean',
             'items.*.unit_price' => 'nullable|numeric|min:0|max:99999999.99',
+            'items.*.override_reason' => 'nullable|string|max:500',
         ])->validate()['items'];
 
+        $isAdministrator = strtolower((string) auth()->user()?->role?->role_name) === 'admin';
+        $discount = round((float) ($validated['discount'] ?? 0), 2);
+        $maximumDiscount = (float) config(
+            $isAdministrator ? 'pos.admin_max_discount_percent' : 'pos.cashier_max_discount_percent',
+            $isAdministrator ? 100 : 0
+        );
+        $maximumDiscount = min(100, max(0, $maximumDiscount));
+        $discountReason = trim((string) ($validated['discount_reason'] ?? ''));
+
+        if ($discount > $maximumDiscount) {
+            throw ValidationException::withMessages([
+                'discount' => 'Your staff role is not allowed to apply this discount. Ask an administrator for approval.',
+            ]);
+        }
+
+        if ($discount > 0 && $discountReason === '') {
+            throw ValidationException::withMessages([
+                'discount_reason' => 'Enter a reason before applying a discount.',
+            ]);
+        }
+
         foreach ($items as $item) {
-            if (! empty($item['price_override']) && (! array_key_exists('unit_price', $item) || $item['unit_price'] === null || $item['unit_price'] === '')) {
-                throw ValidationException::withMessages([
-                    'cart' => 'An adjusted product price is missing. Please review the cart and try again.',
-                ]);
+            if (! empty($item['price_override'])) {
+                if (! $isAdministrator) {
+                    abort(403, 'Only administrators can override product prices.');
+                }
+                if (! array_key_exists('unit_price', $item) || $item['unit_price'] === null || $item['unit_price'] === '') {
+                    throw ValidationException::withMessages([
+                        'cart' => 'An adjusted product price is missing. Please review the cart and try again.',
+                    ]);
+                }
+                if (trim((string) ($item['override_reason'] ?? '')) === '') {
+                    throw ValidationException::withMessages([
+                        'cart' => 'Enter a reason for every adjusted product price.',
+                    ]);
+                }
             }
         }
 
@@ -291,7 +326,8 @@ class PosController extends Controller
         try {
             $result = DB::transaction(function () use (
                 $validated, $items, $methodName, $isCash, $isKhqr, $isCashOnDelivery,
-                $isDelivery, $deliveryFee, $orderChannel, $orderType, $paymentMethod, $payWay
+                $isDelivery, $deliveryFee, $orderChannel, $orderType, $paymentMethod, $payWay,
+                $discount, $discountReason
             ) {
                 $productIds = collect($items)->pluck('product_id')->map(fn ($id) => (int) $id)->unique()->sort()->values()->all();
                 $products = Product::query()
@@ -310,6 +346,7 @@ class PosController extends Controller
 
                 $subtotal = 0.0;
                 $salePrices = [];
+                $priceOverrideAudits = [];
                 foreach ($items as $item) {
                     $product = $products->get((int) $item['product_id']);
                     $quantity = (int) $item['quantity'];
@@ -320,10 +357,22 @@ class PosController extends Controller
                         ]);
                     }
 
-                    // An override is per-order only. The catalogue price is never changed.
-                    $salePrice = ! empty($item['price_override'])
+                    // An override is per-order only, administrator-authorized, and audited.
+                    $cataloguePrice = (float) $product->price;
+                    $hasPriceOverride = ! empty($item['price_override']);
+                    $salePrice = $hasPriceOverride
                         ? round((float) $item['unit_price'], 2)
-                        : (float) $product->price;
+                        : $cataloguePrice;
+                    if ($hasPriceOverride && abs($salePrice - $cataloguePrice) >= 0.005) {
+                        $priceOverrideAudits[] = [
+                            'product_id' => (int) $product->product_id,
+                            'product_name' => (string) $product->product_name,
+                            'catalogue_unit_price' => round($cataloguePrice, 2),
+                            'charged_unit_price' => round($salePrice, 2),
+                            'quantity' => $quantity,
+                            'reason' => trim((string) $item['override_reason']),
+                        ];
+                    }
                     $salePrices[$product->product_id] = $salePrice;
                     $subtotal += $salePrice * $quantity;
                 }
@@ -348,7 +397,6 @@ class PosController extends Controller
                     ]);
                 }
 
-                $discount = (float) ($validated['discount'] ?? 0);
                 $totalAmount = round($subtotal + $deliveryFee, 2);
                 $finalPrice = round($totalAmount * (1 - ($discount / 100)), 2);
                 $isPaidAtCreation = $isCash;
@@ -402,6 +450,38 @@ class PosController extends Controller
                     'note' => 'POS order received via '.str_replace('_', ' ', $orderChannel).($isDelivery ? '; home delivery requested.' : '.'),
                     'created_at' => now(),
                 ]);
+
+                foreach ($priceOverrideAudits as $overrideAudit) {
+                    OrderStatusHistory::create([
+                        'order_id' => $order->order_id,
+                        'event_type' => 'pos_price_override',
+                        'from_status' => null,
+                        'to_status' => null,
+                        'actor_type' => 'staff',
+                        'actor_id' => auth()->id(),
+                        'actor_label' => auth()->user()?->name ?? 'POS Staff',
+                        'note' => json_encode($overrideAudit, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                        'created_at' => now(),
+                    ]);
+                }
+
+                if ($discount > 0) {
+                    OrderStatusHistory::create([
+                        'order_id' => $order->order_id,
+                        'event_type' => 'pos_discount_applied',
+                        'from_status' => null,
+                        'to_status' => null,
+                        'actor_type' => 'staff',
+                        'actor_id' => auth()->id(),
+                        'actor_label' => auth()->user()?->name ?? 'POS Staff',
+                        'note' => json_encode([
+                            'discount_percent' => $discount,
+                            'discount_amount' => round($totalAmount * ($discount / 100), 2),
+                            'reason' => $discountReason,
+                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                        'created_at' => now(),
+                    ]);
+                }
 
                 // Cash on Delivery does not become revenue until the delivery is
                 // marked completed (and cash collected) by an authorised admin.

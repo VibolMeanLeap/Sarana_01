@@ -21,6 +21,7 @@ use App\Http\Controllers\PosOrderCorrectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductSalesAnalyticsController;
 use App\Http\Controllers\OrderCorrectionAuditController;
+use App\Http\Controllers\PosPriceDiscountAuditController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReportController;
@@ -335,6 +336,10 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
     // Read-only audit of POS receipt corrections and staff-confirmed cash adjustments.
     Route::get('/admin/order-corrections', [OrderCorrectionAuditController::class, 'index'])->name('admin.order-corrections.index');
     Route::get('/admin/order-corrections/export/csv', [OrderCorrectionAuditController::class, 'csv'])->name('admin.order-corrections.csv');
+
+    // Read-only audit of administrator POS price overrides and discounts.
+    Route::get('/admin/pos-price-discount-audit', [PosPriceDiscountAuditController::class, 'index'])->name('admin.pos-price-discount-audit.index');
+    Route::get('/admin/pos-price-discount-audit/export/csv', [PosPriceDiscountAuditController::class, 'csv'])->name('admin.pos-price-discount-audit.csv');
 
     // Consolidated administrator reporting (all routes inherit auth + administrator middleware).
     Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');

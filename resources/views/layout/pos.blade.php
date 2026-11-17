@@ -386,7 +386,9 @@
 </head>
 
 <body data-exchange-rate="{{ (float) ($shopSettings?->exchange_rate ?: 4100) }}"
-    data-delivery-fee="{{ number_format((float) ($deliveryFee ?? 0), 2, '.', '') }}">
+    data-delivery-fee="{{ number_format((float) ($deliveryFee ?? 0), 2, '.', '') }}"
+    data-can-manage-pricing="{{ strtolower((string) auth()->user()?->role?->role_name) === 'admin' ? '1' : '0' }}"
+    data-max-discount-percent="{{ (float) ($maxDiscountPercent ?? 0) }}">
     @php
         $isAdmin = strtolower((string) auth()->user()->role?->role_name) === 'admin';
         $homeRoute = $isAdmin ? route('admin.dashboard') : route('cashier.dashboard');
@@ -444,6 +446,7 @@
                     @csrf
                     <input type="hidden" name="cart" id="cartPayload">
                     <input type="hidden" name="discount" id="discountPayload" value="0">
+                    <input type="hidden" name="discount_reason" id="discountReasonPayload" value="">
                     <div class="modal-header border-0 pb-0">
                         <div>
                             <div class="mini-label">Finalize transaction</div>
@@ -572,6 +575,7 @@
         </div>
     </div>
 
+    @if ($isAdmin)
     <div class="modal fade" id="priceOverrideModal" tabindex="-1" aria-labelledby="priceOverrideTitle"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -592,6 +596,9 @@
                         <label for="priceOverrideValue" class="form-label fw-semibold">New unit price (USD)</label>
                         <input type="number" class="form-control form-control-lg" id="priceOverrideValue"
                             min="0" max="99999999.99" step="0.01" required>
+                        <label for="priceOverrideReason" class="form-label fw-semibold mt-3">Reason for price change</label>
+                        <textarea class="form-control" id="priceOverrideReason" rows="2" maxlength="500"
+                            placeholder="Explain why this order uses a different price" required></textarea>
                         <div class="small text-danger mt-2 d-none" id="priceOverrideError" role="alert"></div>
                         <div class="pos-modal-note mt-3"><i class="bi bi-info-circle me-1"></i>This adjustment applies
                             only to the current order. It will not change the regular product price.</div>
@@ -607,6 +614,7 @@
             </div>
         </div>
     </div>
+    @endif
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -626,6 +634,10 @@
             const previewTotal = document.getElementById('paymentPreviewTotal');
             const cartPayload = document.getElementById('cartPayload');
             const discountPayload = document.getElementById('discountPayload');
+            const discountReasonInput = document.getElementById('discountReasonInput');
+            const discountReasonPayload = document.getElementById('discountReasonPayload');
+            const canManagePricing = document.body.dataset.canManagePricing === '1';
+            const maximumDiscountPercent = Number(document.body.dataset.maxDiscountPercent || 0);
             const checkoutForm = document.getElementById('checkoutForm');
             const confirmSaleBtn = document.getElementById('confirmSaleBtn');
             const orderTypeSelect = document.getElementById('checkoutOrderType');
@@ -825,8 +837,10 @@
                             adjusted.textContent = 'Adjusted';
                             priceTools.appendChild(adjusted);
                         }
-                        priceTools.appendChild(makeButton('Edit price', 'btn-pos-price-edit', () =>
-                            openPriceOverride(item.id), 'Adjust the price for this order only'));
+                        if (canManagePricing) {
+                            priceTools.appendChild(makeButton('Edit price', 'btn-pos-price-edit', () =>
+                                openPriceOverride(item.id), 'Adjust the price for this order only'));
+                        }
                         nameCell.append(name, priceTools);
                         const qtyCell = document.createElement('td');
                         qtyCell.className = 'text-center';
@@ -858,7 +872,7 @@
 
             function calculateTotals() {
                 const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-                const discountRate = Math.min(100, Math.max(0, Number(discountEl.value || 0)));
+                const discountRate = Math.min(maximumDiscountPercent, Math.max(0, Number(discountEl.value || 0)));
                 discountEl.value = String(discountRate);
                 discountPresetButtons.forEach(button => {
                     const selected = Number(button.dataset.discountPreset) === discountRate;
@@ -914,13 +928,23 @@
                         return;
                     }
                 }
+                const selectedDiscount = Number(discountEl?.value || 0);
+                const selectedDiscountReason = (discountReasonInput?.value || '').trim();
+                if (selectedDiscount > 0 && !selectedDiscountReason) {
+                    event.preventDefault();
+                    alert('Enter a reason before applying a discount.');
+                    discountReasonInput?.focus();
+                    return;
+                }
                 cartPayload.value = JSON.stringify(cart.map(item => ({
                     product_id: Number(item.id),
                     quantity: item.qty,
                     price_override: Boolean(item.priceOverridden),
-                    unit_price: item.priceOverridden ? Number(item.price.toFixed(2)) : null
+                    unit_price: item.priceOverridden ? Number(item.price.toFixed(2)) : null,
+                    override_reason: item.priceOverridden ? (item.overrideReason || '') : null
                 })));
                 discountPayload.value = discountEl.value;
+                if (discountReasonPayload) discountReasonPayload.value = selectedDiscountReason;
                 confirmSaleBtn.disabled = true;
                 confirmSaleBtn.innerHTML =
                     '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Saving order…';
@@ -947,6 +971,8 @@
                 document.getElementById('priceOverrideProductName').textContent = item.title;
                 document.getElementById('priceOverrideBasePrice').textContent = money(item.basePrice);
                 priceOverrideValue.value = Number(item.price).toFixed(2);
+                const reasonInput = document.getElementById('priceOverrideReason');
+                if (reasonInput) reasonInput.value = item.overrideReason || '';
                 showPriceOverrideError('');
                 priceOverrideModal.show();
                 window.setTimeout(() => priceOverrideValue?.focus(), 150);
@@ -959,8 +985,16 @@
                     showPriceOverrideError('Enter a valid price between $0.00 and $99,999,999.99.');
                     return;
                 }
+                const priceWillChange = Math.abs(nextPrice - item.basePrice) >= 0.005;
+                const reason = (document.getElementById('priceOverrideReason')?.value || '').trim();
+                if (priceWillChange && !reason) {
+                    showPriceOverrideError('Enter a reason for this price change.');
+                    document.getElementById('priceOverrideReason')?.focus();
+                    return;
+                }
                 item.price = Math.round((nextPrice + Number.EPSILON) * 100) / 100;
                 item.priceOverridden = Math.abs(item.price - item.basePrice) >= 0.005;
+                item.overrideReason = item.priceOverridden ? reason : null;
                 priceOverrideModal?.hide();
                 renderCart();
             });
@@ -969,6 +1003,7 @@
                 if (!item) return;
                 item.price = item.basePrice;
                 item.priceOverridden = false;
+                item.overrideReason = null;
                 priceOverrideModal?.hide();
                 renderCart();
             });

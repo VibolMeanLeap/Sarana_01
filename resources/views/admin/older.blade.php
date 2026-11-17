@@ -76,18 +76,11 @@
 .orders-filter-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   padding: 16px 20px 18px;
   border-bottom: 1px solid #edf1ee;
 }
 
-.orders-date-panel {
-  padding: 16px 18px;
-  border: 1px solid #cde4d4;
-  border-radius: 15px;
-  background: linear-gradient(135deg, #e5f3e9 0%, #f3faf5 58%, #eaf6ee 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
-}
 
 .orders-filter-panel {
   padding: 16px 18px;
@@ -97,7 +90,7 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
 }
 
-.orders-date-heading, .orders-filter-heading {
+.orders-filter-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -106,7 +99,7 @@
   margin-bottom: 12px;
 }
 
-.orders-date-title, .orders-filter-title {
+.orders-filter-title {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -115,7 +108,6 @@
   font-weight: 850;
   margin: 0;
 }
-.orders-filter-title { color: #1b5037; }
 
 .orders-filter-icon {
   width: 29px;
@@ -129,41 +121,14 @@
   font-size: 13px;
 }
 
-.orders-period-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.orders-period-title { color: #294233; font-size: 12px; font-weight: 850; }
-.orders-period-caption { color: #617b69; font-size: 10px; margin-top: 2px; }
-.orders-period-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
-.orders-period-button {
-  border: 1px solid #bcd8c5; border-radius: 999px; padding: 8px 14px;
-  background: rgba(255,255,255,.88); color: #1f6744; font-size: 11px; font-weight: 850;
-  transition: .15s ease;
-}
-.orders-period-button:hover, .orders-period-button.is-active {
-  border-color: #176b4b; background: #176b4b; color: #fff;
-  box-shadow: 0 4px 10px rgba(23,107,75,.14);
-}
-
-.orders-date-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 220px));
-  gap: 10px;
-}
-.orders-date-field label, .orders-filter-field label {
+.orders-filter-field label {
   display: block;
   margin-bottom: 5px;
   color: #607267;
   font-size: 10px;
   font-weight: 800;
 }
-.orders-date-panel .form-control, .orders-filter-panel .form-control,
-.orders-filter-panel .form-select {
+.orders-filter-panel .form-control, .orders-filter-panel .form-select {
   min-width: 0;
   height: 40px;
   border-color: #dfe9e2;
@@ -656,14 +621,12 @@
   }
 
   .orders-filter-stack { padding: 13px; }
-  .orders-date-panel, .orders-filter-panel { padding: 13px; }
-  .orders-date-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .orders-filter-panel { padding: 13px; }
 
   .orders-filter .wide-search {
     grid-column: 1/-1;
   }
 
-  .orders-date-fields { grid-template-columns: 1fr; }
 }
 </style>
 @endpush
@@ -720,29 +683,14 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
     </div>
 
     <form action="{{ route('admin.orders.index') }}" method="GET" id="ordersFilterForm">
-      <input type="hidden" name="period" id="ordersPeriodInput" value="{{ request('period') }}">
       <div class="orders-filter-stack">
-        <section class="orders-date-panel" aria-labelledby="ordersDateFilterTitle">
-          <div class="orders-date-heading">
-            <h2 class="orders-date-title" id="ordersDateFilterTitle"><span class="orders-filter-icon"><i class="bi bi-calendar-range"></i></span>Date range</h2>
-            <span class="small fw-semibold" style="color:#52735e">Choose a quick period or set dates manually</span>
-          </div>
-          <div class="orders-period-row">
-            <div>
-              <div class="orders-period-title"><i class="bi bi-calendar3 me-1"></i>Quick date range</div>
-              <div class="orders-period-caption">The date preset applies to all order records and keeps your other filters.</div>
-            </div>
-            <div class="orders-period-buttons" role="group" aria-label="Quick order date range">
-              <button type="button" class="orders-period-button {{ request('period') === 'today' ? 'is-active' : '' }}" data-order-period="today"><i class="bi bi-sun me-1"></i>Today</button>
-              <button type="button" class="orders-period-button {{ request('period') === 'week' ? 'is-active' : '' }}" data-order-period="week"><i class="bi bi-calendar-week me-1"></i>This week</button>
-              <button type="button" class="orders-period-button {{ request('period') === 'month' ? 'is-active' : '' }}" data-order-period="month"><i class="bi bi-calendar3 me-1"></i>This month</button>
-            </div>
-          </div>
-          <div class="orders-date-fields">
-            <div class="orders-date-field"><label for="adminOrdersStartDate">From date</label><input class="form-control" id="adminOrdersStartDate" type="date" name="start_date" aria-label="Start date" value="{{ request('start_date') }}"></div>
-            <div class="orders-date-field"><label for="adminOrdersEndDate">To date</label><input class="form-control" id="adminOrdersEndDate" type="date" name="end_date" aria-label="End date" value="{{ request('end_date') }}"></div>
-          </div>
-        </section>
+        @include('admin.partials.date-filter-panel', [
+            'dateFilter' => $dateFilter,
+            'dateFromField' => 'start_date',
+            'dateToField' => 'end_date',
+            'dateFilterTitle' => 'Order date range',
+            'dateFilterHint' => 'Filter orders by today, this week, this month, all time, or a custom date range.',
+        ])
 
         <section class="orders-filter-panel" aria-labelledby="ordersOptionFilterTitle">
           <div class="orders-filter-heading">
@@ -808,25 +756,6 @@ $orderStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_deliver
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const ordersFilterForm = document.getElementById('ordersFilterForm');
-  const ordersPeriodInput = document.getElementById('ordersPeriodInput');
-  document.querySelectorAll('[data-order-period]').forEach((button) => {
-    button.addEventListener('click', () => {
-      if (!ordersFilterForm || !ordersPeriodInput) return;
-      ordersPeriodInput.value = button.dataset.orderPeriod || '';
-      const startDate = ordersFilterForm.querySelector('[name="start_date"]');
-      const endDate = ordersFilterForm.querySelector('[name="end_date"]');
-      if (startDate) startDate.value = '';
-      if (endDate) endDate.value = '';
-      ordersFilterForm.requestSubmit();
-    });
-  });
-  ['start_date', 'end_date'].forEach((field) => {
-    ordersFilterForm?.querySelector(`[name="${field}"]`)?.addEventListener('change', () => {
-      if (ordersPeriodInput) ordersPeriodInput.value = '';
-    });
-  });
-
   const statusLabels = {
     pending: 'PEND', confirmed: 'CONF', preparing: 'PREP', ready: 'READY',
     out_for_delivery: 'DISP', completed: 'DONE', cancelled: 'CXL'

@@ -475,7 +475,7 @@
 @section('content')
 @php
 $firstName = collect(preg_split('/\s+/', trim(auth()->user()->name ?? 'there')))->first() ?: 'there';
-$shopName = $shopSettings?->shop_name ?: 'Coffee Corner';
+$shopName = $shopSettings?->shop_name ?: 'SK Coffee';
 @endphp
 <div class="d-flex flex-column gap-4">
   @include('admin.partials.dashboard-date-filter')

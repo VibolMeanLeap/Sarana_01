@@ -9,9 +9,11 @@
             <p class="text-muted mb-0">Build a cart, choose the customer and payment method, then save the sale.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <button type="button" class="btn btn-pos" data-bs-toggle="modal" data-bs-target="#quickProductModal">
-                <i class="bi bi-plus-circle me-1"></i>Add product
-            </button>
+            @if ($isAdmin)
+                <button type="button" class="btn btn-pos" data-bs-toggle="modal" data-bs-target="#quickProductModal">
+                    <i class="bi bi-plus-circle me-1"></i>Add product
+                </button>
+            @endif
             <button type="button" class="btn btn-pos-outline" id="refreshPosBtn"
                 data-catalog-url="{{ route('pos.catalog.products') }}"
                 title="Refresh products and stock only; keep the current cart">
@@ -132,22 +134,33 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label for="discountInput" class="text-muted mb-0">Discount (%)</label>
-                            <input type="number" id="discountInput" class="form-control form-control-sm text-end"
-                                value="0" min="0" max="100" step="5" style="width:82px"
-                                inputmode="numeric" aria-describedby="discountStepHelp">
+                            @if ($isAdmin)
+                                <input type="number" id="discountInput" class="form-control form-control-sm text-end"
+                                    value="0" min="0" max="{{ $maxDiscountPercent }}" step="5" style="width:82px"
+                                    inputmode="numeric" aria-describedby="discountStepHelp">
+                            @else
+                                <input type="number" id="discountInput" class="form-control form-control-sm text-end"
+                                    value="0" min="0" max="0" step="1" style="width:82px" readonly
+                                    aria-describedby="discountStepHelp">
+                            @endif
                         </div>
-                        <div class="d-flex flex-wrap gap-2" role="group" aria-label="Discount presets">
-                            <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn active"
-                                data-discount-preset="0">No discount</button>
-                            <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn"
-                                data-discount-preset="10">10%</button>
-                            <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn"
-                                data-discount-preset="20">20%</button>
-                            <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn"
-                                data-discount-preset="30">30%</button>
-                        </div>
-                        <small id="discountStepHelp" class="text-muted d-block mt-1">Use the arrows to adjust by 5% per
-                            step.</small>
+                        @if ($isAdmin)
+                            <div class="d-flex flex-wrap gap-2" role="group" aria-label="Discount presets">
+                                <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn active"
+                                    data-discount-preset="0">No discount</button>
+                                @foreach ([10, 20, 30] as $preset)
+                                    @if ($maxDiscountPercent >= $preset)
+                                        <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn"
+                                            data-discount-preset="{{ $preset }}">{{ $preset }}%</button>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <label for="discountReasonInput" class="form-label small text-muted mt-2 mb-1">Discount reason (required when discount is used)</label>
+                            <input type="text" id="discountReasonInput" class="form-control form-control-sm"
+                                maxlength="500" placeholder="e.g. Customer promotion / manager approval">
+                        @else
+                            <small id="discountStepHelp" class="text-muted d-block mt-1">Discounts require administrator approval.</small>
+                        @endif
                     </div>
                     <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal</span><strong
                             id="subTotal">$0.00</strong></div>
@@ -172,6 +185,7 @@
         </div>
     </div>
 
+    @if ($isAdmin)
     <div class="modal fade" id="quickProductModal" tabindex="-1" aria-labelledby="quickProductTitle"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -262,7 +276,7 @@
                                 <label for="quickProductImage" class="form-label fw-semibold">Product image</label>
                                 <input type="file" class="form-control" id="quickProductImage" name="image"
                                     accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp">
-                                <small class="form-text text-muted">JPG, PNG, GIF or WEBP · maximum 4 MB</small>
+                                <small class="form-text text-muted">JPEG, PNG, GIF or WEBP · maximum 4 MB</small>
                             </div>
                         </div>
                         <div class="mb-2">
@@ -283,4 +297,5 @@
             </div>
         </div>
     </div>
+    @endif
 @endsection

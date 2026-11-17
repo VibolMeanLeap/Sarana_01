@@ -548,6 +548,111 @@
         }
     </style>
     @stack('styles')
+    <style id="admin-collapsible-navigation">
+        .sidebar-navigation {
+            min-height: 0;
+            overflow-y: auto;
+            padding: 0 2px 12px;
+            scrollbar-width: thin;
+            scrollbar-color: #d5e1d8 transparent;
+        }
+
+        .sidebar-navigation .nav-label {
+            padding: 11px 12px 7px;
+        }
+
+        .nav-group {
+            margin: 4px 0;
+        }
+
+        .nav-group-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 12px;
+            border-radius: 11px;
+            color: #536259;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            list-style: none;
+            user-select: none;
+            transition: background .18s ease, color .18s ease;
+        }
+
+        .nav-group-toggle::-webkit-details-marker {
+            display: none;
+        }
+
+        .nav-group-toggle:hover {
+            background: #f4f7f5;
+            color: var(--cc-green);
+        }
+
+        .nav-group-toggle.group-active {
+            background: #f0f6f1;
+            color: var(--cc-green-dark);
+        }
+
+        .nav-group-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .nav-group-title > i {
+            width: 20px;
+            text-align: center;
+            color: #829087;
+            font-size: 17px;
+        }
+
+        .nav-group-toggle.group-active .nav-group-title > i {
+            color: var(--cc-green);
+        }
+
+        .nav-group-chevron {
+            color: #96a39a;
+            font-size: 12px;
+            transition: transform .18s ease;
+        }
+
+        .nav-group[open] > .nav-group-toggle .nav-group-chevron {
+            transform: rotate(180deg);
+        }
+
+        .nav-group-toggle:focus-visible {
+            outline: 2px solid #5da47b;
+            outline-offset: 2px;
+        }
+
+        .nav-group-items {
+            margin: 3px 0 8px 18px;
+            padding: 3px 0 3px 9px;
+            border-left: 1px solid #e1ebe4;
+            gap: 2px;
+        }
+
+        .nav-group-items a {
+            padding: 9px 10px;
+            gap: 10px;
+            font-size: 12.5px;
+        }
+
+        .nav-group-items a i {
+            font-size: 15px;
+            width: 18px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .nav-group-toggle,
+            .nav-group-chevron {
+                transition: none;
+            }
+        }
+    </style>
     <style id="admin-green-filter-theme">
         :root { --cc-bg: #edf4ef; --cc-green-soft: #e4f1e8; --cc-line: #dce9df; }
         body { background: #edf4ef; }
@@ -609,81 +714,132 @@
                 <span><span class="brand-name d-block">{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</span><span
                         class="brand-caption">Management workspace</span></span>
             </a>
-            <div class="nav-label">Workspace</div>
-            <nav class="app-nav">
-                <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin') ? 'active' : '' }}"><i
-                        class="bi bi-grid-1x2-fill"></i>Overview</a>
-                <a href="{{ route('pos.dashboard') }}" class="{{ request()->is('pos*') ? 'active' : '' }}"><i
-                        class="bi bi-shop-window"></i>Point of Sale</a>
-            </nav>
-            <div class="nav-label">Catalog</div>
-            <nav class="app-nav">
-                <a href="{{ route('admin.product') }}"
-                    class="{{ request()->is('admin/product*') || request()->is('products*') ? 'active' : '' }}"><i
-                        class="bi bi-cup-straw"></i>Products</a>
-                <a href="{{ route('admin.category') }}"
-                    class="{{ request()->is('admin/category*') || request()->is('categories*') ? 'active' : '' }}"><i
-                        class="bi bi-collection"></i>Categories</a>
-                <a href="{{ route('offer.list') }}" class="{{ request()->is('admin/offer*') ? 'active' : '' }}"><i
-                        class="bi bi-tags"></i>Offers</a>
-            </nav>
-            <div class="nav-label">Operations</div>
-            <nav class="app-nav">
-                <a href="{{ route('admin.orders.index') }}"
-                    class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i
-                        class="bi bi-receipt"></i><span>Orders</span><span class="nav-action-count"
-                        data-action-count="orders" title="Orders waiting for review"
-                        @if (($adminActionCounts['orders'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['orders'] ?? 0) }}{{ ($adminActionCounts['orders'] ?? 0) > 99 ? '+' : '' }}</span></a>
-                <a href="{{ route('admin.product-sales.index') }}"
-                    class="{{ request()->is('admin/product-sales*') ? 'active' : '' }}"><i
-                        class="bi bi-bar-chart-line"></i>Product sales</a>
-                <a href="{{ route('admin.order-corrections.index') }}"
-                    class="{{ request()->is('admin/order-corrections*') ? 'active' : '' }}"><i
-                        class="bi bi-journal-check"></i>Receipt corrections</a>
-                <a href="{{ route('purchase.index') }}"
-                    class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i
-                        class="bi bi-cart-check"></i>Purchases</a>
-                <a href="{{ route('inventory.index') }}"
-                    class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i
-                        class="bi bi-box-seam"></i><span>Inventory & stock</span><span class="nav-action-count"
-                        data-action-count="inventory" title="Active stock-tracked products out of stock"
-                        @if (($adminActionCounts['inventory'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['inventory'] ?? 0) }}{{ ($adminActionCounts['inventory'] ?? 0) > 99 ? '+' : '' }}</span></a>
-                <a href="{{ route('expense_income.index') }}"
-                    class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i
-                        class="bi bi-cash-stack"></i>Sales & expenses</a>
-                <a href="{{ route('reports.index') }}"
-                    class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i
-                        class="bi bi-graph-up-arrow"></i>Reports & analytics</a>
-                <a href="{{ route('delivery.index') }}"
-                    class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i
-                        class="bi bi-truck"></i><span>Delivery</span><span class="nav-action-count"
-                        data-action-count="delivery" title="Active deliveries"
-                        @if (($adminActionCounts['delivery'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['delivery'] ?? 0) }}{{ ($adminActionCounts['delivery'] ?? 0) > 99 ? '+' : '' }}</span></a>
-                <a href="{{ route('reviews.index') }}"
-                    class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i
-                        class="bi bi-star"></i><span>Reviews</span><span class="nav-action-count"
-                        data-action-count="reviews" title="Reviews awaiting approval"
-                        @if (($adminActionCounts['reviews'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['reviews'] ?? 0) }}{{ ($adminActionCounts['reviews'] ?? 0) > 99 ? '+' : '' }}</span></a>
-                <a href="{{ route('admin.customer-service.index') }}"
-                    class="{{ request()->is('admin/customer-service*') ? 'active' : '' }}"><i
-                        class="bi bi-chat-square-text"></i><span>Customer enquiries</span><span class="nav-action-count"
-                        data-action-count="enquiries" title="Unread customer enquiries or replies"
-                        @if (($adminActionCounts['enquiries'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['enquiries'] ?? 0) }}{{ ($adminActionCounts['enquiries'] ?? 0) > 99 ? '+' : '' }}</span></a>
-            </nav>
-            <div class="nav-label">People & settings</div>
-            <nav class="app-nav">
-                <a href="{{ route('supplier.list') }}"
-                    class="{{ request()->is('admin/supplier*') ? 'active' : '' }}"><i
-                        class="bi bi-truck-front"></i>Suppliers</a>
-                <a href="{{ route('auth.list') }}" class="{{ request()->is('admin/user*') ? 'active' : '' }}"><i
-                        class="bi bi-person-vcard"></i>Customer accounts</a>
-                <a href="{{ route('setting.list') }}"
-                    class="{{ request()->is('admin/meanleap/setting*') ? 'active' : '' }}"><i
-                        class="bi bi-sliders"></i>Settings & staff management</a>
-                <a href="{{ route('admin.backups.index') }}"
-                    class="{{ request()->is('admin/backups*') ? 'active' : '' }}"><i
-                        class="bi bi-database-lock"></i>Backups & restore</a>
-            </nav>
+            @php
+                $catalogNavActive = request()->is('admin/product', 'admin/product/*', 'products*', 'admin/category*', 'categories*', 'admin/offer*');
+                $customerNavActive = request()->is('admin/user*', 'admin/customer-service*', 'admin/reviews*');
+                $salesNavActive = request()->is('admin/orders*', 'admin/olders*', 'admin/product-sales*', 'admin/order-corrections*', 'admin/pos-price-discount-audit*');
+                $operationsNavActive = request()->is('admin/purchases*', 'admin/inventory*', 'admin/expense-income*', 'admin/reports*', 'admin/delivery*');
+                $adminNavActive = request()->is('admin/supplier*', 'admin/meanleap/setting*', 'admin/backups*');
+            @endphp
+
+            <div class="sidebar-navigation">
+                <div class="nav-label">Workspace</div>
+                <nav class="app-nav">
+                    <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin') ? 'active' : '' }}"><i
+                            class="bi bi-grid-1x2-fill"></i><span>Overview</span></a>
+                    <a href="{{ route('pos.dashboard') }}" class="{{ request()->is('pos*') ? 'active' : '' }}"><i
+                            class="bi bi-shop-window"></i><span>Point of Sale</span></a>
+                </nav>
+
+                <details class="nav-group" {{ $catalogNavActive ? 'open' : '' }}>
+                    <summary class="nav-group-toggle {{ $catalogNavActive ? 'group-active' : '' }}">
+                        <span class="nav-group-title"><i class="bi bi-grid"></i><span>Catalog management</span></span>
+                        <i class="bi bi-chevron-down nav-group-chevron"></i>
+                    </summary>
+                    <nav class="app-nav nav-group-items">
+                        <a href="{{ route('admin.product') }}"
+                            class="{{ request()->is('admin/product', 'admin/product/*', 'products*') ? 'active' : '' }}"><i
+                                class="bi bi-cup-straw"></i><span>Products</span></a>
+                        <a href="{{ route('admin.category') }}"
+                            class="{{ request()->is('admin/category*') || request()->is('categories*') ? 'active' : '' }}"><i
+                                class="bi bi-collection"></i><span>Categories</span></a>
+                        <a href="{{ route('offer.list') }}"
+                            class="{{ request()->is('admin/offer*') ? 'active' : '' }}"><i
+                                class="bi bi-tags"></i><span>Offers</span></a>
+                    </nav>
+                </details>
+
+                <details class="nav-group" {{ $customerNavActive ? 'open' : '' }}>
+                    <summary class="nav-group-toggle {{ $customerNavActive ? 'group-active' : '' }}">
+                        <span class="nav-group-title"><i class="bi bi-people"></i><span>Customers &amp; support</span></span>
+                        <i class="bi bi-chevron-down nav-group-chevron"></i>
+                    </summary>
+                    <nav class="app-nav nav-group-items">
+                        <a href="{{ route('auth.list') }}"
+                            class="{{ request()->is('admin/user*') ? 'active' : '' }}"><i
+                                class="bi bi-person-vcard"></i><span>Customer accounts</span></a>
+                        <a href="{{ route('admin.customer-service.index') }}"
+                            class="{{ request()->is('admin/customer-service*') ? 'active' : '' }}"><i
+                                class="bi bi-chat-square-text"></i><span>Customer enquiries</span><span class="nav-action-count"
+                                data-action-count="enquiries" title="Unread customer enquiries or replies"
+                                @if (($adminActionCounts['enquiries'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['enquiries'] ?? 0) }}{{ ($adminActionCounts['enquiries'] ?? 0) > 99 ? '+' : '' }}</span></a>
+                        <a href="{{ route('reviews.index') }}"
+                            class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i
+                                class="bi bi-star"></i><span>Reviews</span><span class="nav-action-count"
+                                data-action-count="reviews" title="Reviews awaiting approval"
+                                @if (($adminActionCounts['reviews'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['reviews'] ?? 0) }}{{ ($adminActionCounts['reviews'] ?? 0) > 99 ? '+' : '' }}</span></a>
+                    </nav>
+                </details>
+
+                <details class="nav-group" {{ $salesNavActive ? 'open' : '' }}>
+                    <summary class="nav-group-toggle {{ $salesNavActive ? 'group-active' : '' }}">
+                        <span class="nav-group-title"><i class="bi bi-receipt-cutoff"></i><span>Sales &amp; audit</span></span>
+                        <i class="bi bi-chevron-down nav-group-chevron"></i>
+                    </summary>
+                    <nav class="app-nav nav-group-items">
+                        <a href="{{ route('admin.orders.index') }}"
+                            class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i
+                                class="bi bi-receipt"></i><span>Orders</span><span class="nav-action-count"
+                                data-action-count="orders" title="Orders waiting for review"
+                                @if (($adminActionCounts['orders'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['orders'] ?? 0) }}{{ ($adminActionCounts['orders'] ?? 0) > 99 ? '+' : '' }}</span></a>
+                        <a href="{{ route('admin.product-sales.index') }}"
+                            class="{{ request()->is('admin/product-sales*') ? 'active' : '' }}"><i
+                                class="bi bi-bar-chart-line"></i><span>Product sales</span></a>
+                        <a href="{{ route('admin.order-corrections.index') }}"
+                            class="{{ request()->is('admin/order-corrections*') ? 'active' : '' }}"><i
+                                class="bi bi-journal-check"></i><span>Receipt corrections</span></a>
+                        <a href="{{ route('admin.pos-price-discount-audit.index') }}"
+                            class="{{ request()->is('admin/pos-price-discount-audit*') ? 'active' : '' }}"><i
+                                class="bi bi-tags"></i><span>POS price &amp; discount audit</span></a>
+                    </nav>
+                </details>
+
+                <details class="nav-group" {{ $operationsNavActive ? 'open' : '' }}>
+                    <summary class="nav-group-toggle {{ $operationsNavActive ? 'group-active' : '' }}">
+                        <span class="nav-group-title"><i class="bi bi-boxes"></i><span>Inventory &amp; operations</span></span>
+                        <i class="bi bi-chevron-down nav-group-chevron"></i>
+                    </summary>
+                    <nav class="app-nav nav-group-items">
+                        <a href="{{ route('purchase.index') }}"
+                            class="{{ request()->is('admin/purchases*') ? 'active' : '' }}"><i
+                                class="bi bi-cart-check"></i><span>Purchases</span></a>
+                        <a href="{{ route('inventory.index') }}"
+                            class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i
+                                class="bi bi-box-seam"></i><span>Inventory &amp; stock</span><span class="nav-action-count"
+                                data-action-count="inventory" title="Active stock-tracked products out of stock"
+                                @if (($adminActionCounts['inventory'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['inventory'] ?? 0) }}{{ ($adminActionCounts['inventory'] ?? 0) > 99 ? '+' : '' }}</span></a>
+                        <a href="{{ route('expense_income.index') }}"
+                            class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i
+                                class="bi bi-cash-stack"></i><span>Sales &amp; expenses</span></a>
+                        <a href="{{ route('delivery.index') }}"
+                            class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i
+                                class="bi bi-truck"></i><span>Delivery</span><span class="nav-action-count"
+                                data-action-count="delivery" title="Active deliveries"
+                                @if (($adminActionCounts['delivery'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['delivery'] ?? 0) }}{{ ($adminActionCounts['delivery'] ?? 0) > 99 ? '+' : '' }}</span></a>
+                        <a href="{{ route('reports.index') }}"
+                            class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i
+                                class="bi bi-graph-up-arrow"></i><span>Reports &amp; analytics</span></a>
+                    </nav>
+                </details>
+
+                <details class="nav-group" {{ $adminNavActive ? 'open' : '' }}>
+                    <summary class="nav-group-toggle {{ $adminNavActive ? 'group-active' : '' }}">
+                        <span class="nav-group-title"><i class="bi bi-gear"></i><span>Administration</span></span>
+                        <i class="bi bi-chevron-down nav-group-chevron"></i>
+                    </summary>
+                    <nav class="app-nav nav-group-items">
+                        <a href="{{ route('supplier.list') }}"
+                            class="{{ request()->is('admin/supplier*') ? 'active' : '' }}"><i
+                                class="bi bi-truck-front"></i><span>Suppliers</span></a>
+                        <a href="{{ route('setting.list') }}"
+                            class="{{ request()->is('admin/meanleap/setting*') ? 'active' : '' }}"><i
+                                class="bi bi-sliders"></i><span>Settings &amp; staff management</span></a>
+                        <a href="{{ route('admin.backups.index') }}"
+                            class="{{ request()->is('admin/backups*') ? 'active' : '' }}"><i
+                                class="bi bi-database-lock"></i><span>Backups &amp; restore</span></a>
+                    </nav>
+                </details>
+            </div>
             <div class="sidebar-bottom">
                 <div class="sidebar-note"><strong><i class="bi bi-shield-check me-1"></i>Administrator
                         workspace</strong>Signed-in staff tools are protected by role-based access.</div>
