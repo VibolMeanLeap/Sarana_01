@@ -55,7 +55,9 @@ return [
 
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
-        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME', 'Sa1ona_Bot'),
+        // Public Telegram username customers can use to contact the administrator.
+        'contact_admin_username' => env('TELEGRAM_CONTACT_ADMIN_USERNAME', 'Cho3Nab'),
         'group_chat_id' => env('TELEGRAM_GROUP_CHAT_ID'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
         // Cambodia default country calling code; international +numbers are preserved.

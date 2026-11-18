@@ -138,11 +138,14 @@
             text-decoration: underline;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('assets/css/telegram-support-widget.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
 
 <body>
+
+    @include('partials.telegram-support-widget')
 
     <!-- Top Simple Brand Bar -->
     <header class="py-4 text-center">

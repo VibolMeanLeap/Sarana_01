@@ -1419,5 +1419,22 @@
     "Adding…": "កំពុងបន្ថែម…",
     "Dismiss notification": "បិទការជូនដំណឹង",
     "The saved store delivery fee is ": "តម្លៃដឹកជញ្ជូនដែលបានរក្សាទុកគឺ ",
-    " and applies only when Home delivery is selected.": " ហើយអនុវត្តតែនៅពេលជ្រើសរើសការដឹកជញ្ជូនដល់ផ្ទះប៉ុណ្ណោះ។"
+    " and applies only when Home delivery is selected.": " ហើយអនុវត្តតែនៅពេលជ្រើសរើសការដឹកជញ្ជូនដល់ផ្ទះប៉ុណ្ណោះ។",
+    "Order sound alerts": "ការជូនដំណឹងសំឡេងអំពីការបញ្ជាទិញ",
+    "Sound off": "បិទសំឡេង",
+    "Sound on": "បើកសំឡេង",
+    "Enable sound for new website orders": "បើកសំឡេងសម្រាប់ការបញ្ជាទិញថ្មីពីគេហទំព័រ",
+    "Volume": "កម្រិតសំឡេង",
+    "Test sound": "សាកល្បងសំឡេង",
+    "Muted": "បានបិទសំឡេង",
+    "Enabled": "បានបើក",
+    "Sound is muted. Visual order notifications remain enabled.": "សំឡេងត្រូវបានបិទ។ ការជូនដំណឹងអំពីការបញ្ជាទិញនៅតែបង្ហាញដដែល។",
+    "Sound enabled for new website orders.": "បានបើកសំឡេងសម្រាប់ការបញ្ជាទិញថ្មីពីគេហទំព័រ។",
+    "Sound is enabled. Click Test sound once if your browser blocks audio.": "សំឡេងត្រូវបានបើក។ សូមចុច សាកល្បងសំឡេង ម្តង ប្រសិនបើកម្មវិធីរុករករារាំងសំឡេង។",
+    "Sound test played. New website order alerts are ready.": "បានសាកល្បងសំឡេងរួចរាល់។ ការជូនដំណឹងសំឡេងសម្រាប់ការបញ្ជាទិញថ្មីអាចប្រើបានហើយ។",
+    "Sound is enabled. If your browser blocks audio after reload, click Test sound once.": "សំឡេងត្រូវបានបើក។ ប្រសិនបើកម្មវិធីរុករករារាំងសំឡេងក្រោយពេលផ្ទុកទំព័រឡើងវិញ សូមចុច សាកល្បងសំឡេង ម្តង។",
+    "Sound is off. Enable it to hear new website orders.": "សំឡេងត្រូវបានបិទ។ សូមបើកវា ដើម្បីឮសំឡេងជូនដំណឹងការបញ្ជាទិញថ្មីពីគេហទំព័រ។",
+    "This browser does not support notification audio. Visual alerts will continue to work.": "កម្មវិធីរុករកនេះមិនគាំទ្រសំឡេងជូនដំណឹងទេ។ ការជូនដំណឹងដែលបង្ហាញលើអេក្រង់នៅតែដំណើរការដដែល។",
+    "Audio could not be initialized. Visual alerts will continue to work.": "មិនអាចចាប់ផ្តើមប្រព័ន្ធសំឡេងបានទេ។ ការជូនដំណឹងដែលបង្ហាញលើអេក្រង់នៅតែដំណើរការដដែល។",
+    "Click Test sound once to allow your browser to play order alerts.": "សូមចុច សាកល្បងសំឡេង ម្តង ដើម្បីអនុញ្ញាតឱ្យកម្មវិធីរុករកចាក់សំឡេងជូនដំណឹងការបញ្ជាទិញ។"
 }

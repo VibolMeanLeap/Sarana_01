@@ -724,6 +724,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('assets/css/telegram-support-widget.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
@@ -929,6 +930,8 @@
             </div>
         </div>
     </nav>
+    @include('partials.telegram-support-widget')
+
     {{-- container --}}
     @yield('content')
     @if (session('cart_success') || session('cart_error'))

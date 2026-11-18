@@ -88,11 +88,24 @@ class TelegramWebhookController extends Controller
                         $this->sendCustomerNoticeSafely(
                             $telegram,
                             $chatId,
-                            'Welcome to SK Coffee. Please open the private Telegram link shown on the website registration page to connect your account.'
+                            "☕ Welcome to SK Coffee!\n\nWe are happy to help you. To verify your customer account, open the private Telegram link from the website registration page.\n\nNeed assistance? Tap Contact Admin below.",
+                            $this->contactAdminKeyboard()
                         );
                     } else {
                         try {
+                            // Keep the existing secure OTP flow intact. This call still
+                            // binds the chat and sends the phone-sharing request keyboard.
                             $customerTelegramOtp->handleTelegramStart($linkToken, $chatId);
+
+                            // Inline URL buttons cannot be combined with Telegram's
+                            // request_contact reply keyboard, so show admin contact
+                            // in a separate message instead of replacing that keyboard.
+                            $this->sendCustomerNoticeSafely(
+                                $telegram,
+                                $chatId,
+                                'Need help with account verification? Contact our administrator here:',
+                                $this->contactAdminKeyboard()
+                            );
                         } catch (Throwable $exception) {
                             Log::notice('Customer Telegram verification start was rejected.', [
                                 'exception' => $exception::class,
@@ -101,7 +114,8 @@ class TelegramWebhookController extends Controller
                             $this->sendCustomerNoticeSafely(
                                 $telegram,
                                 $chatId,
-                                'This registration link is invalid, expired, or already used. Return to the SK Coffee website and generate a new Telegram link.'
+                                'This registration link is invalid, expired, or already used. Return to the SK Coffee website and generate a new Telegram link. If you need help, contact our administrator below.',
+                                $this->contactAdminKeyboard()
                             );
                         }
                     }
@@ -194,6 +208,27 @@ class TelegramWebhookController extends Controller
         return response()->json(['ok' => true]);
     }
 
+
+    /** Build a safe Telegram inline URL button for the configured support account. */
+    private function contactAdminKeyboard(): array
+    {
+        $username = ltrim(trim((string) config('services.telegram.contact_admin_username', 'Cho3Nab')), '@');
+
+        // Telegram usernames contain only letters, numbers, and underscores.
+        // Do not construct a URL from an invalid or unexpected configuration value.
+        if (preg_match('/^[A-Za-z0-9_]{5,32}$/', $username) !== 1) {
+            return [];
+        }
+
+        return [
+            'inline_keyboard' => [[
+                [
+                    'text' => '👨‍💼 Contact Admin',
+                    'url' => 'https://t.me/'.$username,
+                ],
+            ]],
+        ];
+    }
 
     private function sendCustomerNoticeSafely(TelegramBotService $telegram, string $chatId, string $text, array $replyMarkup = []): void
     {
