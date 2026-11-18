@@ -425,7 +425,7 @@
               <div class="offer-banner-price">
                 <strong>${{ number_format((float)$offer->new_price, 2) }}</strong><del>${{ number_format((float)$offerProduct->price, 2) }}</del>
               </div>
-              <form method="POST" action="{{ route('web.cart.add', $offerProduct->product_id) }}"
+              <form method="POST" action="{{ route('web.cart.add', $offerProduct->product_id) }}" data-cart-ajax="true"
                 class="d-inline-block">
                 @csrf
                 <button class="offer-banner-btn" type="submit"><i class="bi bi-bag-plus me-1"></i>Grab this deal <i
@@ -519,7 +519,7 @@
             </div>
             <div class="p-3 p-lg-3 d-flex flex-column flex-grow-1">
               <div class="small text-success fw-semibold mb-1">
-                {{ $product->category->category_name ?? 'SK Coffee' }}</div>
+                {{ $product->category->category_name ?? 'Coffee Corner' }}</div>
               <h3 class="h6 shop-product-name mb-2"><a class="text-decoration-none text-reset"
                   href="{{ route('web.product.show', $product->product_id) }}">{{ $product->product_name }}</a></h3>
               <p class="small text-muted flex-grow-1 mb-3">
@@ -540,7 +540,7 @@
                 <a href="{{ route('web.product.show', $product->product_id) }}"
                   class="btn btn-outline-success rounded-pill flex-shrink-0"
                   aria-label="View {{ $product->product_name }}"><i class="bi bi-eye"></i></a>
-                <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" class="flex-grow-1">
+                <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" data-cart-ajax="true" class="flex-grow-1">
                   @csrf<button class="shop-add-btn w-100" type="submit"><i class="bi bi-bag-plus me-1"></i>Add to
                     cart</button></form>
               </div>

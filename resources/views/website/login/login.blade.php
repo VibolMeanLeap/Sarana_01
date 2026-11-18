@@ -172,6 +172,9 @@
         <p class="customer-login-sub mb-0">Sign in to track your orders and enjoy a smoother checkout at
             {{ $shopSettings?->shop_name ?: 'SK Coffee' }}.</p>
     </div>
+    @if (session('status'))
+        <div class="alert alert-success py-2 small" role="status"><i class="bi bi-check-circle me-1"></i>{{ session('status') }}</div>
+    @endif
     @if (session('error'))
         <div class="alert alert-danger py-2 small">{{ session('error') }}</div>
     @endif
@@ -194,7 +197,11 @@
                     type="text" class="form-control customer-auth-input @error('phone') is-invalid @enderror"
                     value="{{ old('phone') }}" name="phone" placeholder="012 345 678" autocomplete="tel" required></div>
         </div>
-        <div class="mb-3"><label class="customer-auth-label" for="customer-password">Password</label>
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="customer-auth-label mb-0" for="customer-password">Password</label>
+                <a href="{{ route('web.password.request') }}" class="small fw-bold text-success text-decoration-none">Forgot password?</a>
+            </div>
             <div class="customer-auth-field"><i class="bi bi-lock field-icon"></i><input id="customer-password"
                     type="password" class="form-control customer-auth-input" name="password"
                     placeholder="Enter your password" autocomplete="current-password" required><button

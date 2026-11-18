@@ -89,7 +89,7 @@
                         </div>
                         <div class="d-flex gap-2 mt-2">
                             <a href="{{ route('web.product.show', $product->product_id) }}" class="btn btn-outline-success rounded-pill" aria-label="View {{ $product->product_name }}"><i class="bi bi-eye"></i></a>
-                            <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" class="flex-grow-1">
+                            <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" data-cart-ajax="true" class="flex-grow-1">
                                 @csrf
                                 <button class="btn btn-green w-100" type="submit"><i class="bi bi-bag-plus me-2"></i>Add to cart</button>
                             </form>

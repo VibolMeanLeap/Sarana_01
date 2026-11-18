@@ -21,7 +21,6 @@ use App\Http\Controllers\PosOrderCorrectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductSalesAnalyticsController;
 use App\Http\Controllers\OrderCorrectionAuditController;
-use App\Http\Controllers\PosPriceDiscountAuditController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReportController;
@@ -37,6 +36,8 @@ use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\LanguageController;
 Use App\Http\Controllers\CustomerTelegramRegistrationController;
+use App\Http\Controllers\CustomerPasswordRecoveryController;
+use App\Http\Controllers\PosPriceDiscountAuditController;
 
 // Language switching: English / Khmer
 Route::post('/language', [LanguageController::class, 'update'])
@@ -113,6 +114,18 @@ Route::post('/store/login/process', [
         'throttle:10,1',
     ])
     ->name('login');
+
+// Customer password recovery: OTP is sent only to the Telegram chat already verified on the account.
+Route::get('/store/password/forgot', [CustomerPasswordRecoveryController::class, 'requestForm'])
+    ->name('web.password.request');
+Route::post('/store/password/forgot', [CustomerPasswordRecoveryController::class, 'sendCode'])
+    ->middleware('throttle:5,10')
+    ->name('web.password.send-code');
+Route::get('/store/password/forgot/verify', [CustomerPasswordRecoveryController::class, 'verifyForm'])
+    ->name('web.password.verify');
+Route::post('/store/password/forgot/verify', [CustomerPasswordRecoveryController::class, 'resetPassword'])
+    ->middleware('throttle:5,1')
+    ->name('web.password.update');
 
 // Submit six-digit Telegram OTP
 Route::post('/store/register/verify-telegram', [
@@ -209,6 +222,22 @@ Route::get('/admin/customer-service/{contactMessage}/thread', [AdminCustomerServ
     ->whereNumber('contactMessage')->middleware('throttle:120,1')->name('admin.customer-service.thread');
 Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCustomerServiceController::class, 'threadUpdates'])
     ->whereNumber('contactMessage')->middleware('throttle:120,1')->name('admin.customer-service.thread-updates');
+    Route::get('/admin/order-corrections', [OrderCorrectionAuditController::class, 'index'])
+    ->name('admin.order-corrections.index');
+
+Route::get('/admin/order-corrections/export/csv', [OrderCorrectionAuditController::class, 'csv'])
+    ->name('admin.order-corrections.csv');
+    // POS Price & Discount Audit
+Route::get('/admin/pos-price-discount-audit', [
+    PosPriceDiscountAuditController::class,
+    'index'
+])->name('admin.pos-price-discount-audit.index');
+
+// Export POS Price & Discount Audit
+Route::get('/admin/pos-price-discount-audit/export/csv', [
+    PosPriceDiscountAuditController::class,
+    'csv'
+])->name('admin.pos-price-discount-audit.csv');
 
     // Customer-service enquiries submitted from the public storefront.
     Route::get('/admin/customer-service', [AdminCustomerServiceController::class, 'index'])->name('admin.customer-service.index');
@@ -336,10 +365,6 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
     // Read-only audit of POS receipt corrections and staff-confirmed cash adjustments.
     Route::get('/admin/order-corrections', [OrderCorrectionAuditController::class, 'index'])->name('admin.order-corrections.index');
     Route::get('/admin/order-corrections/export/csv', [OrderCorrectionAuditController::class, 'csv'])->name('admin.order-corrections.csv');
-
-    // Read-only audit of administrator POS price overrides and discounts.
-    Route::get('/admin/pos-price-discount-audit', [PosPriceDiscountAuditController::class, 'index'])->name('admin.pos-price-discount-audit.index');
-    Route::get('/admin/pos-price-discount-audit/export/csv', [PosPriceDiscountAuditController::class, 'csv'])->name('admin.pos-price-discount-audit.csv');
 
     // Consolidated administrator reporting (all routes inherit auth + administrator middleware).
     Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');

@@ -17,6 +17,7 @@ use App\Models\Review;
 use App\Models\Settings;
 use App\Models\StockLog;
 use App\Services\PayWayService;
+use App\Support\StoreDeliveryFee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +148,23 @@ class CustomerOrderController extends Controller
             'quantity' => ['sometimes', 'required', 'integer', 'min:1', 'max:100'],
         ]);
         $quantityToAdd = (int) ($validated['quantity'] ?? 1);
+        $cart = (array) $request->session()->get('web_cart', []);
+
+        $respond = function (bool $success, string $message, int $status = 200, ?string $productName = null) use ($request, $cart) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => $success,
+                    'message' => $message,
+                    'product_name' => $productName,
+                    'cart_count' => array_sum(array_map('intval', $cart)),
+                    'cart_items' => count($cart),
+                ], $status)->header('Cache-Control', 'no-store');
+            }
+
+            return $success
+                ? redirect()->back()->with('cart_success', $message)
+                : redirect()->back()->with('cart_error', $message);
+        };
 
         $product = Product::query()
             ->where('product_id', $productId)
@@ -154,23 +172,34 @@ class CustomerOrderController extends Controller
             ->first();
 
         if (! $product) {
-            return back()->with('cart_error', 'This product is no longer available. Please refresh the menu.');
+            return $respond(false, 'This product is no longer available. Please refresh the menu.', 404);
         }
 
         if ($product->isStockTracked() && (int) $product->qty < 1) {
-            return back()->with('cart_error', 'This product is currently out of stock.');
+            return $respond(false, 'This product is currently out of stock.', 422, $product->product_name);
         }
 
-        $cart = (array) $request->session()->get('web_cart', []);
         $currentQuantity = (int) ($cart[$productId] ?? 0);
         $newQuantity = $currentQuantity + $quantityToAdd;
 
         if ($product->isStockTracked() && $newQuantity > (int) $product->qty) {
-            return back()->with('cart_error', 'Only '.(int) $product->qty.' unit(s) are currently available.');
+            return $respond(false, 'Only '.(int) $product->qty.' unit(s) are currently available.', 422, $product->product_name);
         }
 
         $cart[$productId] = $newQuantity;
         $request->session()->put('web_cart', $cart);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $product->product_name.' was added to your cart.',
+                'product_name' => $product->product_name,
+                'quantity' => $newQuantity,
+                'cart_count' => array_sum(array_map('intval', $cart)),
+                'cart_items' => count($cart),
+                'cart_url' => route('web.cart'),
+            ])->header('Cache-Control', 'no-store');
+        }
 
         return redirect()->back()->with('cart_success', $product->product_name.' was added to your cart.');
     }
@@ -228,7 +257,7 @@ class CustomerOrderController extends Controller
             return redirect()->route('web.cart')->with('error', 'Online pickup/delivery options are not configured. Please contact the shop.');
         }
 
-        $deliveryFee = max(0, (float) config('services.ecommerce.delivery_fee', 0));
+        $deliveryFee = StoreDeliveryFee::current();
         $checkoutToken = (string) $request->session()->get('web_checkout_token', '');
         if ($checkoutToken === '') {
             $checkoutToken = (string) Str::uuid();
@@ -332,7 +361,7 @@ class CustomerOrderController extends Controller
                     $subtotal += $unitPrice * $quantity;
                 }
 
-                $deliveryFee = $isDelivery ? max(0, (float) config('services.ecommerce.delivery_fee', 0)) : 0.0;
+                $deliveryFee = $isDelivery ? StoreDeliveryFee::current() : 0.0;
                 $grandTotal = round($subtotal + $deliveryFee, 2);
 
                 $order = Order::create([

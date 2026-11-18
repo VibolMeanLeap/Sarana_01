@@ -1,6 +1,14 @@
 @extends('layout.web')
 @section('web_title', 'Secure checkout')
 @section('content')
+@php
+    $requestedOrderTypeId = (int) old('order_type_id', $orderTypes->first()->order_type_id);
+    $selectedOrderType = $orderTypes->firstWhere('order_type_id', $requestedOrderTypeId) ?? $orderTypes->first();
+    $selectedOrderTypeId = (int) $selectedOrderType->order_type_id;
+    $initialIsDelivery = strtolower((string) $selectedOrderType->order_name) === 'delivery';
+    $initialDeliveryFee = $initialIsDelivery ? (float) $deliveryFee : 0.0;
+    $initialGrandTotal = round((float) $subtotal + $initialDeliveryFee, 2);
+@endphp
 <style>
     .checkout-page{background:linear-gradient(180deg,#f6faf6,#fff);padding:42px 0 70px;min-height:70vh}.checkout-title{font-weight:850;letter-spacing:-.05em;color:#183326}.checkout-card{background:#fff;border:1px solid #e6eee7;border-radius:23px;box-shadow:0 16px 42px rgba(24,56,38,.05)}.checkout-card h2{font-weight:800;color:#203a2b}.checkout-control{border-radius:12px;padding:12px 14px;border-color:#dfe8e1}.checkout-control:focus{border-color:#5c9c72;box-shadow:0 0 0 4px rgba(34,128,76,.1)}.checkout-total{font-size:1.9rem;font-weight:900;color:#167549;letter-spacing:-.04em}.checkout-pay-btn{border:0;border-radius:99px;background:#1d7548;padding:14px 20px;font-weight:850}.checkout-pay-btn:disabled{opacity:.7}
 </style>
@@ -20,7 +28,7 @@
                             @php($isPickup = strtolower($type->order_name) === 'takeaway')
                             <div class="col-sm-6">
                                 <label class="border rounded-4 p-3 h-100 d-flex gap-3 align-items-start w-100" style="cursor:pointer">
-                                    <input class="form-check-input mt-1" type="radio" name="order_type_id" value="{{ $type->order_type_id }}" data-type="{{ strtolower($type->order_name) }}" @checked(old('order_type_id', $orderTypes->first()->order_type_id) == $type->order_type_id) required>
+                                    <input class="form-check-input mt-1" type="radio" name="order_type_id" value="{{ $type->order_type_id }}" data-type="{{ strtolower($type->order_name) }}" @checked($selectedOrderTypeId === (int) $type->order_type_id) required>
                                     <span><strong class="d-block">{{ $isPickup ? 'Pickup at the shop' : 'Home delivery' }}</strong><small class="text-muted">{{ $isPickup ? 'Collect your order when it is ready.' : 'We will prepare your order for delivery.' }}</small></span>
                                 </label>
                             </div>
@@ -51,9 +59,9 @@
                         </div>
                     @endforeach
                     <div class="d-flex justify-content-between py-2 mt-2"><span class="text-muted">Items subtotal</span><strong>${{ number_format($subtotal, 2) }}</strong></div>
-                    <div class="d-flex justify-content-between py-2"><span class="text-muted">Delivery fee</span><strong id="deliveryFeeDisplay">$0.00</strong></div>
-                    <div class="border-top mt-2 pt-3 d-flex justify-content-between align-items-end"><span class="fw-bold">Total to pay</span><span class="checkout-total" id="checkoutGrandTotal" data-subtotal="{{ number_format($subtotal, 2, '.', '') }}" data-delivery-fee="{{ number_format($deliveryFee, 2, '.', '') }}">${{ number_format($subtotal, 2) }}</span></div>
-                    <small class="text-muted d-block mt-2">Delivery fee applies only to home delivery. Current fee: ${{ number_format($deliveryFee, 2) }}.</small>
+                    <div class="d-flex justify-content-between py-2"><span class="text-muted">Delivery fee</span><strong id="deliveryFeeDisplay">${{ number_format($initialDeliveryFee, 2) }}</strong></div>
+                    <div class="border-top mt-2 pt-3 d-flex justify-content-between align-items-end"><span class="fw-bold">Total to pay</span><span class="checkout-total" id="checkoutGrandTotal" data-subtotal="{{ number_format($subtotal, 2, '.', '') }}" data-delivery-fee="{{ number_format($deliveryFee, 2, '.', '') }}">${{ number_format($initialGrandTotal, 2) }}</span></div>
+                    <small class="text-muted d-block mt-2">The saved store delivery fee is ${{ number_format($deliveryFee, 2) }} and applies only when Home delivery is selected.</small>
                     <button class="btn btn-success checkout-pay-btn w-100 mt-4" id="checkoutSubmit" type="submit"><i class="bi bi-lock-fill me-2"></i>Place order & generate KHQR</button>
                     <a href="{{ route('web.cart') }}" class="btn btn-link text-muted text-decoration-none w-100 mt-2">Back to cart</a>
                 </aside>

@@ -699,6 +699,7 @@
 
 <body data-admin-updates-url="{{ route('admin.operations.updates') }}"
     data-admin-orders-url="{{ route('admin.orders.index') }}"
+    data-admin-sound-user="{{ auth()->id() }}"
     data-last-website-order-id="{{ $adminLatestWebsiteOrderId ?? 0 }}">
     <div class="app-shell">
         <aside class="sidebar" id="appSidebar">
@@ -859,6 +860,37 @@
                     </div>
                 </div>
                 <div class="user-chip">
+                    <div class="dropdown admin-order-sound-control">
+                        <button class="btn btn-cc-light btn-sm dropdown-toggle" type="button" id="adminOrderSoundMenu"
+                            data-bs-toggle="dropdown" aria-expanded="false" title="Order sound alerts">
+                            <i class="bi bi-volume-mute" data-order-sound-icon aria-hidden="true"></i>
+                            <span class="d-none d-md-inline" data-order-sound-button-label>Sound off</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3 shadow border-0" aria-labelledby="adminOrderSoundMenu"
+                            style="width:min(290px,calc(100vw - 28px));border-radius:14px">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong class="small">Order sound alerts</strong>
+                                <span class="badge text-bg-light" data-order-sound-state>Muted</span>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="adminOrderSoundEnabled">
+                                <label class="form-check-label small" for="adminOrderSoundEnabled">Enable sound for new website orders</label>
+                            </div>
+                            <label for="adminOrderSoundVolume" class="form-label small fw-semibold mb-1">Volume</label>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="bi bi-volume-down text-muted" aria-hidden="true"></i>
+                                <input type="range" class="form-range mb-0" min="0" max="100" step="5" value="65"
+                                    id="adminOrderSoundVolume" aria-label="Order notification volume">
+                                <span class="small text-muted" style="min-width:34px;text-align:right" data-order-sound-volume-label>65%</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success w-100" id="adminOrderSoundTest">
+                                <i class="bi bi-play-fill me-1" aria-hidden="true"></i>Test sound
+                            </button>
+                            <div class="small text-muted mt-2" id="adminOrderSoundStatus" role="status" aria-live="polite">
+                                Sound is off. Enable it to hear new website orders.
+                            </div>
+                        </div>
+                    </div>
                     @include('partials.language-switcher')
                     <div class="avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</div>
                     <div class="user-meta">
@@ -919,6 +951,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('assets/vendors/chart.js/Chart.min.js') }}"></script>
+    <script src="{{ asset('assets/js/admin-order-sound-alert.js') }}"></script>
     <script>
         window.confirmDelete = (url, name = 'this record') => {
             if (typeof Swal === 'undefined') {
@@ -1033,6 +1066,9 @@
                     window.CoffeeCornerAdminApplyCounts(payload.counts || {});
                     const arrivals = Array.isArray(payload.new_orders) ? payload.new_orders : [];
                     arrivals.forEach(showOrderNotice);
+                    if (arrivals.length > 0) {
+                        window.CoffeeCornerPlayNewOrderSound?.();
+                    }
                     sinceOrderId = Number(payload.next_since_order_id ?? payload.latest_website_order_id ??
                         sinceOrderId);
                 } catch (error) {

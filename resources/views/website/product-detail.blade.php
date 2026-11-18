@@ -179,7 +179,7 @@
                                     ABA KHQR</span>
                             </div>
                             @if (!$product->isStockTracked() || (int) $product->qty > 0)
-                                <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}"
+                                <form method="POST" action="{{ route('web.cart.add', $product->product_id) }}" data-cart-ajax="true"
                                     class="mt-auto">
                                     @csrf
                                     <label for="productQuantity"

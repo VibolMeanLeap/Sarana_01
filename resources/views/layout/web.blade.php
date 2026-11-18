@@ -944,6 +944,14 @@
         </div>
     @endif
     {{-- endcontainer --}}
+    <div id="storeCartToastContainer" class="store-cart-toast-container" aria-live="polite" aria-atomic="true" data-cart-url="{{ route('web.cart') }}"></div>
+    <style>
+        .store-cart-toast-container{position:fixed;z-index:1090;top:88px;right:22px;width:min(420px,calc(100vw - 28px));display:grid;gap:10px;pointer-events:none}
+        .store-cart-toast{pointer-events:auto;display:flex;align-items:flex-start;gap:11px;padding:14px 16px;border:1px solid #d8eadc;border-radius:16px;background:#fff;box-shadow:0 16px 42px rgba(20,55,35,.16);color:#183326;animation:storeToastIn .2s ease-out}
+        .store-cart-toast.is-error{border-color:#f2c9c9}.store-cart-toast-icon{font-size:1.15rem;line-height:1.4}.store-cart-toast-message{font-size:.9rem;font-weight:650;line-height:1.45;flex:1}.store-cart-toast-link{font-size:.8rem;font-weight:800;color:#187747;text-decoration:none;white-space:nowrap}.store-cart-toast-close{border:0;background:transparent;color:#64748b;padding:0 2px;font-size:1.1rem;line-height:1}
+        @keyframes storeToastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        @media(max-width:575px){.store-cart-toast-container{top:76px;right:14px;width:calc(100vw - 28px)}}
+    </style>
 
     <!-- Customer-first storefront footer -->
     <footer class="store-footer">
@@ -1062,6 +1070,99 @@
     </script>
     <script src="{{ asset('assets/js/form-validation.js') }}"></script>
     <script src="{{ asset('assets/js/password-toggle.js') }}"></script>
+    <script>
+        (() => {
+            const toastContainer = document.getElementById('storeCartToastContainer');
+            const cartBadge = document.getElementById('cart-badge');
+
+            const showCartToast = (message, isError = false) => {
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                toast.className = `store-cart-toast${isError ? ' is-error' : ''}`;
+                const icon = document.createElement('i');
+                icon.className = `store-cart-toast-icon bi ${isError ? 'bi-exclamation-circle-fill text-danger' : 'bi-check-circle-fill text-success'}`;
+                const text = document.createElement('div');
+                text.className = 'store-cart-toast-message';
+                text.textContent = message;
+                toast.append(icon, text);
+
+                if (!isError) {
+                    const link = document.createElement('a');
+                    link.className = 'store-cart-toast-link';
+                    link.href = toastContainer.dataset.cartUrl || '/store/cart';
+                    link.textContent = 'View cart';
+                    toast.append(link);
+                }
+
+                const close = document.createElement('button');
+                close.type = 'button';
+                close.className = 'store-cart-toast-close';
+                close.setAttribute('aria-label', 'Dismiss notification');
+                close.textContent = '×';
+                close.addEventListener('click', () => toast.remove());
+                toast.append(close);
+                toastContainer.append(toast);
+                window.setTimeout(() => toast.remove(), 4200);
+            };
+
+            const updateCartBadge = (count) => {
+                if (!cartBadge || !Number.isFinite(Number(count))) return;
+                const value = Math.max(0, Number(count));
+                cartBadge.textContent = String(value);
+                cartBadge.classList.toggle('d-none', value === 0);
+                const cartLink = cartBadge.closest('a');
+                if (cartLink) {
+                    cartLink.setAttribute('aria-label', `View shopping cart (${value} items)`);
+                    cartLink.setAttribute('title', `View cart (${value})`);
+                }
+            };
+
+            document.addEventListener('submit', async (event) => {
+                const form = event.target.closest('form[data-cart-ajax="true"]');
+                if (!form) return;
+
+                event.preventDefault();
+                if (form.dataset.submitting === 'true') return;
+                form.dataset.submitting = 'true';
+
+                const button = form.querySelector('button[type="submit"],button:not([type])');
+                const originalButtonHtml = button ? button.innerHTML : null;
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Adding…';
+                }
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok || payload.success !== true) {
+                        const validationMessage = payload.errors ? Object.values(payload.errors).flat()[0] : null;
+                        throw new Error(payload.message || validationMessage || 'We could not add this item. Please try again.');
+                    }
+
+                    updateCartBadge(payload.cart_count);
+                    showCartToast(payload.message || 'Added to your cart.');
+                } catch (error) {
+                    showCartToast(error.message || 'We could not add this item. Please try again.', true);
+                } finally {
+                    delete form.dataset.submitting;
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = originalButtonHtml;
+                    }
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>
