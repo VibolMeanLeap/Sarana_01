@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Costumer;
 use App\Models\User;
 use DomainException;
 use Google\Client as GoogleClient;
@@ -135,11 +136,38 @@ class GoogleAuthController extends Controller
             $googleId = (string) $claims['sub'];
             $email = mb_strtolower(trim((string) $claims['email']));
 
-            $user = $this->findAndLinkLocalAccount($googleId, $email, $audience);
+            if ($audience === 'customer') {
+                $customer = $this->findAndLinkExistingCustomer($googleId, $email);
+
+                if ($customer) {
+                    // Existing customers can sign in immediately after Google's
+                    // verified identity is matched to their existing account.
+                    Auth::login($customer, true);
+                    $request->session()->regenerate();
+
+                    return redirect()->intended(route('web.shop'))
+                        ->with('success', 'Welcome back to SK Coffee. You are signed in with Google.');
+                }
+
+                // A first-time Google visitor is not yet an account. Keep the
+                // verified Google identity in the short-lived session, then ask
+                // only for the required customer name and phone number.
+                $request->session()->regenerate();
+                $request->session()->put('customer_google_registration', [
+                    'google_id' => $googleId,
+                    'email' => $email,
+                    'name' => trim((string) ($claims['name'] ?? '')),
+                    'created_at' => time(),
+                ]);
+
+                return redirect()->route('web.google.customer.complete');
+            }
+
+            $user = $this->findAndLinkLocalAccount($googleId, $email, 'staff');
 
             // Administrator Google sign-in is only a first factor. Do not create an
             // authenticated Laravel session until the email OTP has been verified.
-            if ($audience === 'staff' && strtolower((string) $user->role?->role_name) === 'admin') {
+            if (strtolower((string) $user->role?->role_name) === 'admin') {
                 $challenge = app(\App\Services\AdminGoogleLoginOtpService::class)->issue($user);
                 $request->session()->regenerate();
                 $request->session()->put('staff_google_otp_challenge', $challenge);
@@ -148,18 +176,10 @@ class GoogleAuthController extends Controller
                     ->with('success', 'A six-digit verification code has been sent to your registered email.');
             }
 
-            // Cashier and customer Google login keep their current behavior.
-            // No Google access or refresh token is stored by this application.
+            // Cashier Google sign-in remains unchanged. No Google access or
+            // refresh token is stored by this application.
             Auth::login($user, true);
             $request->session()->regenerate();
-
-            if ($audience === 'customer') {
-                return redirect()->intended(route('web.shop'))->with('success', 'Welcome back. You are signed in with Google.');
-            }
-
-            if (strtolower((string) $user->role?->role_name) === 'admin') {
-                return redirect()->route('admin.dashboard')->with('success_login', 'Welcome back, administrator.');
-            }
 
             return redirect()->route('cashier.dashboard')->with('success_login', 'Welcome back. Your cashier workspace is ready.');
         } catch (DomainException $exception) {
@@ -221,7 +241,62 @@ class GoogleAuthController extends Controller
     }
 
     /**
-     * Link only an existing active Sarona account. A Google account cannot
+     * Find and safely link an existing customer by stable Google subject or
+     * verified email. Returns null only when this is a first-time customer.
+     * Google never creates or changes staff roles.
+     */
+    private function findAndLinkExistingCustomer(string $googleId, string $email): ?User
+    {
+        return DB::transaction(function () use ($googleId, $email): ?User {
+            $user = User::query()
+                ->where('google_id', $googleId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $user) {
+                $user = User::query()
+                    ->whereRaw('LOWER(email) = ?', [$email])
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (! $user) {
+                return null;
+            }
+
+            if (strtolower((string) $user->status) !== 'active') {
+                throw new DomainException('This SK Coffee account is inactive. Please contact the shop.');
+            }
+
+            $roleName = strtolower((string) $user->role()->value('role_name'));
+            if ($roleName !== 'customer') {
+                throw new DomainException('This Google email is already linked to a staff account. Please use the staff sign-in page.');
+            }
+
+            $existingGoogleId = (string) ($user->google_id ?? '');
+            if ($existingGoogleId !== '' && ! hash_equals($existingGoogleId, $googleId)) {
+                throw new DomainException('This customer email is already linked to a different Google account. Please use the original sign-in method or contact the shop.');
+            }
+
+            $user->google_id = $googleId;
+            if (! $user->email_verified_at) {
+                $user->email_verified_at = now();
+            }
+            $user->save();
+
+            if (! $user->customer()->exists()) {
+                Costumer::query()->firstOrCreate(
+                    ['user_id' => $user->user_id],
+                    ['name' => $user->name, 'phone' => $user->phone]
+                );
+            }
+
+            return $user->load('role');
+        }, 3);
+    }
+
+    /**
+     * Link only an existing active staff account. A Google account cannot
      * create an admin/cashier user or change a user's existing application role.
      */
     private function findAndLinkLocalAccount(string $googleId, string $email, string $audience): User
@@ -240,11 +315,11 @@ class GoogleAuthController extends Controller
             }
 
             if (! $user) {
-                throw new DomainException('No Sarona account uses this verified Google email. Create your account first, then sign in with Google.');
+                throw new DomainException('No active staff account uses this verified Google email. Contact the administrator if you need staff access.');
             }
 
             if (strtolower((string) $user->status) !== 'active') {
-                throw new DomainException('This Sarona account is inactive. Please contact the administrator.');
+                throw new DomainException('This staff account is inactive. Please contact the administrator.');
             }
 
             $roleName = strtolower((string) $user->role()->value('role_name'));
@@ -260,7 +335,7 @@ class GoogleAuthController extends Controller
 
             $existingGoogleId = (string) ($user->google_id ?? '');
             if ($existingGoogleId !== '' && ! hash_equals($existingGoogleId, $googleId)) {
-                throw new DomainException('This Sarona account is already linked to a different Google account. Contact the administrator to change the link safely.');
+                throw new DomainException('This staff account is already linked to a different Google account. Contact the administrator to change the link safely.');
             }
 
             $user->google_id = $googleId;

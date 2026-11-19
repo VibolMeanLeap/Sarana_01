@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('web_title', 'Customer account') · {{ $shopSettings?->shop_name ?: 'SK Coffee' }}</title>
+    <title>@yield('web_title', 'Customer account') · SK Coffee</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -138,24 +138,21 @@
             text-decoration: underline;
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('assets/css/telegram-support-widget.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
 </head>
 
 <body>
 
-    @include('partials.telegram-support-widget')
-
     <!-- Top Simple Brand Bar -->
     <header class="py-4 text-center">
         <a href="{{ route('web.shop') }}" class="text-decoration-none fw-bold fs-3 text-dark d-inline-flex align-items-center">
             @if($shopSettings?->logo && file_exists(public_path('uploads/'.$shopSettings->logo)))
-                <span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px"><img src="{{ asset('uploads/'.$shopSettings->logo) }}" alt="{{ $shopSettings->shop_name }} logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
+                <span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px"><img src="{{ asset('uploads/'.$shopSettings->logo) }}" alt="SK Coffee logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
             @else
                 <span class="p-2 rounded-circle me-2 d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;background-color:var(--light-green-bg);color:var(--primary-green)"><i class="bi bi-cup-hot-fill fs-5"></i></span>
             @endif
-            {{ $shopSettings?->shop_name ?: 'SK Coffee' }}
+            SK Coffee
         </a>
     </header>
 

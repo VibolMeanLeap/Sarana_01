@@ -39,6 +39,7 @@ Use App\Http\Controllers\CustomerTelegramRegistrationController;
 use App\Http\Controllers\CustomerPasswordRecoveryController;
 use App\Http\Controllers\PosPriceDiscountAuditController;
 use App\Http\Controllers\StaffGoogleLoginOtpController;
+use App\Http\Controllers\CustomerGoogleProfileController;
 
 // Language switching: English / Khmer
 Route::post('/language', [LanguageController::class, 'update'])
@@ -67,7 +68,12 @@ Route::get('/auth/google/{audience}', [GoogleAuthController::class, 'redirect'])
     ->where('audience', 'staff|customer')->middleware('throttle:10,1')->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->middleware('throttle:20,1')->name('google.callback');
-
+Route::get('/store/google/complete-profile', [CustomerGoogleProfileController::class, 'show'])
+    ->middleware('throttle:20,1')
+    ->name('web.google.customer.complete');
+Route::post('/store/google/complete-profile', [CustomerGoogleProfileController::class, 'store'])
+    ->middleware('throttle:5,10')
+    ->name('web.google.customer.complete.store');
 /* Public coffee shop pages. The catalogue can be browsed without an account. */
 // Keep one public storefront landing page. The old /store URL is a permanent alias.
 Route::redirect('/store', '/store/shop', 301)->name('web.home');
@@ -125,7 +131,6 @@ Route::post('/store/login/process', [
         'throttle:10,1',
     ])
     ->name('login');
-
 // Customer password recovery: OTP is sent only to the Telegram chat already verified on the account.
 Route::get('/store/password/forgot', [CustomerPasswordRecoveryController::class, 'requestForm'])
     ->name('web.password.request');

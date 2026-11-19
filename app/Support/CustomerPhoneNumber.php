@@ -83,21 +83,41 @@ class CustomerPhoneNumber
         return false;
     }
 
-    public static function isUsedByPendingRegistration(string $phone, ?int $exceptRegistrationId = null): bool
-    {
+    public static function isUsedByPendingRegistration(
+        string $phone,
+        ?int $exceptTelegramRegistrationId = null,
+        ?int $exceptEmailRegistrationId = null
+    ): bool {
         $target = self::normalize($phone);
         if ($target === '') {
             return false;
         }
 
-        $registrations = CustomerTelegramRegistration::query()
+        $telegramRegistrations = CustomerTelegramRegistration::query()
             ->where('created_at', '>=', now()->subMinutes(30))
-            ->when($exceptRegistrationId !== null, fn ($query) => $query->where('id', '<>', $exceptRegistrationId))
+            ->when($exceptTelegramRegistrationId !== null, fn ($query) => $query->where('id', '<>', $exceptTelegramRegistrationId))
             ->get(['id', 'phone']);
 
-        foreach ($registrations as $registration) {
+        foreach ($telegramRegistrations as $registration) {
             if (self::normalize((string) $registration->phone) === $target) {
                 return true;
+            }
+        }
+
+        // Email OTP and Telegram OTP are separate verification channels, but a
+        // phone number can only be reserved by one pending registration at a time.
+        if (class_exists(\App\Models\CustomerEmailRegistration::class)
+            && \Illuminate\Support\Facades\Schema::hasTable('customer_email_registrations')) {
+            $emailRegistrations = \App\Models\CustomerEmailRegistration::query()
+                ->where('draft_expires_at', '>', now())
+                ->whereNull('consumed_at')
+                ->when($exceptEmailRegistrationId !== null, fn ($query) => $query->where('id', '<>', $exceptEmailRegistrationId))
+                ->get(['id', 'phone']);
+
+            foreach ($emailRegistrations as $registration) {
+                if (self::normalize((string) $registration->phone) === $target) {
+                    return true;
+                }
             }
         }
 

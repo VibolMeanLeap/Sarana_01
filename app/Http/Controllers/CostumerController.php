@@ -270,22 +270,32 @@ class CostumerController extends Controller
 
     public function login(Request $request)
     {
+        // Keep the legacy input key `phone` so existing lockout middleware and
+        // bookmarks remain compatible, while allowing either a phone or email.
         $validated = $request->validate([
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:255',
             'password' => 'required|string|min:8',
         ]);
 
-        $user = User::with('role')
-            ->where('phone', $validated['phone'])
+        $identity = trim((string) $validated['phone']);
+        $isEmail = filter_var($identity, FILTER_VALIDATE_EMAIL) !== false;
+
+        $user = User::query()
+            ->with('role')
             ->where('status', 'active')
-            ->whereHas('role', function ($query) {
-                $query->whereRaw('LOWER(role_name) = ?', ['customer']);
+            ->whereHas('role', fn ($query) => $query->whereRaw('LOWER(role_name) = ?', ['customer']))
+            ->where(function ($query) use ($identity, $isEmail): void {
+                if ($isEmail) {
+                    $query->whereRaw('LOWER(email) = ?', [mb_strtolower($identity)]);
+                } else {
+                    $query->where('phone', $identity)->orWhere('username', $identity);
+                }
             })
             ->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return back()->withErrors([
-                'phone' => 'The phone number or password is incorrect.',
+                'phone' => 'The email/phone number or password is incorrect.',
             ])->onlyInput('phone');
         }
 
