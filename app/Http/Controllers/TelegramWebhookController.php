@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Illuminate\Validation\ValidationException;
+use DomainException;
 use Throwable;
 
 class TelegramWebhookController extends Controller
@@ -106,15 +107,35 @@ class TelegramWebhookController extends Controller
                                 'Need help with account verification? Contact our administrator here:',
                                 $this->contactAdminKeyboard()
                             );
-                        } catch (Throwable $exception) {
-                            Log::notice('Customer Telegram verification start was rejected.', [
-                                'exception' => $exception::class,
-                                'message' => $exception->getMessage(),
+                        } catch (DomainException $exception) {
+                            // Expected customer-facing states (expired token, an
+                            // already-linked account, or a conflicting pending draft).
+                            Log::notice('Customer Telegram registration link was rejected.', [
+                                'reason' => $exception->getMessage(),
+                                'chat_id' => $chatId,
+                                'update_id' => $request->input('update_id'),
                             ]);
+
                             $this->sendCustomerNoticeSafely(
                                 $telegram,
                                 $chatId,
-                                'This registration link is invalid, expired, or already used. Return to the SK Coffee website and generate a new Telegram link. If you need help, contact our administrator below.',
+                                $exception->getMessage()."\n\nNeed help? Contact our administrator below.",
+                                $this->contactAdminKeyboard()
+                            );
+                        } catch (Throwable $exception) {
+                            // Do not call database/schema/Telegram API failures an
+                            // invalid link. The detailed error stays in Laravel logs.
+                            Log::error('Customer Telegram registration could not be processed.', [
+                                'exception' => $exception::class,
+                                'message' => $exception->getMessage(),
+                                'chat_id' => $chatId,
+                                'update_id' => $request->input('update_id'),
+                            ]);
+
+                            $this->sendCustomerNoticeSafely(
+                                $telegram,
+                                $chatId,
+                                'We could not process your registration because of a temporary system problem. Your customer account has not been activated. Return to the website and try generating a new Telegram link. If the problem continues, contact our administrator below.',
                                 $this->contactAdminKeyboard()
                             );
                         }

@@ -38,6 +38,7 @@ use App\Http\Controllers\LanguageController;
 Use App\Http\Controllers\CustomerTelegramRegistrationController;
 use App\Http\Controllers\CustomerPasswordRecoveryController;
 use App\Http\Controllers\PosPriceDiscountAuditController;
+use App\Http\Controllers\StaffGoogleLoginOtpController;
 
 // Language switching: English / Khmer
 Route::post('/language', [LanguageController::class, 'update'])
@@ -45,6 +46,16 @@ Route::post('/language', [LanguageController::class, 'update'])
     ->name('language.switch');
 /* Staff sign-in (admin and cashier). */
 Route::get('/', [AuthContoller::class, 'showLogin'])->name('showlogin');
+
+Route::get('/staff/google/otp', [StaffGoogleLoginOtpController::class, 'show'])
+    ->middleware('throttle:30,1')->name('staff.google-otp.show');
+Route::post('/staff/google/otp', [StaffGoogleLoginOtpController::class, 'verify'])
+    ->middleware('throttle:6,1')->name('staff.google-otp.verify');
+Route::post('/staff/google/otp/resend', [StaffGoogleLoginOtpController::class, 'resend'])
+    ->middleware('throttle:4,1')->name('staff.google-otp.resend');
+Route::post('/staff/google/otp/cancel', [StaffGoogleLoginOtpController::class, 'cancel'])
+    ->middleware('throttle:20,1')->name('staff.google-otp.cancel');
+
 Route::post('/login/process', [AuthContoller::class, 'processlogin'])
     ->middleware([
         \App\Http\Middleware\ProtectLoginAttempts::class . ':name,staff',

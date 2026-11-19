@@ -521,6 +521,10 @@
                         </svg>
                         <span>Continue with Google</span>
                     </a>
+                    <div class="google-security-note" style="display:flex;align-items:center;gap:8px;margin-top:11px;color:#728177;font-size:10px;line-height:1.6;">
+                        <i class="bi bi-shield-lock-fill" style="color:#176b4b;"></i>
+                        <span>Administrator Google sign-ins require an additional email verification code.</span>
+                    </div>
                 @endif
                 <div class="auth-divider">OR EXPLORE THE SHOP</div>
                 <a href="{{ route('web.shop') }}" class="auth-public-link"><i class="bi bi-globe2"></i> Visit

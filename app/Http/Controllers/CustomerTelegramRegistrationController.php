@@ -136,19 +136,26 @@ class CustomerTelegramRegistrationController extends Controller
         }
 
         $telegramLink = (string) $request->session()->get(self::SESSION_TELEGRAM_LINK, '');
-        $linkExpired = ! $registration->telegram_chat_id
-            && (! $registration->link_expires_at || $registration->link_expires_at->isPast());
-        if ($telegramLink === '' || $linkExpired) {
-            try {
-                $telegramLink = $telegramOtp->createTelegramLink($registration);
-                $request->session()->put(self::SESSION_TELEGRAM_LINK, $telegramLink);
-            } catch (Throwable $exception) {
-                report($exception);
 
-                return redirect()->route('webRegister')->withErrors([
-                    'register_error' => 'Telegram verification is temporarily unavailable. Please try again later.',
-                ]);
+        // Once Telegram has bound the chat, the link token is intentionally
+        // consumed. Never regenerate a new link merely because the session's
+        // display URL is missing; doing so would clear the valid chat binding.
+        if (! $registration->telegram_chat_id) {
+            $linkExpired = ! $registration->link_expires_at || $registration->link_expires_at->isPast();
+            if ($telegramLink === '' || $linkExpired) {
+                try {
+                    $telegramLink = $telegramOtp->createTelegramLink($registration);
+                    $request->session()->put(self::SESSION_TELEGRAM_LINK, $telegramLink);
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    return redirect()->route('webRegister')->withErrors([
+                        'register_error' => 'Telegram verification is temporarily unavailable. Please try again later.',
+                    ]);
+                }
             }
+        } else {
+            $telegramLink = '';
         }
 
         return view('website.register.verify-telegram', compact('registration', 'telegramLink'));

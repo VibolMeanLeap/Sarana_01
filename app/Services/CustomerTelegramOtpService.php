@@ -7,6 +7,7 @@ use App\Models\CustomerTelegramRegistration;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\CustomerPhoneNumber;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -76,11 +77,15 @@ class CustomerTelegramOtpService
      */
     public function handleTelegramStart(string $token, string $chatId): void
     {
-        if (! $this->isConfigured() || strlen($token) < 20 || strlen($token) > 80 || $chatId === '') {
-            throw new RuntimeException('The Telegram verification link is invalid or expired.');
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Telegram customer verification is not fully configured.');
         }
 
-        $registrationId = DB::transaction(function () use ($token, $chatId): int {
+        if (strlen($token) < 20 || strlen($token) > 80 || $chatId === '') {
+            throw new DomainException('This registration link is invalid. Return to the website and generate a fresh Telegram link.');
+        }
+
+        $startResult = DB::transaction(function () use ($token, $chatId): array {
             CustomerTelegramRegistration::query()
                 ->where('created_at', '<', now()->subMinutes(30))
                 ->delete();
@@ -91,12 +96,33 @@ class CustomerTelegramOtpService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $registration || $registration->created_at?->lt(now()->subMinutes(30))) {
-                throw new RuntimeException('The Telegram verification link is invalid or expired.');
+            // Telegram can deliver /start more than once when a customer opens
+            // the same deep link again. The link token is deliberately one-use,
+            // but the chat binding is still valid for the 30-minute draft.
+            // Resume that exact pending chat instead of reporting a false expiry.
+            if (! $registration) {
+                $alreadyBound = CustomerTelegramRegistration::query()
+                    ->where('telegram_chat_id', $chatId)
+                    ->where('created_at', '>=', now()->subMinutes(30))
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($alreadyBound) {
+                    return [
+                        'registration_id' => (int) $alreadyBound->id,
+                        'already_bound' => true,
+                    ];
+                }
+
+                if (User::query()->where('telegram_chat_id', $chatId)->exists()) {
+                    throw new DomainException('This Telegram account is already connected to an existing customer account. Please sign in instead.');
+                }
+
+                throw new DomainException('This registration link has expired or was already used. Return to the website and generate a fresh Telegram link.');
             }
 
             if (User::query()->where('telegram_chat_id', $chatId)->exists()) {
-                throw new RuntimeException('This Telegram account is already connected to a SK Coffee customer account.');
+                throw new DomainException('This Telegram account is already connected to an existing customer account. Please sign in instead.');
             }
 
             $chatAlreadyPending = CustomerTelegramRegistration::query()
@@ -105,7 +131,7 @@ class CustomerTelegramOtpService
                 ->exists();
 
             if ($chatAlreadyPending) {
-                throw new RuntimeException('This Telegram account is already being used for another pending registration.');
+                throw new DomainException('This Telegram account is already connected to another pending registration. Return to the website and continue with the existing registration.');
             }
 
             $registration->forceFill([
@@ -118,20 +144,51 @@ class CustomerTelegramOtpService
                 'otp_attempts' => 0,
             ])->save();
 
-            return (int) $registration->id;
+            return [
+                'registration_id' => (int) $registration->id,
+                'already_bound' => false,
+            ];
         });
+
+        $registration = CustomerTelegramRegistration::query()->find($startResult['registration_id']);
+        if (! $registration) {
+            throw new RuntimeException('The pending Telegram registration disappeared before it could be resumed.');
+        }
+
+        if ($startResult['already_bound']) {
+            if ($registration->telegram_phone_verified_at) {
+                $hasLiveOtp = $registration->otp_hash
+                    && $registration->otp_expires_at
+                    && $registration->otp_expires_at->isFuture()
+                    && (int) $registration->otp_attempts < self::MAX_OTP_ATTEMPTS;
+
+                $message = $hasLiveOtp
+                    ? 'Your Telegram account is already connected and your phone number is confirmed. A valid OTP has already been sent. Please return to the SK Coffee website and enter that code. Do not request another code unless it expires.'
+                    : 'Your Telegram account is connected and your phone number was already confirmed, but there is no active OTP. Return to the SK Coffee website and choose “Generate a new Telegram link” to restart verification.';
+
+                $this->telegram->sendMessage($chatId, $message, ['remove_keyboard' => true]);
+            } else {
+                $this->telegram->sendMessage(
+                    $chatId,
+                    "Your SK Coffee registration is already connected to this Telegram account. Please share your own phone number using the button below. We will send an OTP only after it matches the number entered on the website.",
+                    $this->phoneRequestKeyboard()
+                );
+            }
+
+            return;
+        }
 
         try {
             $this->telegram->sendMessage(
                 $chatId,
-                "Welcome to SK Coffee!\n\nBefore we send your verification code, please confirm that the phone number you entered on the website belongs to this Telegram account. Tap the button below to share your own Telegram phone number.\n\nWe will send an OTP only when the shared number matches your registration.",
+                "Welcome to SK Coffee!\n\nBefore we send your verification code, please confirm that the phone number you entered on the website belongs to this Telegram account. Tap the button below to share your own phone number.\n\nWe will send an OTP only when the shared number matches your registration.",
                 $this->phoneRequestKeyboard()
             );
         } catch (Throwable $exception) {
             // If the prompt could not be delivered, release the Telegram binding
             // and restore a short-lived one-use link so the customer can retry.
             CustomerTelegramRegistration::query()
-                ->whereKey($registrationId)
+                ->whereKey($startResult['registration_id'])
                 ->where('telegram_chat_id', $chatId)
                 ->update([
                     'telegram_chat_id' => null,

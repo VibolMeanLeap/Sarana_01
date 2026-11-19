@@ -137,7 +137,18 @@ class GoogleAuthController extends Controller
 
             $user = $this->findAndLinkLocalAccount($googleId, $email, $audience);
 
-            // Google sign-in opts into Laravel's persistent remember cookie.
+            // Administrator Google sign-in is only a first factor. Do not create an
+            // authenticated Laravel session until the email OTP has been verified.
+            if ($audience === 'staff' && strtolower((string) $user->role?->role_name) === 'admin') {
+                $challenge = app(\App\Services\AdminGoogleLoginOtpService::class)->issue($user);
+                $request->session()->regenerate();
+                $request->session()->put('staff_google_otp_challenge', $challenge);
+
+                return redirect()->route('staff.google-otp.show')
+                    ->with('success', 'A six-digit verification code has been sent to your registered email.');
+            }
+
+            // Cashier and customer Google login keep their current behavior.
             // No Google access or refresh token is stored by this application.
             Auth::login($user, true);
             $request->session()->regenerate();
