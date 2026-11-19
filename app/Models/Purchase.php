@@ -20,6 +20,7 @@ class Purchase extends Model
         'quantity',
         'cost_price',
         'purchase_date',
+        'receipt_path',
     ];
 
     // បម្លែង purchase_date ទៅជា date

@@ -117,11 +117,15 @@ class CashTransactionController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge(['note' => is_string($request->input('note')) ? trim($request->input('note')) : $request->input('note')]);
         $validated = $request->validate([
             'category_id' => 'required|exists:accounting_category,id',
             'amount' => 'required|numeric|min:0.01',
             'transaction_date' => 'required|date',
-            'note' => 'nullable|string|max:2000',
+            'note' => 'required|string|min:15|max:1000',
+        ], [
+            'note.required' => 'Enter the reason for this expense.',
+            'note.min' => 'Please provide a clear expense reason of at least 15 characters.',
         ]);
 
         $category = AccountingCategory::findOrFail($validated['category_id']);
@@ -144,11 +148,15 @@ class CashTransactionController extends Controller
             return redirect()->route('expense_income.index')->with('error', 'Historical income records are read-only and are not part of the expense ledger.');
         }
 
+        $request->merge(['note' => is_string($request->input('note')) ? trim($request->input('note')) : $request->input('note')]);
         $validated = $request->validate([
             'category_id' => 'required|exists:accounting_category,id',
             'amount' => 'required|numeric|min:0.01',
             'transaction_date' => 'required|date',
-            'note' => 'nullable|string|max:2000',
+            'note' => 'required|string|min:15|max:1000',
+        ], [
+            'note.required' => 'Enter the reason for this expense.',
+            'note.min' => 'Please provide a clear expense reason of at least 15 characters.',
         ]);
         $category = AccountingCategory::findOrFail($validated['category_id']);
         if ((int) $category->id_type !== 2) {

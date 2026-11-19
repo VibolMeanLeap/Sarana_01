@@ -382,7 +382,7 @@
             <section class="border rounded-3 p-3 bg-light-subtle">
                 <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i class="bi bi-funnel me-1"></i>Ledger filters</div>
                 <div class="finance-filter">
-                    <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search note or ID" aria-label="Search transactions">
+                    <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search expense reason or ID" aria-label="Search transactions">
                     <select name="category_id" class="form-select"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(request('category_id')==$category->id)>{{ $category->name }}</option>@endforeach</select>
                     <select name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir', 'desc' )==='desc' )>Newest first</option><option value="asc" @selected(request('sort_dir')==='asc' )>Oldest first</option></select>
                     <select name="per_page" class="form-select"><option value="15" @selected(($perPage ?? 15)===15)>15 / page</option><option value="25" @selected(($perPage ?? 15)===25)>25 / page</option><option value="50" @selected(($perPage ?? 15)===50)>50 / page</option><option value="100" @selected(($perPage ?? 15)===100)>100 / page</option></select>
@@ -399,7 +399,7 @@
                         <th>Type</th>
                         <th>Category</th>
                         <th>Reference</th>
-                        <th>Note</th>
+                        <th>Expense reason</th>
                         <th>Recorded by</th>
                         <th class="text-end">Amount</th>
                         <th class="text-end">Actions</th>
@@ -447,11 +447,11 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label">Expense category <span class="text-danger">*</span></label><select name="category_id" class="form-select" required>
-                        <option value="">Choose a category</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach
+                        <option value="">Choose a category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>@endforeach
                     </select>@error('category_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                <div class="mb-3"><label class="form-label">Amount (USD) <span class="text-danger">*</span></label><input type="number" name="amount" min="0.01" step="0.01" class="form-control" required>@error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="datetime-local" name="transaction_date" value="{{ now()->format('Y-m-d\TH:i') }}" class="form-control" required>@error('transaction_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                <div class="mb-0"><label class="form-label">Note <span class="text-muted fw-normal">(optional)</span></label><textarea name="note" rows="2" class="form-control" data-optional placeholder="e.g. Electricity, rent, supplies or maintenance"></textarea></div>
+                <div class="mb-3"><label class="form-label">Amount (USD) <span class="text-danger">*</span></label><input type="number" name="amount" min="0.01" step="0.01" class="form-control" value="{{ old('amount') }}" required>@error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="datetime-local" name="transaction_date" value="{{ old('transaction_date', now()->format('Y-m-d\TH:i')) }}" class="form-control" required>@error('transaction_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="mb-0"><label class="form-label">Expense reason / business purpose <span class="text-danger">*</span></label><textarea name="note" rows="3" minlength="15" maxlength="1000" class="form-control @error('note') is-invalid @enderror" required placeholder="Explain what was paid for, why it was needed and which business area it supports.">{{ old('note') }}</textarea><div class="form-text">At least 15 characters. This reason appears in the expense ledger for later review.</div>@error('note')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success">Save expense</button></div>
         </form>
@@ -476,4 +476,14 @@
         </div>
     </div>
 </div>
+@if($errors->hasAny(['category_id', 'amount', 'transaction_date', 'note']))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalElement = document.getElementById('addTransactionModal');
+    if (modalElement && window.bootstrap && window.bootstrap.Modal) {
+        window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    }
+});
+</script>
+@endif
 @endsection

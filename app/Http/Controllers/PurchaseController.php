@@ -11,6 +11,8 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 use App\Support\AdminDateFilter;
 
 class PurchaseController extends Controller
@@ -63,10 +65,22 @@ class PurchaseController extends Controller
         return view('admin.purchase', compact('purchases', 'suppliers', 'products', 'summary', 'dateFilter'));
     }
 
+    /** Download a purchase receipt from private storage (admin routes only). */
+    public function receipt(Purchase $purchase)
+    {
+        $path = $purchase->receipt_path;
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $filename = 'purchase-'.$purchase->purchase_id.'-receipt'.($extension ? '.'.$extension : '');
+
+        return Storage::disk('local')->download($path, $filename);
+    }
+
     public function create()
     {
         $suppliers = Supplier::orderBy('name')->get();
-        $products = Product::where('product_type', 'stock')->orderBy('product_name')->get();
+        $products = Product::whereRaw("LOWER(TRIM(COALESCE(product_type, 'stock'))) NOT IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')")->orderBy('product_name')->get();
 
         return view('admin.purchase.create', compact('suppliers', 'products'));
     }
@@ -79,6 +93,7 @@ class PurchaseController extends Controller
             'quantity' => 'required|integer|min:1',
             'cost_price' => 'required|numeric|min:0',
             'purchase_date' => 'required|date',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
         ]);
 
         $selectedProduct = Product::findOrFail($validated['product_id']);
@@ -86,34 +101,58 @@ class PurchaseController extends Controller
             return back()->withInput()->withErrors(['product_id' => 'Purchases can only be recorded for Stock products.']);
         }
 
-        DB::transaction(function () use ($validated) {
-            $product = Product::where('product_id', $validated['product_id'])
-                ->lockForUpdate()
-                ->firstOrFail();
+        $receiptPath = $request->hasFile('receipt')
+            ? $request->file('receipt')->store('purchase-receipts', 'local')
+            : null;
+        if ($request->hasFile('receipt') && ! $receiptPath) {
+            return back()->withInput()->withErrors(['receipt' => 'The receipt could not be saved. Please try again.']);
+        }
 
-            $purchase = Purchase::create($validated + ['user_id' => Auth::id()]);
-            $product->qty = (int) $product->qty + (int) $validated['quantity'];
-            $product->save();
+        $purchaseData = $validated;
+        unset($purchaseData['receipt']);
 
-            StockLog::create([
-                'product_id' => $product->product_id,
-                'user_id' => Auth::id(),
-                'type' => 'IN',
-                'quantity' => $validated['quantity'],
-                'reason' => 'Purchase',
-                'note' => "Restock from purchase #{$purchase->purchase_id}",
-            ]);
+        try {
+            DB::transaction(function () use ($purchaseData, $receiptPath) {
+                $product = Product::where('product_id', $purchaseData['product_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            $this->syncPurchaseExpense($purchase, $validated);
-        });
+                $purchase = Purchase::create($purchaseData + [
+                    'user_id' => Auth::id(),
+                    'receipt_path' => $receiptPath,
+                ]);
 
-        return redirect()->route('purchase.index')->with('success', 'Purchase recorded, stock updated, and expense linked.');
+                $product->qty = (int) $product->qty + (int) $purchaseData['quantity'];
+                $product->save();
+
+                StockLog::create([
+                    'product_id' => $product->product_id,
+                    'user_id' => Auth::id(),
+                    'type' => 'IN',
+                    'quantity' => $purchaseData['quantity'],
+                    'reason' => 'Purchase',
+                    'note' => "Restock from purchase #{$purchase->purchase_id}",
+                ]);
+
+                $this->syncPurchaseExpense($purchase, $purchaseData);
+            });
+        } catch (Throwable $exception) {
+            if ($receiptPath) {
+                Storage::disk('local')->delete($receiptPath);
+            }
+            throw $exception;
+        }
+
+        return redirect()->route('purchase.index')->with(
+            'success',
+            'Purchase recorded, stock updated, and expense linked.'.($receiptPath ? ' Receipt attached securely.' : '')
+        );
     }
 
     public function edit(Purchase $purchase)
     {
         $suppliers = Supplier::orderBy('name')->get();
-        $products = Product::where('product_type', 'stock')->orderBy('product_name')->get();
+        $products = Product::whereRaw("LOWER(TRIM(COALESCE(product_type, 'stock'))) NOT IN ('non-stock','non stock','nonstock','no stock','service','digital','untracked')")->orderBy('product_name')->get();
 
         return view('admin.purchase.edit', compact('purchase', 'suppliers', 'products'));
     }
@@ -126,81 +165,117 @@ class PurchaseController extends Controller
             'quantity' => 'required|integer|min:1',
             'cost_price' => 'required|numeric|min:0',
             'purchase_date' => 'required|date',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
+            'remove_receipt' => 'nullable|boolean',
         ]);
 
-        $updated = DB::transaction(function () use ($validated, $purchase) {
-            $lockedPurchase = Purchase::where('purchase_id', $purchase->purchase_id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $newReceiptPath = $request->hasFile('receipt')
+            ? $request->file('receipt')->store('purchase-receipts', 'local')
+            : null;
+        if ($request->hasFile('receipt') && ! $newReceiptPath) {
+            return back()->withInput()->withErrors(['receipt' => 'The receipt could not be saved. Please try again.']);
+        }
 
-            $productIds = array_values(array_unique([
-                (int) $lockedPurchase->product_id,
-                (int) $validated['product_id'],
-            ]));
-            sort($productIds);
-            $products = Product::whereIn('product_id', $productIds)
-                ->orderBy('product_id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('product_id');
+        $purchaseData = $validated;
+        unset($purchaseData['receipt'], $purchaseData['remove_receipt']);
+        $removeReceipt = $request->boolean('remove_receipt');
+        $oldReceiptPath = null;
 
-            $oldProduct = $products->get($lockedPurchase->product_id);
-            $newProduct = $products->get($validated['product_id']);
-            if (!$oldProduct || !$newProduct || ! $oldProduct->isStockTracked() || ! $newProduct->isStockTracked() || (int) $oldProduct->qty < (int) $lockedPurchase->quantity) {
-                return false;
-            }
+        try {
+            $updated = DB::transaction(function () use ($purchaseData, $purchase, $newReceiptPath, $removeReceipt, &$oldReceiptPath) {
+                $lockedPurchase = Purchase::where('purchase_id', $purchase->purchase_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            // Revert the old purchase quantity, then apply the edited purchase.
-            $oldProduct->qty = (int) $oldProduct->qty - (int) $lockedPurchase->quantity;
-            $oldProduct->save();
-            $newProduct->qty = (int) $newProduct->qty + (int) $validated['quantity'];
-            $newProduct->save();
+                $productIds = array_values(array_unique([
+                    (int) $lockedPurchase->product_id,
+                    (int) $purchaseData['product_id'],
+                ]));
+                sort($productIds);
+                $products = Product::whereIn('product_id', $productIds)
+                    ->orderBy('product_id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_id');
 
-            $purchaseNote = "Restock from purchase #{$lockedPurchase->purchase_id}";
-            $stockLog = StockLog::where('note', $purchaseNote)->latest('log_id')->first();
+                $oldProduct = $products->get($lockedPurchase->product_id);
+                $newProduct = $products->get($purchaseData['product_id']);
+                if (! $oldProduct || ! $newProduct || ! $oldProduct->isStockTracked() || ! $newProduct->isStockTracked() || (int) $oldProduct->qty < (int) $lockedPurchase->quantity) {
+                    return false;
+                }
 
-            if ((int) $oldProduct->product_id === (int) $newProduct->product_id) {
-                if ($stockLog) {
-                    $stockLog->update([
-                        'quantity' => $validated['quantity'],
+                // Reverse the previous received quantity, then apply the corrected purchase.
+                $oldProduct->qty = (int) $oldProduct->qty - (int) $lockedPurchase->quantity;
+                $oldProduct->save();
+                $newProduct->qty = (int) $newProduct->qty + (int) $purchaseData['quantity'];
+                $newProduct->save();
+
+                $purchaseNote = "Restock from purchase #{$lockedPurchase->purchase_id}";
+                $stockLog = StockLog::where('note', $purchaseNote)->latest('log_id')->first();
+
+                if ((int) $oldProduct->product_id === (int) $newProduct->product_id) {
+                    if ($stockLog) {
+                        $stockLog->update([
+                            'quantity' => $purchaseData['quantity'],
+                            'type' => 'IN',
+                            'reason' => 'Purchase',
+                        ]);
+                    }
+                } else {
+                    if ($stockLog) {
+                        $stockLog->update([
+                            'type' => 'OUT',
+                            'quantity' => $lockedPurchase->quantity,
+                            'reason' => 'Purchase correction',
+                            'note' => "Stock reversed after editing purchase #{$lockedPurchase->purchase_id}",
+                        ]);
+                    }
+                    StockLog::create([
+                        'product_id' => $newProduct->product_id,
+                        'user_id' => Auth::id(),
                         'type' => 'IN',
+                        'quantity' => $purchaseData['quantity'],
                         'reason' => 'Purchase',
+                        'note' => $purchaseNote,
                     ]);
                 }
-            } else {
-                if ($stockLog) {
-                    $stockLog->update([
-                        'type' => 'OUT',
-                        'quantity' => $lockedPurchase->quantity,
-                        'reason' => 'Purchase correction',
-                        'note' => "Stock reversed after editing purchase #{$lockedPurchase->purchase_id}",
-                    ]);
+
+                $oldReceiptPath = $lockedPurchase->receipt_path;
+                if ($newReceiptPath) {
+                    $purchaseData['receipt_path'] = $newReceiptPath;
+                } elseif ($removeReceipt) {
+                    $purchaseData['receipt_path'] = null;
                 }
-                StockLog::create([
-                    'product_id' => $newProduct->product_id,
-                    'user_id' => Auth::id(),
-                    'type' => 'IN',
-                    'quantity' => $validated['quantity'],
-                    'reason' => 'Purchase',
-                    'note' => $purchaseNote,
-                ]);
+
+                $lockedPurchase->update($purchaseData);
+                $this->syncPurchaseExpense($lockedPurchase, $purchaseData);
+
+                return true;
+            });
+        } catch (Throwable $exception) {
+            if ($newReceiptPath) {
+                Storage::disk('local')->delete($newReceiptPath);
             }
+            throw $exception;
+        }
 
-            $lockedPurchase->update($validated);
-            $this->syncPurchaseExpense($lockedPurchase, $validated);
-
-            return true;
-        });
-
-        if (!$updated) {
+        if (! $updated) {
+            if ($newReceiptPath) {
+                Storage::disk('local')->delete($newReceiptPath);
+            }
             return back()->withInput()->with('error', 'This purchase cannot be changed because the original quantity is no longer available in stock.');
         }
 
-        return redirect()->route('purchase.index')->with('success', 'Purchase, stock history, and linked expense were updated.');
+        if (($newReceiptPath || $removeReceipt) && $oldReceiptPath) {
+            Storage::disk('local')->delete($oldReceiptPath);
+        }
+
+        return redirect()->route('purchase.index')->with('success', 'Purchase, stock history, linked expense, and receipt details were updated.');
     }
 
     public function destroy(Purchase $purchase)
     {
+        $receiptPath = $purchase->receipt_path;
         $deleted = DB::transaction(function () use ($purchase) {
             $lockedPurchase = Purchase::where('purchase_id', $purchase->purchase_id)
                 ->lockForUpdate()
@@ -246,7 +321,11 @@ class PurchaseController extends Controller
             return back()->with('error', 'This purchase cannot be removed because some of its stock is no longer available.');
         }
 
-        return back()->with('success', 'Purchase removed; stock and linked finance entry were reversed.');
+        if ($receiptPath) {
+            Storage::disk('local')->delete($receiptPath);
+        }
+
+        return back()->with('success', 'Purchase removed; stock, linked finance entry, and attached receipt were reversed.');
     }
 
     private function syncPurchaseExpense(Purchase $purchase, array $validated): void

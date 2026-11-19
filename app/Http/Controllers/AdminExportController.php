@@ -403,7 +403,7 @@ class AdminExportController extends Controller
             ->leftJoin('in_and_exp_types as iet', 'iet.id_type', '=', 'ac.id_type')
             ->where('ac.id_type', 2)
             ->leftJoin('users as u', 'u.user_id', '=', 'ct.user_id')
-            ->select(['ct.id as Transaction_ID', 'ct.transaction_date as Transaction_Date', 'iet.name as Type', 'ac.name as Category', 'ct.amount as Amount', 'ct.order_id as Order_ID', 'ct.purchase_id as Purchase_ID', 'u.name as Recorded_By', 'ct.note as Note'])
+            ->select(['ct.id as Transaction_ID', 'ct.transaction_date as Transaction_Date', 'iet.name as Type', 'ac.name as Category', 'ct.amount as Amount', 'ct.order_id as Order_ID', 'ct.purchase_id as Purchase_ID', 'u.name as Recorded_By', 'ct.note as Expense_Reason'])
             ->when($request->filled('category_id'), fn ($q) => $q->where('ct.category_id', $request->input('category_id')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
@@ -415,7 +415,7 @@ class AdminExportController extends Controller
         $this->applyDateRange($query, 'ct.transaction_date', $request, ['from', 'date_from', 'start_date'], ['to', 'date_to', 'end_date']);
         $query->orderBy($this->sortColumn($request, ['transaction_date' => 'ct.transaction_date', 'id' => 'ct.id', 'amount' => 'ct.amount'], 'ct.transaction_date'), $this->sortDirection($request));
 
-        return $this->report('Operating Expenses', ['Transaction ID', 'Transaction Date', 'Type', 'Category', 'Amount (USD)', 'Order ID', 'Purchase ID', 'Recorded By', 'Note'], $query);
+        return $this->report('Operating Expenses', ['Transaction ID', 'Transaction Date', 'Type', 'Category', 'Amount (USD)', 'Order ID', 'Purchase ID', 'Recorded By', 'Expense Reason'], $query);
     }
 
     private function deliveries(Request $request): array

@@ -337,6 +337,7 @@ Route::get('/admin/pos-price-discount-audit/export/csv', [
     Route::get('/admin/purchases', [PurchaseController::class, 'index'])->name('purchase.index');
     Route::get('/admin/purchases/create', [PurchaseController::class, 'create'])->name('purchase.create');
     Route::post('/admin/purchases', [PurchaseController::class, 'store'])->name('purchase.store');
+    Route::get('/admin/purchases/{purchase}/receipt', [PurchaseController::class, 'receipt'])->whereNumber('purchase')->name('purchase.receipt');
     Route::get('/admin/purchases/{purchase}/edit', [PurchaseController::class, 'edit'])->name('purchase.edit');
     Route::put('/admin/purchases/{purchase}', [PurchaseController::class, 'update'])->name('purchase.update');
     Route::delete('/admin/purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchase.destroy');

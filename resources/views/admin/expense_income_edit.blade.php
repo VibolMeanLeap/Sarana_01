@@ -36,8 +36,9 @@
                 </div>
             </div>
             <div class="mt-3 mb-4">
-                <label class="form-label fw-semibold">Note <span class="text-muted fw-normal">(optional)</span></label>
-                <textarea name="note" rows="3" maxlength="2000" class="form-control" data-optional>{{ old('note', $transaction->note) }}</textarea>
+                <label class="form-label fw-semibold">Expense reason / business purpose <span class="text-danger">*</span></label>
+                <textarea name="note" rows="4" minlength="15" maxlength="1000" class="form-control @error('note') is-invalid @enderror" required placeholder="Explain what was paid for and why it was necessary.">{{ old('note', $transaction->note) }}</textarea>
+                <div class="form-text">Required: at least 15 characters. Keep the reason clear for future review and audit.</div>
                 @error('note')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
             </div>
             <div class="d-flex justify-content-end gap-2">

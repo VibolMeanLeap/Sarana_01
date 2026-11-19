@@ -260,9 +260,9 @@
                     </div>
                 </div>
 
-                <div class="prod-form-group">
-                    <label for="qty" class="prod-form-label" id="qty-label">Opening Stock Quantity</label>
-                    <input type="number" min="0" name="qty" id="qty" class="prod-form-control" placeholder="0" value="{{ old('qty', 0) }}" required>
+                <div class="prod-form-group" style="padding:14px 16px;border:1px solid #cfe5d5;border-radius:10px;background:#f2faf4">
+                    <div style="font-size:13px;font-weight:700;color:#176b4b"><i class="fa fa-lock me-1"></i> Inventory starts at 0 units</div>
+                    <div class="small text-muted mt-1">To protect stock accuracy, quantity is not entered on the Product form. Record received stock in <a href="{{ route('purchase.create') }}" class="fw-semibold">Purchases</a> or use an audited <a href="{{ route('inventory.create') }}" class="fw-semibold">Inventory Adjustment</a>.</div>
                 </div>
 
                 <div class="prod-form-row">
@@ -311,26 +311,5 @@
 
 </div>
 
-
-@section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const typeSelect = document.getElementById('product_type');
-    const quantityInput = document.getElementById('qty');
-    if (!typeSelect || !quantityInput) return;
-    const syncInventoryType = () => {
-        const nonStock = typeSelect.value === 'non-stock';
-        if (nonStock) quantityInput.value = '0';
-        quantityInput.readOnly = nonStock;
-        quantityInput.setAttribute('aria-readonly', nonStock ? 'true' : 'false');
-        quantityInput.classList.toggle('bg-light', nonStock);
-        const quantityLabel = document.getElementById('qty-label');
-        if (quantityLabel) quantityLabel.textContent = nonStock ? 'Inventory Quantity (not used)' : 'Stock Quantity';
-    };
-    typeSelect.addEventListener('change', syncInventoryType);
-    syncInventoryType();
-});
-</script>
-@endsection
 
 @endsection
