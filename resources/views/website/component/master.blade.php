@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="{{ asset('assets/js/cc-theme-boot.js') }}"></script>
     <title>@yield('web_title', 'Customer account') · SK Coffee</title>
 
     <!-- Bootstrap 5 CSS -->
@@ -140,20 +141,28 @@
     </style>
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme-interactions.css') }}">
 </head>
 
 <body>
 
     <!-- Top Simple Brand Bar -->
-    <header class="py-4 text-center">
-        <a href="{{ route('web.shop') }}" class="text-decoration-none fw-bold fs-3 text-dark d-inline-flex align-items-center">
-            @if($shopSettings?->logo && file_exists(public_path('uploads/'.$shopSettings->logo)))
-                <span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px"><img src="{{ asset('uploads/'.$shopSettings->logo) }}" alt="SK Coffee logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
+    <header class="py-4 d-flex align-items-center justify-content-between gap-3">
+        <a href="{{ route('web.shop') }}"
+            class="text-decoration-none fw-bold fs-3 text-dark d-inline-flex align-items-center">
+            @if ($shopSettings?->logo && file_exists(public_path('uploads/' . $shopSettings->logo)))
+                <span class="me-2 d-inline-flex align-items-center justify-content-center"
+                    style="width:44px;height:44px"><img src="{{ asset('uploads/' . $shopSettings->logo) }}"
+                        alt="SK Coffee logo" style="max-width:100%;max-height:100%;object-fit:contain"></span>
             @else
-                <span class="p-2 rounded-circle me-2 d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;background-color:var(--light-green-bg);color:var(--primary-green)"><i class="bi bi-cup-hot-fill fs-5"></i></span>
+                <span class="p-2 rounded-circle me-2 d-inline-flex align-items-center justify-content-center"
+                    style="width:40px;height:40px;background-color:var(--light-green-bg);color:var(--primary-green)"><i
+                        class="bi bi-cup-hot-fill fs-5"></i></span>
             @endif
             SK Coffee
         </a>
+        @include('partials.theme-switcher')
     </header>
 
     <!-- Auth Main Container -->
@@ -182,9 +191,12 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
+    <script>
+        window.CoffeeCornerValidationErrors = @json($errors->toArray());
+    </script>
     <script src="{{ asset('assets/js/form-validation.js') }}"></script>
-<script src="{{ asset('assets/js/password-toggle.js') }}"></script>
+    <script src="{{ asset('assets/js/password-toggle.js') }}"></script>
+    <script src="{{ asset('assets/js/cc-theme.js') }}"></script>
 </body>
 
 </html>

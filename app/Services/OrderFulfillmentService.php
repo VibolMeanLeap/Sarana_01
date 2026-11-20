@@ -31,6 +31,21 @@ class OrderFulfillmentService
         return strtolower(trim((string) $order->orderType?->order_name)) === 'delivery';
     }
 
+    /** Store pickup orders use a fulfilment journey but do not need a delivery row. */
+    public function isTakeawayOrder(Order $order): bool
+    {
+        $name = strtolower(trim((string) $order->orderType?->order_name));
+        $name = preg_replace('/[\s_-]+/u', ' ', $name) ?? $name;
+
+        return in_array($name, ['takeaway', 'take away', 'pickup', 'pick up', 'store pickup'], true);
+    }
+
+    /** Orders that should display the shared Admin → Orders fulfilment controls. */
+    public function isManagedFulfillmentOrder(Order $order): bool
+    {
+        return $this->isDeliveryOrder($order) || $this->isTakeawayOrder($order);
+    }
+
     public function nextStatus(Order $order): ?string
     {
         if (! $order->is_paid && ! $this->isCashOnDelivery($order)) {
@@ -118,9 +133,15 @@ class OrderFulfillmentService
 
             $collectionNote = trim((string) ($actor['cod_collection_note'] ?? ''));
             if ($collectionNote === '') {
-                $collectionNote = $telegramConfirmed
-                    ? 'Cash received at delivery handoff; confirmed by the authorised Telegram administrator.'
-                    : 'Cash received from the customer at delivery handoff.';
+                if ($this->isDeliveryOrder($order)) {
+                    $collectionNote = $telegramConfirmed
+                        ? 'Cash received at delivery handoff; confirmed by the authorised Telegram administrator.'
+                        : 'Cash received from the customer at delivery handoff.';
+                } else {
+                    $collectionNote = $telegramConfirmed
+                        ? 'Cash received when the customer collected the takeaway order; confirmed by the authorised Telegram administrator.'
+                        : 'Cash received from the customer when they collected the takeaway order.';
+                }
             }
 
             $order->cod_collected_amount = number_format($amountDue, 2, '.', '');
@@ -168,7 +189,10 @@ class OrderFulfillmentService
             'telegram_username' => $actor['telegram_username'] ?? null,
             'actor_label' => $actor['actor_label'] ?? null,
             'note' => $isCodCollection
-                ? 'Delivery completed and COD payment collection recorded. '.trim((string) ($actor['note'] ?? ''))
+                ? ($this->isDeliveryOrder($order)
+                    ? 'Delivery completed and COD payment collection recorded. '
+                    : 'Takeaway collected and COD payment collection recorded. ')
+                    .trim((string) ($actor['note'] ?? ''))
                 : ($actor['note'] ?? null),
             'created_at' => now(),
         ]);

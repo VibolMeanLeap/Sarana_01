@@ -247,7 +247,7 @@
 
         .cs-panel-title {
             font-family: 'Manrope', 'DM Sans', sans-serif;
-            color: #26382e;
+            color: #91DCAF;
             font-size: .96rem;
             font-weight: 850;
             letter-spacing: -.025em;

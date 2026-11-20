@@ -21,7 +21,7 @@ html[data-cc-theme="dark"] {
     --cc-theme-surface: #19251f;
     --cc-theme-surface-raised: #202e27;
     --cc-theme-surface-muted: #24332b;
-    --cc-theme-text: #e8f0ea;
+    --cc-theme-text: #91dcaf;
     --cc-theme-muted: #a5b4aa;
     --cc-theme-border: #34463b;
     --cc-theme-input: #17231d;
@@ -527,4 +527,3825 @@ html[data-cc-theme="dark"] .badge-soft-danger {
         transition-duration: 0.01ms !important;
         animation-duration: 0.01ms !important;
     }
+}
+
+/* -------------------------------------------------------------------------
+   Workspace-wide compatibility layer (admin, cashier, POS, storefront, auth)
+   This layer intentionally comes after page/layout styles so fixed light
+   surfaces and hard-coded component backgrounds cannot leak into dark mode.
+   ------------------------------------------------------------------------- */
+:root {
+    --cc-theme-focus: 0 0 0 0.22rem
+        color-mix(in srgb, var(--cc-theme-green) 19%, transparent);
+}
+
+html[data-cc-theme="dark"] body {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .app-shell,
+html[data-cc-theme="dark"] .main-wrap,
+html[data-cc-theme="dark"] .content-area,
+html[data-cc-theme="dark"] .cashier-main,
+html[data-cc-theme="dark"] .pos-main,
+html[data-cc-theme="dark"] .store-page,
+html[data-cc-theme="dark"] .account-page,
+html[data-cc-theme="dark"] .inbox-page,
+html[data-cc-theme="dark"] .store-contact-page,
+html[data-cc-theme="dark"] .store-info-page,
+html[data-cc-theme="dark"] .thread-page,
+html[data-cc-theme="dark"] .order-track-page {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Workspace chrome and shared content surfaces. */
+html[data-cc-theme="dark"] .sidebar,
+html[data-cc-theme="dark"] .topbar,
+html[data-cc-theme="dark"] .cashier-top,
+html[data-cc-theme="dark"] .pos-navbar,
+html[data-cc-theme="dark"] .navbar-clean,
+html[data-cc-theme="dark"] .card,
+html[data-cc-theme="dark"] .card-header,
+html[data-cc-theme="dark"] .panel,
+html[data-cc-theme="dark"] .pos-panel,
+html[data-cc-theme="dark"] .product-card,
+html[data-cc-theme="dark"] .checkout-panel,
+html[data-cc-theme="dark"] .checkout-card,
+html[data-cc-theme="dark"] .cart-panel,
+html[data-cc-theme="dark"] .account-card,
+html[data-cc-theme="dark"] .account-order-row,
+html[data-cc-theme="dark"] .inbox-card,
+html[data-cc-theme="dark"] .thread-card,
+html[data-cc-theme="dark"] .order-track-card,
+html[data-cc-theme="dark"] .product-detail-card,
+html[data-cc-theme="dark"] .product-related-card,
+html[data-cc-theme="dark"] .shop-product-card,
+html[data-cc-theme="dark"] .product-image,
+html[data-cc-theme="dark"] .product-placeholder,
+html[data-cc-theme="dark"] .modal-content,
+html[data-cc-theme="dark"] .dropdown-menu,
+html[data-cc-theme="dark"] .offcanvas,
+html[data-cc-theme="dark"] .popover,
+html[data-cc-theme="dark"] .toast,
+html[data-cc-theme="dark"] .list-group-item,
+html[data-cc-theme="dark"] .accordion-item,
+html[data-cc-theme="dark"] .accordion-button,
+html[data-cc-theme="dark"] .admin-live-notice,
+html[data-cc-theme="dark"] .admin-live-notice-icon {
+    background-color: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .card,
+html[data-cc-theme="dark"] .content-area .orders-panel,
+html[data-cc-theme="dark"] .content-area .panel,
+html[data-cc-theme="dark"] .content-area [class*="-card"],
+html[data-cc-theme="dark"] .content-area [class*="-panel"],
+html[data-cc-theme="dark"] .content-area [class*="-section"],
+html[data-cc-theme="dark"] .content-area [class*="-shell"],
+html[data-cc-theme="dark"] .content-area [class*="-table-card"],
+html[data-cc-theme="dark"] .cashier-main [class*="-card"],
+html[data-cc-theme="dark"] .cashier-main [class*="-panel"],
+html[data-cc-theme="dark"] .pos-main [class*="-card"],
+html[data-cc-theme="dark"] .pos-main [class*="-panel"],
+html[data-cc-theme="dark"] .store-page [class*="-card"],
+html[data-cc-theme="dark"] .store-page [class*="-panel"] {
+    background-color: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .card-header,
+html[data-cc-theme="dark"] .content-area .table thead th,
+html[data-cc-theme="dark"] .content-area .filter-card,
+html[data-cc-theme="dark"] .content-area .filter-panel,
+html[data-cc-theme="dark"] .content-area .aura-date-filter,
+html[data-cc-theme="dark"] .content-area .aura-range-pills,
+html[data-cc-theme="dark"] .content-area .sidebar-note,
+html[data-cc-theme="dark"] .content-area .summary-chip,
+html[data-cc-theme="dark"] .content-area .audit-snapshot,
+html[data-cc-theme="dark"] .content-area .audit-kpi,
+html[data-cc-theme="dark"] .content-area .audit-detail,
+html[data-cc-theme="dark"] .content-area .backup-stat,
+html[data-cc-theme="dark"] .content-area .orders-stat,
+html[data-cc-theme="dark"] .content-area .ps-kpi,
+html[data-cc-theme="dark"] .content-area .settings-stat {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Common custom component families used across the administration tabs. */
+html[data-cc-theme="dark"] .content-area .finance-card,
+html[data-cc-theme="dark"] .content-area .finance-panel,
+html[data-cc-theme="dark"] .content-area .aura-panel,
+html[data-cc-theme="dark"] .content-area .aura-stat,
+html[data-cc-theme="dark"] .content-area .cc-p-form-card,
+html[data-cc-theme="dark"] .content-area .cc-form-card,
+html[data-cc-theme="dark"] .content-area .cc-table-card,
+html[data-cc-theme="dark"] .content-area .cc-p-table,
+html[data-cc-theme="dark"] .content-area .cc-prod-table-card,
+html[data-cc-theme="dark"] .content-area .cc-s-section,
+html[data-cc-theme="dark"] .content-area .cc-stock-history-card,
+html[data-cc-theme="dark"] .content-area .orders-panel,
+html[data-cc-theme="dark"] .content-area .order-items-panel,
+html[data-cc-theme="dark"] .content-area .correction-card,
+html[data-cc-theme="dark"] .content-area .supplier-filter-card,
+html[data-cc-theme="dark"] .content-area .supplier-table-card,
+html[data-cc-theme="dark"] .content-area .supplier-stat,
+html[data-cc-theme="dark"] .content-area .backup-card,
+html[data-cc-theme="dark"] .content-area .report-shell,
+html[data-cc-theme="dark"] .content-area .cs-panel,
+html[data-cc-theme="dark"] .content-area .cs-inbox-panel,
+html[data-cc-theme="dark"] .content-area .cs-chat-host,
+html[data-cc-theme="dark"] .content-area .cs-composer-wrap,
+html[data-cc-theme="dark"] .content-area .cs-thread-bubble,
+html[data-cc-theme="dark"] .content-area .cs-message-bubble,
+html[data-cc-theme="dark"] .content-area .cod-settlement-shell,
+html[data-cc-theme="dark"] .content-area .delivery-next-action,
+html[data-cc-theme="dark"] .content-area .delivery-feedback,
+html[data-cc-theme="dark"] .content-area .settings-card,
+html[data-cc-theme="dark"] .content-area .store-contact-card,
+html[data-cc-theme="dark"] .content-area .store-info-card {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Filter/search bands and all data-entry controls. */
+html[data-cc-theme="dark"]
+    .content-area
+    form[method="GET"]:not(#ordersFilterForm),
+html[data-cc-theme="dark"]
+    .content-area
+    form[method="get"]:not(#ordersFilterForm),
+html[data-cc-theme="dark"] .content-area .aura-date-filter,
+html[data-cc-theme="dark"] .content-area .cc-adjust-card,
+html[data-cc-theme="dark"] .content-area .cs-composer,
+html[data-cc-theme="dark"] .content-area .cs-search-input,
+html[data-cc-theme="dark"] .content-area .cs-details-collapse,
+html[data-cc-theme="dark"] .content-area .cs-filter-tabs {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: none !important;
+}
+
+html[data-cc-theme="dark"]
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html[data-cc-theme="dark"] textarea,
+html[data-cc-theme="dark"] select,
+html[data-cc-theme="dark"] .form-control,
+html[data-cc-theme="dark"] .form-select,
+html[data-cc-theme="dark"] .form-control:disabled,
+html[data-cc-theme="dark"] .form-select:disabled,
+html[data-cc-theme="dark"] .input-group-text,
+html[data-cc-theme="dark"] .search-box,
+html[data-cc-theme="dark"] .customer-auth-input,
+html[data-cc-theme="dark"] .auth-input,
+html[data-cc-theme="dark"] .recovery-input,
+html[data-cc-theme="dark"] .cc-module .form-control,
+html[data-cc-theme="dark"] .cc-module .form-select,
+html[data-cc-theme="dark"] .cc-stock .form-control,
+html[data-cc-theme="dark"] .cc-stock .form-select,
+html[data-cc-theme="dark"] .cc-products .form-control,
+html[data-cc-theme="dark"] .cc-products .form-select,
+html[data-cc-theme="dark"] .cc-composer textarea,
+html[data-cc-theme="dark"] .cs-composer textarea,
+html[data-cc-theme="dark"] .cs-search-input input {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] input::placeholder,
+html[data-cc-theme="dark"] textarea::placeholder,
+html[data-cc-theme="dark"] .form-control::placeholder,
+html[data-cc-theme="dark"] .customer-auth-input::placeholder,
+html[data-cc-theme="dark"] .auth-input::placeholder {
+    color: var(--cc-theme-muted) !important;
+    opacity: 0.85;
+}
+
+html[data-cc-theme="dark"] .form-control:focus,
+html[data-cc-theme="dark"] .form-select:focus,
+html[data-cc-theme="dark"] input:focus,
+html[data-cc-theme="dark"] textarea:focus,
+html[data-cc-theme="dark"] select:focus {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-green) !important;
+    box-shadow: var(--cc-theme-focus) !important;
+}
+
+html[data-cc-theme="dark"] .form-select option {
+    background: var(--cc-theme-surface);
+    color: var(--cc-theme-text);
+}
+
+/* Tables and pagination. */
+html[data-cc-theme="dark"] .table,
+html[data-cc-theme="dark"] .table-responsive,
+html[data-cc-theme="dark"] .cc-table,
+html[data-cc-theme="dark"] .cc-p-table,
+html[data-cc-theme="dark"] .cc-prod-table,
+html[data-cc-theme="dark"] .cc-s-table,
+html[data-cc-theme="dark"] .orders-table,
+html[data-cc-theme="dark"] .finance-table,
+html[data-cc-theme="dark"] .oi-table {
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] .table > :not(caption) > * > *,
+html[data-cc-theme="dark"] .cc-table > :not(caption) > * > *,
+html[data-cc-theme="dark"] .orders-table > :not(caption) > * > *,
+html[data-cc-theme="dark"] .finance-table > :not(caption) > * > * {
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    background-color: transparent;
+}
+html[data-cc-theme="dark"] .table thead th,
+html[data-cc-theme="dark"] .cc-table thead th,
+html[data-cc-theme="dark"] .orders-table thead th,
+html[data-cc-theme="dark"] .finance-table thead th,
+html[data-cc-theme="dark"] .cc-p-table thead th,
+html[data-cc-theme="dark"] .cc-prod-table thead th,
+html[data-cc-theme="dark"] .cc-s-table thead th {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme="dark"] .table tbody tr:hover,
+html[data-cc-theme="dark"] .cc-table tbody tr:hover,
+html[data-cc-theme="dark"] .orders-table tbody tr:hover,
+html[data-cc-theme="dark"] .finance-table tbody tr:hover,
+html[data-cc-theme="dark"] .cc-p-table tbody tr:hover,
+html[data-cc-theme="dark"] .cc-prod-table tbody tr:hover,
+html[data-cc-theme="dark"] .cc-s-table tbody tr:hover {
+    background: var(--cc-theme-hover) !important;
+}
+html[data-cc-theme="dark"] .page-link,
+html[data-cc-theme="dark"] .pagination .page-link,
+html[data-cc-theme="dark"] .cc-prod-pagination,
+html[data-cc-theme="dark"] .cc-prod-pagination a,
+html[data-cc-theme="dark"] .cc-prod-pagination button {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] .page-item.active .page-link,
+html[data-cc-theme="dark"] .pagination .active .page-link {
+    background: #176b4b !important;
+    border-color: #176b4b !important;
+    color: #fff !important;
+}
+
+/* Text contrast: keep semantic badges/buttons intact while correcting muted text. */
+html[data-cc-theme="dark"] h1,
+html[data-cc-theme="dark"] h2,
+html[data-cc-theme="dark"] h3,
+html[data-cc-theme="dark"] h4,
+html[data-cc-theme="dark"] h5,
+html[data-cc-theme="dark"] h6,
+html[data-cc-theme="dark"] .text-dark,
+html[data-cc-theme="dark"] .text-body,
+html[data-cc-theme="dark"] .text-secondary,
+html[data-cc-theme="dark"] .text-muted,
+html[data-cc-theme="dark"] .form-label,
+html[data-cc-theme="dark"] .form-check-label,
+html[data-cc-theme="dark"] label,
+html[data-cc-theme="dark"] legend,
+html[data-cc-theme="dark"] .page-heading p,
+html[data-cc-theme="dark"] .table td,
+html[data-cc-theme="dark"] .table th,
+html[data-cc-theme="dark"] .brand,
+html[data-cc-theme="dark"] .brand-name,
+html[data-cc-theme="dark"] .topbar-title,
+html[data-cc-theme="dark"] .user-name,
+html[data-cc-theme="dark"] .nav-group-toggle,
+html[data-cc-theme="dark"] .nav-group-title,
+html[data-cc-theme="dark"] .content-area .section-title,
+html[data-cc-theme="dark"] .content-area .product-title,
+html[data-cc-theme="dark"] .content-area .product-price,
+html[data-cc-theme="dark"] .content-area .stat-value,
+html[data-cc-theme="dark"] .content-area .finance-value,
+html[data-cc-theme="dark"] .content-area .customer-login-title,
+html[data-cc-theme="dark"] .content-area .customer-login-sub,
+html[data-cc-theme="dark"] .content-area .audit-value,
+html[data-cc-theme="dark"] .content-area .cc-case-title,
+html[data-cc-theme="dark"] .content-area .cs-case-title {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"] .text-muted,
+html[data-cc-theme="dark"] .form-text,
+html[data-cc-theme="dark"] .brand-caption,
+html[data-cc-theme="dark"] .topbar-eyebrow,
+html[data-cc-theme="dark"] .user-role,
+html[data-cc-theme="dark"] .nav-label,
+html[data-cc-theme="dark"] .mini-label,
+html[data-cc-theme="dark"] .eyebrow,
+html[data-cc-theme="dark"] .stat-label,
+html[data-cc-theme="dark"] .customer-auth-sub,
+html[data-cc-theme="dark"] .customer-auth-foot {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: var(--cc-theme-green);
+}
+html[data-cc-theme="dark"]
+    a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
+    color: #a4e0ba;
+}
+
+/* Navigation, filters, accordions, tabs and utility controls. */
+html[data-cc-theme="dark"] .app-nav a,
+html[data-cc-theme="dark"] .nav-group-items a,
+html[data-cc-theme="dark"] .cashier-nav a,
+html[data-cc-theme="dark"] .nav-link,
+html[data-cc-theme="dark"] .dropdown-item,
+html[data-cc-theme="dark"] .nav-group-title > i,
+html[data-cc-theme="dark"] .nav-group-chevron {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"] .app-nav a:hover,
+html[data-cc-theme="dark"] .nav-group-toggle:hover,
+html[data-cc-theme="dark"] .nav-group-items a:hover,
+html[data-cc-theme="dark"] .dropdown-item:hover,
+html[data-cc-theme="dark"] .dropdown-item:focus,
+html[data-cc-theme="dark"] .nav-tabs .nav-link:hover,
+html[data-cc-theme="dark"] .nav-pills .nav-link:hover {
+    background: var(--cc-theme-hover) !important;
+    color: var(--cc-theme-green) !important;
+}
+html[data-cc-theme="dark"] .app-nav a.active,
+html[data-cc-theme="dark"] .nav-group-toggle.group-active,
+html[data-cc-theme="dark"] .nav-tabs .nav-link.active,
+html[data-cc-theme="dark"] .nav-pills .nav-link.active,
+html[data-cc-theme="dark"] .customer-auth-tabs a.active {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+}
+html[data-cc-theme="dark"] .nav-group-items,
+html[data-cc-theme="dark"] .nav-group-items a,
+html[data-cc-theme="dark"] .sidebar-navigation .nav-group-items {
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] .sidebar-note {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme="dark"] .admin-live-notice strong {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"] .admin-live-notice span {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme="dark"] .admin-live-notice a {
+    color: var(--cc-theme-green) !important;
+}
+
+/* Buttons and action elements. Preserve saturated primary/danger buttons. */
+html[data-cc-theme="dark"] .btn-light,
+html[data-cc-theme="dark"] .btn-cc-light,
+html[data-cc-theme="dark"] .btn-pos-outline,
+html[data-cc-theme="dark"] .btn-outline-secondary,
+html[data-cc-theme="dark"] .btn-back-list,
+html[data-cc-theme="dark"] .btn-cancel,
+html[data-cc-theme="dark"] .aura-btn-white,
+html[data-cc-theme="dark"] .cc-s-btn.light,
+html[data-cc-theme="dark"] .cc-action,
+html[data-cc-theme="dark"] .cc-p-iconbtn,
+html[data-cc-theme="dark"] .cc-icon-btn {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] .btn-outline-secondary:hover,
+html[data-cc-theme="dark"] .btn-light:hover,
+html[data-cc-theme="dark"] .btn-cc-light:hover,
+html[data-cc-theme="dark"] .btn-pos-outline:hover {
+    background: var(--cc-theme-hover) !important;
+    color: var(--cc-theme-green) !important;
+}
+html[data-cc-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Preserve meaningful state colors with dark-friendly contrast. */
+html[data-cc-theme="dark"] .badge-soft-success,
+html[data-cc-theme="dark"] .badge-paid,
+html[data-cc-theme="dark"] .status-pill.paid,
+html[data-cc-theme="dark"] .aura-mini-badge.completed {
+    background: #244c37 !important;
+    color: #a7e3bd !important;
+}
+html[data-cc-theme="dark"] .badge-soft-warning,
+html[data-cc-theme="dark"] .badge-pending,
+html[data-cc-theme="dark"] .status-pill.pending,
+html[data-cc-theme="dark"] .status-pill.unpaid,
+html[data-cc-theme="dark"] .aura-mini-badge.pending,
+html[data-cc-theme="dark"] .correction-pill.pending {
+    background: #514324 !important;
+    color: #f4d58a !important;
+}
+html[data-cc-theme="dark"] .badge-soft-danger,
+html[data-cc-theme="dark"] .status-pill.cancelled,
+html[data-cc-theme="dark"] .status-pill.failed,
+html[data-cc-theme="dark"] .status-pill.declined,
+html[data-cc-theme="dark"] .status-pill.expired,
+html[data-cc-theme="dark"] .status-pill.review_required {
+    background: #512e2e !important;
+    color: #ffb4ad !important;
+}
+html[data-cc-theme="dark"] .alert-success {
+    background: #1f3c2d !important;
+    color: #b5e5c4 !important;
+    border-color: #315d43 !important;
+}
+html[data-cc-theme="dark"] .alert-warning {
+    background: #46391f !important;
+    color: #f5dfa5 !important;
+    border-color: #66552f !important;
+}
+html[data-cc-theme="dark"] .alert-danger {
+    background: #482b2b !important;
+    color: #ffc0ba !important;
+    border-color: #704141 !important;
+}
+html[data-cc-theme="dark"] .alert-info {
+    background: #203b4b !important;
+    color: #b7e3fa !important;
+    border-color: #34586d !important;
+}
+
+/* Auth screens (customer and staff). Keep the branded showcase gradient. */
+html[data-cc-theme="dark"] .auth-card,
+html[data-cc-theme="dark"] .auth-panel,
+html[data-cc-theme="dark"] .customer-auth-tabs,
+html[data-cc-theme="dark"] .staff-auth .auth-card {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] .auth-panel {
+    background: var(--cc-theme-bg) !important;
+}
+html[data-cc-theme="dark"] .auth-card h2,
+html[data-cc-theme="dark"] .customer-login-title {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"] .auth-card .lead,
+html[data-cc-theme="dark"] .auth-label,
+html[data-cc-theme="dark"] .customer-login-sub,
+html[data-cc-theme="dark"] .customer-auth-label {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme="dark"] .customer-google-button,
+html[data-cc-theme="dark"] .google-auth-button {
+    background: var(--cc-theme-surface-raised) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Other Bootstrap surfaces and native widgets. */
+html[data-cc-theme="dark"] .bg-white,
+html[data-cc-theme="dark"] .bg-light,
+html[data-cc-theme="dark"] .bg-body,
+html[data-cc-theme="dark"] .bg-body-tertiary,
+html[data-cc-theme="dark"] .list-group,
+html[data-cc-theme="dark"] .accordion,
+html[data-cc-theme="dark"] .accordion-button:not(.collapsed) {
+    background-color: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"] .border,
+html[data-cc-theme="dark"] .border-top,
+html[data-cc-theme="dark"] .border-bottom,
+html[data-cc-theme="dark"] .border-start,
+html[data-cc-theme="dark"] .border-end,
+html[data-cc-theme="dark"] hr,
+html[data-cc-theme="dark"] .dropdown-divider {
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] .swal2-popup {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"] .swal2-title,
+html[data-cc-theme="dark"] .swal2-html-container {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme="dark"]
+    .select2-container--default
+    .select2-selection--single,
+html[data-cc-theme="dark"] .select2-dropdown,
+html[data-cc-theme="dark"]
+    .select2-container--default
+    .select2-results__option {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"]
+    .select2-container--default
+    .select2-results__option--highlighted[aria-selected] {
+    background: var(--cc-theme-hover) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Floating theme control used on compact authentication pages. */
+.cc-theme-dock {
+    position: fixed;
+    top: 16px;
+    right: 18px;
+    z-index: 1300;
+}
+
+/* Scrollbars blend with the active appearance without hiding content. */
+html[data-cc-theme="dark"] * {
+    scrollbar-color: #526b5b #1a2921;
+}
+html[data-cc-theme="dark"] ::selection {
+    background: #37684c;
+    color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html[data-cc-theme] *,
+    html[data-cc-theme] *::before,
+    html[data-cc-theme] *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* Additional page-specific panels found across the original Blade screens. */
+html[data-cc-theme="dark"] .staff-auth,
+html[data-cc-theme="dark"] .oi-page-bg,
+html[data-cc-theme="dark"] .prod-page-bg,
+html[data-cc-theme="dark"] .ord-page-bg,
+html[data-cc-theme="dark"] .inbox-page,
+html[data-cc-theme="dark"] .thread-page,
+html[data-cc-theme="dark"] .store-contact-page,
+html[data-cc-theme="dark"] .store-info-page {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area [class*="-kpi"],
+html[data-cc-theme="dark"] .content-area [class*="-stat"],
+html[data-cc-theme="dark"] .content-area [class*="-detail"],
+html[data-cc-theme="dark"] .content-area [class*="-snapshot"],
+html[data-cc-theme="dark"] .content-area [class*="-track"],
+html[data-cc-theme="dark"] .content-area .audit,
+html[data-cc-theme="dark"] .content-area .audit-value,
+html[data-cc-theme="dark"] .content-area .audit-pill,
+html[data-cc-theme="dark"] .content-area .backup-action-summary,
+html[data-cc-theme="dark"] .content-area .backup-action-warning,
+html[data-cc-theme="dark"] .content-area .admin-date-preset,
+html[data-cc-theme="dark"] .content-area .catalog-mode-group,
+html[data-cc-theme="dark"] .content-area .cod-settlement-hint,
+html[data-cc-theme="dark"] .content-area .cod-settlement-footer,
+html[data-cc-theme="dark"] .content-area .delivery-activity-count,
+html[data-cc-theme="dark"] .content-area .delivery-cod-due,
+html[data-cc-theme="dark"] .content-area .delivery-visual-step-icon,
+html[data-cc-theme="dark"] .content-area .cs-count,
+html[data-cc-theme="dark"] .content-area .cs-case-meta-item,
+html[data-cc-theme="dark"] .content-area .cs-private-note,
+html[data-cc-theme="dark"] .content-area .cs-empty-thread,
+html[data-cc-theme="dark"] .content-area .cs-guest-notice,
+html[data-cc-theme="dark"] .content-area .cc-p-total-preview,
+html[data-cc-theme="dark"] .content-area .cc-adjust-footer,
+html[data-cc-theme="dark"] .content-area .cc-stock-history .out,
+html[data-cc-theme="dark"] .content-area .cc-prod-qty,
+html[data-cc-theme="dark"] .content-area .supplier-count {
+    background-color: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .audit-detail,
+html[data-cc-theme="dark"] .content-area .audit-kpi,
+html[data-cc-theme="dark"] .content-area .aura-bar-track,
+html[data-cc-theme="dark"] .content-area .finance-track,
+html[data-cc-theme="dark"] .content-area .cc-preset,
+html[data-cc-theme="dark"] .content-area .cc-p-reset,
+html[data-cc-theme="dark"] .content-area .cc-btn-reset,
+html[data-cc-theme="dark"] .content-area .cc-prod-reset,
+html[data-cc-theme="dark"] .content-area .cc-s-reset,
+html[data-cc-theme="dark"] .content-area .cod-settlement-input-wrap,
+html[data-cc-theme="dark"] .content-area .cod-settlement-field,
+html[data-cc-theme="dark"] .content-area .cs-composer textarea,
+html[data-cc-theme="dark"] .content-area .cs-search-input input,
+html[data-cc-theme="dark"] .content-area .admin-date-field input {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .prod-form-alert,
+html[data-cc-theme="dark"] .content-area .ord-form-alert,
+html[data-cc-theme="dark"] .content-area .oi-form-alert,
+html[data-cc-theme="dark"] .content-area .cc-p-alert,
+html[data-cc-theme="dark"] .content-area .cc-alert,
+html[data-cc-theme="dark"] .content-area .cc-s-alert,
+html[data-cc-theme="dark"] .content-area .cc-prod-alert,
+html[data-cc-theme="dark"] .content-area .cs-composer-error,
+html[data-cc-theme="dark"] .content-area .delivery-feedback.is-error,
+html[data-cc-theme="dark"] .content-area .cc-form-error {
+    background: #482b2b !important;
+    color: #ffc0ba !important;
+    border-color: #704141 !important;
+}
+
+html[data-cc-theme="dark"] .content-area .content-title,
+html[data-cc-theme="dark"] .content-area .page-title,
+html[data-cc-theme="dark"] .content-area .stat-value,
+html[data-cc-theme="dark"] .content-area .product-title,
+html[data-cc-theme="dark"] .content-area .finance-value,
+html[data-cc-theme="dark"] .content-area .orders-stat strong,
+html[data-cc-theme="dark"] .content-area .supplier-stat strong,
+html[data-cc-theme="dark"] .content-area .settings-stat strong,
+html[data-cc-theme="dark"]
+    .content-area
+    .cs-thread-item--customer
+    .cs-thread-bubble,
+html[data-cc-theme="dark"]
+    .content-area
+    .cs-message--customer
+    .cs-message-bubble {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Treat inline white panels as theme surfaces but keep QR canvases white for scanning. */
+html[data-cc-theme="dark"]
+    main
+    div[style*="background:#fff" i]:not(.qr-frame):not([class*="qr"]),
+html[data-cc-theme="dark"]
+    main
+    div[style*="background: #fff" i]:not(.qr-frame):not([class*="qr"]),
+html[data-cc-theme="dark"]
+    main
+    div[style*="background-color:#fff" i]:not(.qr-frame):not([class*="qr"]),
+html[data-cc-theme="dark"]
+    main
+    div[style*="background-color: #fff" i]:not(.qr-frame):not([class*="qr"]),
+html[data-cc-theme="dark"]
+    main
+    section[style*="background:#fff" i]:not([class*="qr"]),
+html[data-cc-theme="dark"]
+    main
+    section[style*="background: #fff" i]:not([class*="qr"]) {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Product and account areas use dark readable titles without changing image assets. */
+html[data-cc-theme="dark"] .product-title,
+html[data-cc-theme="dark"] .product-price,
+html[data-cc-theme="dark"] .section-title,
+html[data-cc-theme="dark"] .customer-login-title,
+html[data-cc-theme="dark"] .customer-auth-label,
+html[data-cc-theme="dark"] .auth-label,
+html[data-cc-theme="dark"] .auth-card h2,
+html[data-cc-theme="dark"] .product-detail-card h1,
+html[data-cc-theme="dark"] .product-detail-card h2,
+html[data-cc-theme="dark"] .product-related-card h3 {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .store-cart-toast,
+html[data-cc-theme="dark"] .cart-empty,
+html[data-cc-theme="dark"] .payment-note,
+html[data-cc-theme="dark"] .recovery-note,
+html[data-cc-theme="dark"] .note,
+html[data-cc-theme="dark"] .info-note,
+html[data-cc-theme="dark"] .delivery-fields,
+html[data-cc-theme="dark"] .cart-empty,
+html[data-cc-theme="dark"] .cc-theme-menu {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Some pages use inline dark body text inside generic cards; set the inherited
+   foreground at the surface level while preserving explicit status/action colors. */
+html[data-cc-theme="dark"] .card,
+html[data-cc-theme="dark"] .panel,
+html[data-cc-theme="dark"] [class$="-card"],
+html[data-cc-theme="dark"] [class$="-panel"] {
+    color: var(--cc-theme-text);
+}
+
+/* Admin action counters follow the SK Coffee green palette in both themes. */
+.nav-action-count,
+.nav-group-action-count {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+}
+html[data-cc-theme="dark"] .nav-action-count,
+html[data-cc-theme="dark"] .nav-group-action-count {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+}
+html:not([data-cc-theme="dark"]) .bg-white {
+    background-color: var(--cc-theme-surface) !important;
+}
+html:not([data-cc-theme="dark"]) .bg-light {
+    background-color: var(--cc-theme-surface-muted) !important;
+}
+
+@media (max-width: 991.98px) {
+    .cc-theme-trigger-copy,
+    .cc-theme-chevron {
+        display: none !important;
+    }
+    .cc-theme-trigger {
+        min-width: 42px;
+        width: 42px;
+        height: 42px;
+        min-height: 42px;
+        padding: 5px;
+        justify-content: center;
+        gap: 0;
+    }
+}
+
+/* -------------------------------------------------------------------------
+   SK Coffee admin panel compatibility fixes
+   Fixes hard-coded light gradients/panel surfaces on date filters, Purchase,
+   Inventory, Stock history, Orders and the Finance overview.  This file is
+   appended to cc-theme.css so these rules run after page-level inline styles.
+   ------------------------------------------------------------------------- */
+
+/* A GET form that contains the reusable date-range component is only a layout
+   wrapper.  Keep the actual date/search panels as the visible surfaces. */
+html[data-cc-theme]
+    .content-area
+    form[method="GET"]:has(.admin-date-filter-panel),
+html[data-cc-theme]
+    .content-area
+    form[method="get"]:has(.admin-date-filter-panel) {
+    padding: 0 !important;
+    margin: 0 0 16px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+html[data-cc-theme]
+    .content-area
+    form[method="GET"]:has(.admin-date-filter-panel)::before,
+html[data-cc-theme]
+    .content-area
+    form[method="get"]:has(.admin-date-filter-panel)::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* Main page shells */
+html[data-cc-theme] .content-area .cc-purchase,
+html[data-cc-theme] .content-area .cc-stock,
+html[data-cc-theme] .content-area .cc-stock-history {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Reusable date range and dashboard range cards */
+html[data-cc-theme] .content-area .admin-date-filter-panel,
+html[data-cc-theme] .content-area .aura-date-filter,
+html[data-cc-theme] .content-area .orders-filter-panel,
+html[data-cc-theme] .content-area .cc-p-panel,
+html[data-cc-theme] .content-area .cc-s-filter,
+html[data-cc-theme] .content-area .cc-prod-filter,
+html[data-cc-theme] .content-area .finance-filter {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: none !important;
+}
+
+/* Summary cards and data panels */
+html[data-cc-theme] .content-area .cc-p-stat,
+html[data-cc-theme] .content-area .cc-s-stat,
+html[data-cc-theme] .content-area .orders-stat,
+html[data-cc-theme] .content-area .finance-card,
+html[data-cc-theme] .content-area .cc-stock-history-card,
+html[data-cc-theme] .content-area .cc-p-table,
+html[data-cc-theme] .content-area .cc-s-section,
+html[data-cc-theme] .content-area .orders-panel,
+html[data-cc-theme] .content-area .finance-panel,
+html[data-cc-theme] .content-area .cs-inbox-panel,
+html[data-cc-theme] .content-area .cs-chat-host {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+/* Panel headers must not retain a pale gradient in dark mode. */
+html[data-cc-theme] .content-area .cc-p-table-head,
+html[data-cc-theme] .content-area .cc-s-section-head,
+html[data-cc-theme] .content-area .cc-stock-history-head,
+html[data-cc-theme] .content-area .cc-p-form-card-head,
+html[data-cc-theme] .content-area .cc-p-form-footer,
+html[data-cc-theme] .content-area .orders-panel-head,
+html[data-cc-theme] .content-area .finance-panel-head,
+html[data-cc-theme] .content-area .cs-chat-header,
+html[data-cc-theme] .content-area .cs-composer-wrap {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Purchase create/edit and inventory-adjustment cards */
+html[data-cc-theme] .content-area .cc-p-form,
+html[data-cc-theme] .content-area .cc-adjust-page {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cc-p-form-card,
+html[data-cc-theme] .content-area .cc-p-aside,
+html[data-cc-theme] .content-area .cc-adjust-card {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-p-total-preview,
+html[data-cc-theme] .content-area .cc-adjust-footer {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Consistent title, label, helper and metadata contrast */
+html[data-cc-theme] .content-area .cc-p-title,
+html[data-cc-theme] .content-area .cc-p-panel-title,
+html[data-cc-theme] .content-area .cc-p-table-title,
+html[data-cc-theme] .content-area .cc-s-title,
+html[data-cc-theme] .content-area .cc-s-filter-title,
+html[data-cc-theme] .content-area .cc-s-section-title,
+html[data-cc-theme] .content-area .cc-stock-history-head strong,
+html[data-cc-theme] .content-area .orders-panel-title,
+html[data-cc-theme] .content-area .orders-filter-title,
+html[data-cc-theme] .content-area .finance-title,
+html[data-cc-theme] .content-area .finance-panel-head h2,
+html[data-cc-theme] .content-area .cs-inbox-heading h2,
+html[data-cc-theme] .content-area .cs-chat-person h2 {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cc-p-sub,
+html[data-cc-theme] .content-area .cc-p-panel-hint,
+html[data-cc-theme] .content-area .cc-p-stat-label,
+html[data-cc-theme] .content-area .cc-p-table-meta,
+html[data-cc-theme] .content-area .cc-s-sub,
+html[data-cc-theme] .content-area .cc-s-filter-hint,
+html[data-cc-theme] .content-area .cc-s-stat-label,
+html[data-cc-theme] .content-area .cc-s-section-hint,
+html[data-cc-theme] .content-area .orders-filter-field label,
+html[data-cc-theme] .content-area .admin-date-filter-title,
+html[data-cc-theme] .content-area .admin-date-filter-hint,
+html[data-cc-theme] .content-area .admin-date-field label,
+html[data-cc-theme] .content-area .finance-subtitle,
+html[data-cc-theme] .content-area .finance-card .label,
+html[data-cc-theme] .content-area .finance-card .hint {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Date presets, range buttons and reset controls */
+html[data-cc-theme] .content-area .admin-date-preset:not(.is-active),
+html[data-cc-theme] .content-area .cc-preset:not(.active),
+html[data-cc-theme] .content-area .cc-p-reset,
+html[data-cc-theme] .content-area .cc-s-reset,
+html[data-cc-theme] .content-area .cc-prod-reset,
+html[data-cc-theme] .content-area .cc-p-iconbtn,
+html[data-cc-theme] .content-area .cc-prod-icon-btn:not(.danger) {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .admin-date-preset.is-active,
+html[data-cc-theme] .content-area .cc-preset.active,
+html[data-cc-theme] .content-area .cc-p-apply,
+html[data-cc-theme] .content-area .cc-s-apply,
+html[data-cc-theme] .content-area .admin-date-apply,
+html[data-cc-theme] .content-area .orders-filter-panel .btn-success {
+    background: #176b4b !important;
+    border-color: #176b4b !important;
+    color: #fff !important;
+}
+html[data-cc-theme] .content-area .admin-date-preset:hover:not(.is-active),
+html[data-cc-theme] .content-area .cc-preset:hover:not(.active),
+html[data-cc-theme] .content-area .cc-p-reset:hover,
+html[data-cc-theme] .content-area .cc-s-reset:hover {
+    background: var(--cc-theme-hover) !important;
+    color: var(--cc-theme-green) !important;
+    border-color: var(--cc-theme-green) !important;
+}
+
+/* Filter controls (including date fields and every non-date Orders filter). */
+html[data-cc-theme] .content-area .admin-date-field input,
+html[data-cc-theme] .content-area .cc-purchase .form-control,
+html[data-cc-theme] .content-area .cc-purchase .form-select,
+html[data-cc-theme] .content-area .cc-stock .form-control,
+html[data-cc-theme] .content-area .cc-stock .form-select,
+html[data-cc-theme] .content-area .cc-stock-history .form-control,
+html[data-cc-theme] .content-area .cc-stock-history .form-select,
+html[data-cc-theme] .content-area .orders-filter-panel .form-control,
+html[data-cc-theme] .content-area .orders-filter-panel .form-select,
+html[data-cc-theme] .content-area .cc-p-form .form-control,
+html[data-cc-theme] .content-area .cc-p-form .form-select,
+html[data-cc-theme] .content-area .cc-adjust-page .form-control,
+html[data-cc-theme] .content-area .cc-adjust-page .form-select,
+html[data-cc-theme] .content-area .finance-filter .form-control,
+html[data-cc-theme] .content-area .finance-filter .form-select {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .admin-date-field input:focus,
+html[data-cc-theme] .content-area .orders-filter-panel .form-control:focus,
+html[data-cc-theme] .content-area .orders-filter-panel .form-select:focus,
+html[data-cc-theme] .content-area .cc-purchase .form-control:focus,
+html[data-cc-theme] .content-area .cc-purchase .form-select:focus,
+html[data-cc-theme] .content-area .cc-stock .form-control:focus,
+html[data-cc-theme] .content-area .cc-stock .form-select:focus {
+    border-color: var(--cc-theme-green) !important;
+    box-shadow: var(--cc-theme-focus) !important;
+}
+
+/* Tables: neutralize hard-coded light headers, cells and hover rows. */
+html[data-cc-theme] .content-area .cc-p-table thead th,
+html[data-cc-theme] .content-area .cc-s-table thead th,
+html[data-cc-theme] .content-area .cc-stock-history table thead th,
+html[data-cc-theme] .content-area .orders-table thead th,
+html[data-cc-theme] .content-area .order-line-table thead th,
+html[data-cc-theme] .content-area .finance-table thead th {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-p-table tbody td,
+html[data-cc-theme] .content-area .cc-s-table tbody td,
+html[data-cc-theme] .content-area .cc-stock-history table tbody td,
+html[data-cc-theme] .content-area .orders-table tbody td,
+html[data-cc-theme] .content-area .order-line-table tbody td,
+html[data-cc-theme] .content-area .finance-table tbody td {
+    background: transparent !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-p-table tbody tr:hover,
+html[data-cc-theme] .content-area .cc-s-table tbody tr:hover,
+html[data-cc-theme] .content-area .cc-stock-history table tbody tr:hover,
+html[data-cc-theme] .content-area .orders-table tbody tr:hover,
+html[data-cc-theme] .content-area .finance-table tbody tr:hover {
+    background: var(--cc-theme-hover) !important;
+}
+html[data-cc-theme] .content-area .order-items-detail > td {
+    background: var(--cc-theme-surface-muted) !important;
+}
+html[data-cc-theme] .content-area .order-items-panel {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Stock movement modals and secondary controls */
+html[data-cc-theme] .content-area .cc-s-modal .modal-header,
+html[data-cc-theme] .content-area .cc-s-modal .modal-footer {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-s-modal .modal-title,
+html[data-cc-theme] .content-area .cc-s-modal .form-label,
+html[data-cc-theme] .content-area .cc-s-modal .modal-body {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cc-p-cancel,
+html[data-cc-theme] .content-area .cc-adjust-cancel,
+html[data-cc-theme] .content-area .cc-s-modal .btn-light {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Finance is the additional single-panel workspace that commonly appeared
+   white after the first theme pass. Preserve semantic income/expense colors. */
+html[data-cc-theme] .content-area .finance-track,
+html[data-cc-theme] .content-area .finance-filter,
+html[data-cc-theme] .content-area .finance-panel-head {
+    background: var(--cc-theme-surface-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .finance-panel-head h2,
+html[data-cc-theme] .content-area .finance-compare-label,
+html[data-cc-theme] .content-area .finance-body {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Keep customer-service inbox/chat panels and their neutral controls themed. */
+html[data-cc-theme] .content-area .cs-messenger .cs-inbox-panel,
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-host,
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-header,
+html[data-cc-theme] .content-area .cs-messenger .cs-composer-wrap {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-search-input input,
+html[data-cc-theme] .content-area .cs-messenger .cs-composer-wrap textarea {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-conversation-item:hover,
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-conversation-item.is-active {
+    background: var(--cc-theme-hover) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Keep branded action buttons and QR/payment canvases unchanged. */
+
+/* ========================================================================
+   SK Coffee – targeted admin polish (Products, Categories, Offers,
+   Customer Enquiries, Orders source select, Backup warning and panel edges)
+   This section intentionally comes last to override page-level inline CSS.
+   ======================================================================== */
+
+/* Product and Category page shells: remove fixed pale gradients in both modes. */
+html[data-cc-theme] .content-area .cc-products,
+html[data-cc-theme] .content-area .cc-module {
+    background: var(--cc-theme-bg) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-radius: 22px !important;
+    background-clip: padding-box;
+}
+
+/* Products: stat cards, filter surface, table shell and footer. */
+html[data-cc-theme] .content-area .cc-prod-stat,
+html[data-cc-theme] .content-area .cc-prod-table-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-filter,
+html[data-cc-theme] .content-area .cc-prod-table-head,
+html[data-cc-theme] .content-area .cc-prod-pagination {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: none !important;
+}
+html[data-cc-theme] .content-area .cc-prod-title,
+html[data-cc-theme] .content-area .cc-prod-name,
+html[data-cc-theme] .content-area .cc-prod-price,
+html[data-cc-theme] .content-area .cc-prod-table-title,
+html[data-cc-theme] .content-area .cc-prod-filter-title,
+html[data-cc-theme] .content-area .cc-prod-stat-value {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-kicker,
+html[data-cc-theme] .content-area .cc-prod-subtitle,
+html[data-cc-theme] .content-area .cc-prod-stat-label,
+html[data-cc-theme] .content-area .cc-prod-stat-note,
+html[data-cc-theme] .content-area .cc-prod-filter-hint,
+html[data-cc-theme] .content-area .cc-prod-field label,
+html[data-cc-theme] .content-area .cc-prod-table-meta,
+html[data-cc-theme] .content-area .cc-prod-meta,
+html[data-cc-theme] .content-area .cc-prod-empty,
+html[data-cc-theme] .content-area .cc-prod-pagination .small {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-filter-icon,
+html[data-cc-theme] .content-area .cc-prod-thumb {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-table thead th {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-table tbody td {
+    background: transparent !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-table tbody tr:hover {
+    background: var(--cc-theme-hover) !important;
+}
+html[data-cc-theme] .content-area .cc-products .form-control,
+html[data-cc-theme] .content-area .cc-products .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-prod-reset,
+html[data-cc-theme] .content-area .cc-prod-icon-btn:not(.danger) {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Categories: stat cards, filter panel and table. */
+html[data-cc-theme] .content-area .cc-module .cc-stat,
+html[data-cc-theme] .content-area .cc-module .cc-table-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-filter,
+html[data-cc-theme] .content-area .cc-module .cc-table-head {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: none !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-title,
+html[data-cc-theme] .content-area .cc-module .cc-stat-value,
+html[data-cc-theme] .content-area .cc-module .cc-table-title,
+html[data-cc-theme] .content-area .cc-module .cc-category-name {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-kicker,
+html[data-cc-theme] .content-area .cc-module .cc-subtitle,
+html[data-cc-theme] .content-area .cc-module .cc-stat-label,
+html[data-cc-theme] .content-area .cc-module .cc-filter-hint,
+html[data-cc-theme] .content-area .cc-module .cc-field label,
+html[data-cc-theme] .content-area .cc-module .cc-table-meta,
+html[data-cc-theme] .content-area .cc-module .cc-empty {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-filter-icon,
+html[data-cc-theme] .content-area .cc-module .cc-stat-icon,
+html[data-cc-theme] .content-area .cc-module .cc-category-mark {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-table thead th {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-table tbody td {
+    background: transparent !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-table tbody tr:hover {
+    background: var(--cc-theme-hover) !important;
+}
+html[data-cc-theme] .content-area .cc-module .form-control,
+html[data-cc-theme] .content-area .cc-module .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cc-module .cc-btn-reset,
+html[data-cc-theme] .content-area .cc-module .cc-action:not(.danger) {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Offers: the third Catalog management tab uses Bootstrap utility classes. */
+html[data-cc-theme] .content-area .offer-admin-page .card {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    background-clip: padding-box;
+}
+html[data-cc-theme] .content-area .offer-admin-page > form > section,
+html[data-cc-theme] .content-area .offer-admin-page .card-header,
+html[data-cc-theme] .content-area .offer-admin-page .card-footer {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .offer-admin-page .card-body,
+html[data-cc-theme] .content-area .offer-admin-page .table,
+html[data-cc-theme] .content-area .offer-admin-page .table tbody td {
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .offer-admin-page .table thead th {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .offer-admin-page .form-control,
+html[data-cc-theme] .content-area .offer-admin-page .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .offer-admin-page .bg-white,
+html[data-cc-theme] .content-area .offer-admin-page .bg-light {
+    background-color: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Customer Enquiries: theme the actual chat canvas, transcript, bubbles,
+   empty state and composer rather than only the outer chat card. */
+html[data-cc-theme] .content-area .cs-messenger,
+html[data-cc-theme] .content-area .cs-view {
+    --cs-ink: var(--cc-theme-text);
+    --cs-muted: var(--cc-theme-muted);
+    --cs-line: var(--cc-theme-border);
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-host,
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-panel,
+html[data-cc-theme] .content-area .cs-messenger .cs-thread-scroll,
+html[data-cc-theme] .content-area .cs-view .cs-panel,
+html[data-cc-theme] .content-area .cs-view .cs-conversation {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-thread-scroll {
+    background: var(--cc-theme-bg) !important;
+    border-top: 1px solid var(--cc-theme-border);
+    border-bottom: 1px solid var(--cc-theme-border);
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-header,
+html[data-cc-theme] .content-area .cs-messenger .cs-composer-wrap,
+html[data-cc-theme] .content-area .cs-messenger .cs-details-collapse,
+html[data-cc-theme] .content-area .cs-messenger .cs-manage-details,
+html[data-cc-theme] .content-area .cs-messenger .cs-filter-tabs,
+html[data-cc-theme] .content-area .cs-messenger .cs-conversation-list {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-thread-scroll
+    .cs-day-divider {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-thread-scroll
+    .cs-day-divider::before,
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-thread-scroll
+    .cs-day-divider::after {
+    background: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-message--customer
+    .cs-message-bubble,
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-thread-item--customer
+    .cs-thread-bubble {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-message--staff
+    .cs-message-bubble,
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-thread-item--staff
+    .cs-thread-bubble {
+    background: #176b4b !important;
+    color: #fff !important;
+    border-color: #176b4b !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-message--system
+    .cs-message-bubble {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-message-meta,
+html[data-cc-theme] .content-area .cs-messenger .cs-message-meta strong,
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-person p,
+html[data-cc-theme] .content-area .cs-messenger .cs-composer-bottom > span,
+html[data-cc-theme] .content-area .cs-messenger .cs-details-grid span,
+html[data-cc-theme] .content-area .cs-messenger .cs-info-label,
+html[data-cc-theme] .content-area .cs-messenger .cs-panel-subtitle,
+html[data-cc-theme] .content-area .cs-messenger .cs-manage-form label {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-chat-person h2,
+html[data-cc-theme] .content-area .cs-messenger .cs-details-grid strong,
+html[data-cc-theme] .content-area .cs-messenger .cs-inbox-heading,
+html[data-cc-theme] .content-area .cs-messenger .cs-panel-title,
+html[data-cc-theme] .content-area .cs-messenger .cs-empty-chat h2,
+html[data-cc-theme] .content-area .cs-messenger .cs-empty-chat p {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-empty-chat {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-composer-wrap textarea,
+html[data-cc-theme] .content-area .cs-messenger .cs-search-input input,
+html[data-cc-theme] .content-area .cs-messenger .cs-manage-form .form-control,
+html[data-cc-theme] .content-area .cs-messenger .cs-manage-form .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-icon-btn {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-messenger .cs-conversation-item:hover,
+html[data-cc-theme]
+    .content-area
+    .cs-messenger
+    .cs-conversation-item.is-active {
+    background: var(--cc-theme-hover) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Orders: native Website/POS source select and its dropdown options. Keep a
+   visible chevron while changing its fill/text/border to the selected theme. */
+html[data-cc-theme] .content-area .orders-filter-panel #ordersSource,
+html[data-cc-theme] .content-area .orders-filter-panel .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    color-scheme: light;
+}
+html[data-cc-theme="dark"] .content-area .orders-filter-panel #ordersSource,
+html[data-cc-theme="dark"] .content-area .orders-filter-panel .form-select {
+    color-scheme: dark;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a5b4aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
+}
+html[data-cc-theme]:not([data-cc-theme="dark"])
+    .content-area
+    .orders-filter-panel
+    #ordersSource,
+html[data-cc-theme]:not([data-cc-theme="dark"])
+    .content-area
+    .orders-filter-panel
+    .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23748178' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
+}
+html[data-cc-theme="dark"] .content-area .orders-filter-panel select option {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Backup restore warning: preserve its danger meaning without forcing dark
+   text onto a dark surface. */
+html[data-cc-theme] .content-area .backup-danger {
+    border-color: var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .backup-danger .text-dark,
+html[data-cc-theme] .content-area .backup-danger .small {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .content-area .backup-danger code {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-green) !important;
+    border: 1px solid var(--cc-theme-border);
+    border-radius: 5px;
+    padding: 1px 4px;
+}
+html[data-cc-theme="dark"] .content-area .backup-danger {
+    background: #332b20 !important;
+    border-color: #665238 !important;
+}
+html[data-cc-theme="dark"] .content-area .backup-danger .text-danger {
+    color: #f29a91 !important;
+}
+
+/* Consistent panel-edge geometry for Overview and the three Catalog tabs:
+   Overview, Products, Categories and Offers. Inner headers follow the same
+   rounded top edge as their containing card; scrollable table wrappers remain. */
+html[data-cc-theme] .content-area .aura-panel,
+html[data-cc-theme] .content-area .aura-stat,
+html[data-cc-theme] .content-area .cc-prod-stat,
+html[data-cc-theme] .content-area .cc-prod-filter,
+html[data-cc-theme] .content-area .cc-prod-table-card,
+html[data-cc-theme] .content-area .cc-module .cc-stat,
+html[data-cc-theme] .content-area .cc-module .cc-filter,
+html[data-cc-theme] .content-area .cc-module .cc-table-card,
+html[data-cc-theme] .content-area .offer-admin-page .card {
+    background-clip: padding-box !important;
+}
+html[data-cc-theme] .content-area .aura-panel {
+    border-radius: 18px !important;
+    overflow: hidden;
+}
+html[data-cc-theme] .content-area .aura-panel > .aura-panel-head,
+html[data-cc-theme] .content-area .aura-panel > .card-header {
+    border-top-left-radius: 17px !important;
+    border-top-right-radius: 17px !important;
+}
+html[data-cc-theme] .content-area .aura-panel > .aura-panel-body:last-child,
+html[data-cc-theme] .content-area .aura-panel > .table-responsive:last-child {
+    border-bottom-left-radius: 17px !important;
+    border-bottom-right-radius: 17px !important;
+}
+html[data-cc-theme] .content-area .aura-stat {
+    border-radius: 17px !important;
+}
+html[data-cc-theme] .content-area .cc-products,
+html[data-cc-theme] .content-area .cc-module {
+    border-radius: 22px !important;
+}
+html[data-cc-theme] .content-area .cc-prod-stat,
+html[data-cc-theme] .content-area .cc-module .cc-stat {
+    border-radius: 16px !important;
+}
+html[data-cc-theme] .content-area .cc-prod-filter,
+html[data-cc-theme] .content-area .cc-module .cc-filter {
+    border-radius: 17px !important;
+}
+html[data-cc-theme] .content-area .cc-prod-table-card,
+html[data-cc-theme] .content-area .cc-module .cc-table-card,
+html[data-cc-theme] .content-area .offer-admin-page .card {
+    border-radius: 18px !important;
+    overflow: hidden;
+}
+html[data-cc-theme] .content-area .cc-prod-table-head,
+html[data-cc-theme] .content-area .cc-module .cc-table-head,
+html[data-cc-theme] .content-area .offer-admin-page .card-header {
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+html[data-cc-theme] .content-area .offer-admin-page .card-footer:last-child {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+}
+
+@media (max-width: 767px) {
+    html[data-cc-theme] .content-area .cc-products,
+    html[data-cc-theme] .content-area .cc-module {
+        border-radius: 16px !important;
+    }
+}
+
+/* Standalone Customer Enquiry conversation page uses .cs-thread-item markup
+   (different from the live inbox's .cs-message markup). */
+html[data-cc-theme]
+    .content-area
+    .cs-view
+    .cs-thread-item--customer
+    .cs-thread-bubble {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-view
+    .cs-thread-item--staff
+    .cs-thread-bubble {
+    background: #176b4b !important;
+    color: #fff !important;
+    border-color: #176b4b !important;
+}
+html[data-cc-theme]
+    .content-area
+    .cs-view
+    .cs-thread-item--system
+    .cs-thread-bubble {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-view .cs-thread-meta,
+html[data-cc-theme] .content-area .cs-view .cs-thread-meta strong,
+html[data-cc-theme] .content-area .cs-view .cs-thread-role {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme] .content-area .cs-view .cs-original {
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .content-area .cs-view .cs-conversation {
+    background: var(--cc-theme-bg) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* POS order correction workflow: these pages render inside .pos-main (not
+   .content-area), so they need their own shared light/dark theme surfaces. */
+html[data-cc-theme] .pos-main .correction-wrap {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-card,
+html[data-cc-theme] .pos-main .correction-wrap .correction-history,
+html[data-cc-theme] .pos-main .correction-wrap .audit-value {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-soft,
+html[data-cc-theme] .pos-main .correction-wrap .correction-history-body,
+html[data-cc-theme] .pos-main .correction-wrap .correction-compact-note {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-soft h2,
+html[data-cc-theme] .pos-main .correction-wrap .correction-history > summary,
+html[data-cc-theme] .pos-main .correction-wrap .audit-value strong {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .audit-value small,
+html[data-cc-theme] .pos-main .correction-wrap .text-muted,
+html[data-cc-theme] .pos-main .correction-wrap .text-muted *,
+html[data-cc-theme] .pos-main .correction-wrap .form-text {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-table {
+    --bs-table-color: var(--cc-theme-text);
+    --bs-table-bg: var(--cc-theme-surface);
+    --bs-table-border-color: var(--cc-theme-border);
+    --bs-table-hover-color: var(--cc-theme-text);
+    --bs-table-hover-bg: var(--cc-theme-hover);
+    color: var(--cc-theme-text) !important;
+    background: var(--cc-theme-surface) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .pos-main
+    .correction-wrap
+    .correction-table
+    > :not(caption)
+    > *
+    > * {
+    color: var(--cc-theme-text) !important;
+    background-color: var(--cc-theme-surface) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-table thead th {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .pos-main
+    .correction-wrap
+    .correction-table
+    tbody
+    tr:hover
+    > * {
+    background: var(--cc-theme-hover) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .border-top,
+html[data-cc-theme] .pos-main .correction-wrap .border-bottom {
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme]
+    .pos-main
+    .correction-wrap
+    .correction-history
+    > summary:after {
+    color: var(--cc-theme-green) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-pill.good {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-pill.pending {
+    background: #fff4dc !important;
+    color: #875a0b !important;
+}
+html[data-cc-theme="dark"] .pos-main .correction-wrap .correction-pill.pending {
+    background: #44371f !important;
+    color: #f4cc76 !important;
+}
+html[data-cc-theme="dark"] .pos-main .correction-wrap .alert-warning {
+    background: #332b20 !important;
+    color: #f3e4c5 !important;
+    border: 1px solid #665238 !important;
+}
+html[data-cc-theme="dark"]
+    .pos-main
+    .correction-wrap
+    .alert-warning
+    .text-muted,
+html[data-cc-theme="dark"] .pos-main .correction-wrap .alert-warning .small {
+    color: #d7c6a4 !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-btn {
+    background: #176b4b !important;
+    color: #fff !important;
+    border-color: #176b4b !important;
+}
+html[data-cc-theme] .pos-main .correction-wrap .correction-btn:hover {
+    background: #105239 !important;
+    border-color: #105239 !important;
+}
+html[data-cc-theme="dark"] .pos-main .correction-wrap .btn-outline-secondary {
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    background: var(--cc-theme-surface-muted) !important;
+}
+
+/* POS quick product modal follows the Product tab palette and form geometry. */
+html[data-cc-theme] #quickProductModal .modal-content {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+}
+html[data-cc-theme] #quickProductModal .modal-header,
+html[data-cc-theme] #quickProductModal .modal-body,
+html[data-cc-theme] #quickProductModal .modal-footer {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme] #quickProductModal .modal-title,
+html[data-cc-theme] #quickProductModal .form-label {
+    color: var(--cc-theme-text) !important;
+}
+html[data-cc-theme] #quickProductModal .text-muted,
+html[data-cc-theme] #quickProductModal .form-text {
+    color: var(--cc-theme-muted) !important;
+}
+html[data-cc-theme] #quickProductModal .form-control,
+html[data-cc-theme] #quickProductModal .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+html[data-cc-theme="dark"] #quickProductModal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(190%);
+}
+html[data-cc-theme] #quickProductModal .info-note {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* =========================================================
+   POS QUICK PRODUCT DIALOG — RESPONSIVE FIT + MODAL LAYERING
+   Keeps form controls inside the dialog at desktop and mobile
+   ========================================================= */
+
+/* The theme selector is intentionally hidden while any Bootstrap
+   modal is open. Its normal z-index is above Bootstrap's modal layer. */
+body.modal-open .cc-theme-switcher {
+    z-index: 1 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+#quickProductModal .quick-product-modal-dialog {
+    width: min(760px, calc(100% - 2rem));
+    max-width: 760px;
+    margin: 1rem auto;
+}
+
+#quickProductModal .quick-product-modal-dialog .modal-content {
+    width: 100%;
+    min-width: 0;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    overflow: hidden;
+}
+
+#quickProductModal #quickProductForm {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+#quickProductModal #quickProductForm .modal-header,
+#quickProductModal #quickProductForm .modal-footer {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+#quickProductModal #quickProductForm .modal-body {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#quickProductModal #quickProductForm .modal-body > *,
+#quickProductModal #quickProductForm .modal-body .row,
+#quickProductModal #quickProductForm .modal-body .row > [class*="col-"] {
+    min-width: 0;
+    max-width: 100%;
+}
+
+#quickProductModal #quickProductForm .form-control,
+#quickProductModal #quickProductForm .form-select,
+#quickProductModal #quickProductForm textarea,
+#quickProductModal #quickProductForm input[type="file"] {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#quickProductModal #quickProductForm .form-label {
+    display: block;
+    max-width: 100%;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#quickProductModal #quickProductForm .info-note,
+#quickProductModal #quickProductErrors {
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+    #quickProductModal .quick-product-modal-dialog {
+        width: calc(100% - 1rem);
+        max-width: none;
+        margin: 0.5rem auto;
+    }
+
+    #quickProductModal .quick-product-modal-dialog .modal-content {
+        max-height: calc(100vh - 1rem);
+        max-height: calc(100dvh - 1rem);
+        border-radius: 16px !important;
+    }
+
+    #quickProductModal #quickProductForm .modal-header,
+    #quickProductModal #quickProductForm .modal-body,
+    #quickProductModal #quickProductForm .modal-footer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+@media (max-width: 380px) {
+    #quickProductModal .quick-product-modal-dialog {
+        width: calc(100% - 0.5rem);
+        margin: 0.25rem auto;
+    }
+
+    #quickProductModal .quick-product-modal-dialog .modal-content {
+        max-height: calc(100vh - 0.5rem);
+        max-height: calc(100dvh - 0.5rem);
+    }
+}
+
+/* =========================================================
+   SK COFFEE — ORDER FULFILLMENT DARK MODE FIX
+   Covers delivery progress, customer info, COD and activity
+   ========================================================= */
+
+html[data-cc-theme="dark"] .content-area .delivery-admin-panel {
+    --delivery-ink: var(--cc-theme-text);
+    --delivery-muted: var(--cc-theme-muted);
+
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+/* Main heading */
+html[data-cc-theme="dark"] .content-area .delivery-panel-heading {
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-panel-title,
+html[data-cc-theme="dark"] .content-area .delivery-info-card strong,
+html[data-cc-theme="dark"] .content-area .delivery-next-copy strong,
+html[data-cc-theme="dark"] .content-area .delivery-activity-heading strong,
+html[data-cc-theme="dark"] .content-area .delivery-activity-item strong {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-panel-subtitle,
+html[data-cc-theme="dark"] .content-area .delivery-eyebrow,
+html[data-cc-theme="dark"] .content-area .delivery-progress-label,
+html[data-cc-theme="dark"] .content-area .delivery-progress-caption,
+html[data-cc-theme="dark"] .content-area .delivery-visual-step-description,
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-activity-item
+    span:not(.delivery-activity-dot),
+html[data-cc-theme="dark"] .content-area .delivery-activity-item small,
+html[data-cc-theme="dark"] .content-area .delivery-activity-empty,
+html[data-cc-theme="dark"] .content-area .delivery-info-label,
+html[data-cc-theme="dark"] .content-area .delivery-info-muted,
+html[data-cc-theme="dark"] .content-area .delivery-next-copy span {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Progress percentage and timeline */
+html[data-cc-theme="dark"] .content-area .delivery-progress-percent {
+    color: #8dd9ac !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-progress-track {
+    background: #34463b !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-visual-step-icon {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-visual-step-label {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-visual-step.is-current
+    .delivery-visual-step-icon {
+    background: #254536 !important;
+    color: #a5e8bf !important;
+    border-color: #4d946b !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-visual-step.is-current
+    .delivery-visual-step-label,
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-visual-step.is-done
+    .delivery-visual-step-label {
+    color: #8dd9ac !important;
+}
+
+/* Customer, address, payment and order information cards */
+html[data-cc-theme="dark"] .content-area .delivery-info-card {
+    background: var(--cc-theme-surface-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-info-icon,
+html[data-cc-theme="dark"] .content-area .delivery-panel-icon {
+    background: var(--cc-theme-green-soft) !important;
+    color: var(--cc-theme-green) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-info-link {
+    color: #8dd9ac !important;
+}
+
+/* COD payment due */
+html[data-cc-theme="dark"] .content-area .delivery-cod-due {
+    background: #3d321f !important;
+    color: #f4d18a !important;
+    border-color: #68532b !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-cod-due strong {
+    color: #ffe0a0 !important;
+}
+
+/* COD payment successfully collected */
+html[data-cc-theme="dark"] .content-area .delivery-cod-receipt {
+    background: #1e3b2c !important;
+    color: #b5e8c5 !important;
+    border-color: #365d43 !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-cod-receipt strong,
+html[data-cc-theme="dark"] .content-area .delivery-cod-receipt .small {
+    color: #b5e8c5 !important;
+}
+
+/* Next action panel */
+html[data-cc-theme="dark"] .content-area .delivery-next-action {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Activity history */
+html[data-cc-theme="dark"] .content-area .delivery-activity {
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-activity-count {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-activity-dot {
+    background: var(--cc-theme-green-soft) !important;
+    color: #8dd9ac !important;
+}
+
+/* Success and error messages */
+html[data-cc-theme="dark"] .content-area .delivery-feedback.is-success {
+    background: #1e3b2c !important;
+    color: #b5e8c5 !important;
+    border: 1px solid #365d43 !important;
+}
+
+html[data-cc-theme="dark"] .content-area .delivery-feedback.is-error {
+    background: #482b2b !important;
+    color: #ffc0ba !important;
+    border-color: #704141 !important;
+}
+
+/* Status badges */
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.pending {
+    background: #47371f !important;
+    color: #f5ce82 !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.confirmed,
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.preparing {
+    background: #293650 !important;
+    color: #b5caff !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.ready,
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.completed {
+    background: #1e3b2c !important;
+    color: #a5e8bf !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.out_for_delivery {
+    background: #1e3b2c !important;
+    color: #a9d7ff !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .delivery-admin-panel
+    .status-pill.cancelled {
+    background: #1e3b2c !important;
+    color: #ffc0ba !important;
+}
+
+/* ============================================================
+   SK COFFEE — FINAL DARK MODE POLISH
+   Product / Category / Orders / Sales / Support / Audit /
+   Finance / Settings
+   Light mode remains unchanged.
+   ============================================================ */
+
+/* 1. PRODUCT — Inventory starts at 0 units + Update button */
+
+html[data-cc-theme="dark"] .content-area .prod-page-bg {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .prod-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    border-radius: 18px !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .prod-form-title,
+html[data-cc-theme="dark"] .content-area .prod-form-label {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Inventory protection notice on Create and Edit */
+html[data-cc-theme="dark"] .content-area .prod-form-group[style*="#f2faf4"] {
+    background: var(--cc-theme-green-soft) !important;
+    background-image: none !important;
+    border-color: var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .prod-form-group[style*="#f2faf4"]
+    > div:first-child {
+    color: #a5e8bf !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .prod-form-group[style*="#f2faf4"]
+    .text-muted,
+html[data-cc-theme="dark"]
+    .content-area
+    .prod-form-group[style*="#f2faf4"]
+    small {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .prod-form-group[style*="#f2faf4"] a {
+    color: #91dcb0 !important;
+}
+
+/* Product form buttons */
+html[data-cc-theme="dark"] .content-area .prod-form-actions .btn-save {
+    background: #176b4b !important;
+    color: #ffffff !important;
+    border-color: #176b4b !important;
+}
+
+html[data-cc-theme="dark"] .content-area .prod-form-actions .btn-save:hover {
+    background: #23845c !important;
+    color: #ffffff !important;
+}
+
+html[data-cc-theme="dark"] .content-area .btn-cancel,
+html[data-cc-theme="dark"] .content-area .btn-back-list {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* 2. CATEGORY — Create and Edit panels */
+
+html[data-cc-theme="dark"] .content-area .cc-form-page {
+    background: var(--cc-theme-bg) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-heading h1,
+html[data-cc-theme="dark"] .content-area .cc-form-card-head h2,
+html[data-cc-theme="dark"] .content-area .cc-form-page .form-label {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-heading p,
+html[data-cc-theme="dark"] .content-area .cc-form-card-head p,
+html[data-cc-theme="dark"] .content-area .cc-form-page .text-muted {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    border-color: var(--cc-theme-border) !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-card-head,
+html[data-cc-theme="dark"] .content-area .cc-form-footer {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-body {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-icon {
+    background: var(--cc-theme-green-soft) !important;
+    color: #91dcb0 !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-page .form-control {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .cc-form-page
+    .form-control::placeholder {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-cancel {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cc-form-save {
+    background: #176b4b !important;
+    color: #ffffff !important;
+}
+
+/* 3. ORDERS — Correction unavailable explanation badge */
+
+html[data-cc-theme="dark"]
+    .content-area
+    .orders-table
+    td[data-order-actions-cell]
+    .badge.text-bg-light {
+    background: #303b33 !important;
+    color: #f0d49a !important;
+    border: 1px solid #655638 !important;
+    cursor: help;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .orders-table
+    td[data-order-actions-cell]
+    [aria-label="Why correction is unavailable"] {
+    color: #e3c477 !important;
+    cursor: help;
+}
+
+/* 4. PRODUCT SALES — Consistent panel border radius */
+
+html[data-cc-theme="dark"] .content-area .ps-section-card,
+html[data-cc-theme="dark"] .content-area .ps-kpi {
+    border: 1px solid var(--cc-theme-border) !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+}
+
+html[data-cc-theme="dark"] .content-area .ps-section-head {
+    background: var(--cc-theme-surface-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+    border-radius: 17px 17px 0 0 !important;
+}
+
+html[data-cc-theme="dark"] .content-area .ps-section-body {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .ps-section-card .table-responsive {
+    border-radius: 0 0 17px 17px;
+}
+
+html[data-cc-theme="dark"] .content-area .ps-rank,
+html[data-cc-theme="dark"] .content-area .ps-product-thumb {
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* 5. CUSTOMER ENQUIRIES — Rounded panel edges */
+
+html[data-cc-theme="dark"] .content-area .cs-view .cs-panel,
+html[data-cc-theme="dark"] .content-area .cs-messenger .cs-inbox-panel,
+html[data-cc-theme="dark"] .content-area .cs-messenger .cs-chat-host,
+html[data-cc-theme="dark"] .content-area .cs-messenger .cs-chat-panel {
+    border-radius: 18px !important;
+    overflow: hidden;
+    border: 1px solid var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cs-view .cs-panel-head,
+html[data-cc-theme="dark"] .content-area .cs-messenger .cs-chat-header {
+    border-radius: 17px 17px 0 0 !important;
+    background: var(--cc-theme-surface-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cs-view .cs-side-body,
+html[data-cc-theme="dark"] .content-area .cs-view .cs-conversation {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .cs-thread-bubble {
+    border-radius: 14px !important;
+}
+
+/* 6. POS PRICE & DISCOUNT AUDIT — Panel geometry */
+
+html[data-cc-theme="dark"] .content-area .pos-audit-panel,
+html[data-cc-theme="dark"] .content-area .pos-audit-card {
+    border-radius: 18px !important;
+    overflow: hidden;
+    border: 1px solid var(--cc-theme-border) !important;
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+}
+
+html[data-cc-theme="dark"] .content-area .pos-audit-panel .border-bottom {
+    background: var(--cc-theme-surface-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* 7. ORDER CORRECTION AUDIT — Rounded panels */
+
+html[data-cc-theme="dark"] .content-area .audit-panel,
+html[data-cc-theme="dark"] .content-area .audit-kpi {
+    border-radius: 18px !important;
+    overflow: hidden;
+    border: 1px solid var(--cc-theme-border) !important;
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+}
+
+html[data-cc-theme="dark"] .content-area .audit-filter-panel {
+    background: var(--cc-theme-surface-muted) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .audit-kpi-label,
+html[data-cc-theme="dark"] .content-area .audit-kpi-note {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .audit-kpi-value {
+    color: var(--cc-theme-text) !important;
+}
+
+/* 8. SALES & EXPENSES — Net cash movement panel only */
+
+html[data-cc-theme="dark"] .content-area .finance-net {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    border-radius: 14px !important;
+}
+
+html[data-cc-theme="dark"] .content-area .finance-net .small {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Preserve positive / negative financial value colors */
+html[data-cc-theme="dark"] .content-area .finance-net .text-success {
+    color: #85d9a7 !important;
+}
+
+html[data-cc-theme="dark"] .content-area .finance-net .text-danger {
+    color: #f19a91 !important;
+}
+
+/* 9. SETTINGS — Active store identity panel */
+
+html[data-cc-theme="dark"]
+    .content-area
+    .settings-card
+    > .p-4.text-center[style*="linear-gradient"] {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .settings-card
+    > .p-4.text-center
+    .text-muted {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .content-area .settings-card > .p-4.text-center h3 {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .settings-card
+    > .p-4.text-center
+    .badge {
+    background: var(--cc-theme-green-soft) !important;
+    color: #a5e8bf !important;
+    border: 1px solid var(--cc-theme-border) !important;
+}
+
+/* 10. Consistent clipping and border alignment */
+
+html[data-cc-theme="dark"] .content-area .ps-section-card,
+html[data-cc-theme="dark"] .content-area .cs-panel,
+html[data-cc-theme="dark"] .content-area .pos-audit-panel,
+html[data-cc-theme="dark"] .content-area .audit-panel,
+html[data-cc-theme="dark"] .content-area .settings-card {
+    -webkit-background-clip: padding-box !important;
+    background-clip: padding-box !important;
+}
+
+/* DELIVERY — RELATED ORDER PANEL */
+html[data-cc-theme="dark"]
+    .content-area
+    .card-body
+    > .rounded-3.p-3.mb-4[style*="#f4f8f5"] {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .card-body
+    > .rounded-3.p-3.mb-4[style*="#f4f8f5"]
+    .small.text-muted {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .card-body
+    > .rounded-3.p-3.mb-4[style*="#f4f8f5"]
+    .h5 {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"]
+    .content-area
+    .card-body
+    > .rounded-3.p-3.mb-4[style*="#f4f8f5"]
+    strong {
+    color: #91dcaf !important;
+}
+
+/* =========================================================
+   SK COFFEE — CUSTOMER AUTHENTICATION DARK MODE
+   Login / Register / Forgot Password / OTP Verification
+   ========================================================= */
+
+html[data-cc-theme="dark"] body {
+    background: var(--cc-theme-bg) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Main authentication panel */
+html[data-cc-theme="dark"] body .auth-card,
+html[data-cc-theme="dark"] main .auth-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+/* Brand header */
+html[data-cc-theme="dark"] body > header a.text-dark {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] body > header {
+    color: var(--cc-theme-text) !important;
+}
+
+/* LOGIN */
+html[data-cc-theme="dark"] .sk-auth-title,
+html[data-cc-theme="dark"] .sk-auth-label {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .sk-auth-sub,
+html[data-cc-theme="dark"] .sk-auth-foot {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .sk-auth-tabs {
+    background: var(--cc-theme-surface-muted) !important;
+}
+
+html[data-cc-theme="dark"] .sk-auth-tabs a {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .sk-auth-tabs a.active {
+    background: #304638 !important;
+    color: #a5e8bf !important;
+    box-shadow: none !important;
+}
+
+/* REGISTER */
+html[data-cc-theme="dark"] .sk-register-title,
+html[data-cc-theme="dark"] .sk-register-label {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-sub,
+html[data-cc-theme="dark"] .sk-register-tabs a {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-tabs {
+    background: var(--cc-theme-surface-muted) !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-tabs a.active {
+    background: #304638 !important;
+    color: #a5e8bf !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-card {
+    background: var(--cc-theme-surface-muted) !important;
+    border-color: var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-note {
+    background: #20362a !important;
+    color: #c5d9ca !important;
+    border-color: #3c5947 !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-error {
+    background: #432a2b !important;
+    color: #ffc0ba !important;
+    border-color: #704141 !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-google {
+    background: #f8faf8 !important;
+    color: #26352d !important;
+    border-color: #607367 !important;
+}
+
+html[data-cc-theme="dark"] .sk-register-google:hover {
+    background: #e8f0e9 !important;
+    color: #176b4b !important;
+}
+
+/* PASSWORD RECOVERY */
+html[data-cc-theme="dark"] .recovery-title,
+html[data-cc-theme="dark"] .recovery-label {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .recovery-sub {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .recovery-method {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .recovery-method strong {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .recovery-method small {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .recovery-method:has(input:checked) {
+    background: #294637 !important;
+    border-color: #638e70 !important;
+    box-shadow: 0 0 0 3px rgba(118, 196, 154, 0.12) !important;
+}
+
+html[data-cc-theme="dark"] .recovery-note {
+    background: #20362a !important;
+    color: #c5d9ca !important;
+    border-color: #3c5947 !important;
+}
+
+/* ALL CUSTOMER AUTH FORM INPUTS */
+html[data-cc-theme="dark"] .sk-auth-input,
+html[data-cc-theme="dark"] .sk-register-input,
+html[data-cc-theme="dark"] .recovery-input {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .sk-auth-input:focus,
+html[data-cc-theme="dark"] .sk-register-input:focus,
+html[data-cc-theme="dark"] .recovery-input:focus {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-green) !important;
+}
+
+html[data-cc-theme="dark"] .sk-auth-input::placeholder,
+html[data-cc-theme="dark"] .sk-register-input::placeholder,
+html[data-cc-theme="dark"] .recovery-input::placeholder {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Customer authentication alerts */
+html[data-cc-theme="dark"] .sk-auth-alert,
+html[data-cc-theme="dark"] .sk-register-error {
+    border-radius: 12px !important;
+}
+
+/* Recovery and authentication links */
+html[data-cc-theme="dark"] .recovery-note a,
+html[data-cc-theme="dark"] .auth-card a.text-success {
+    color: #91dcaf !important;
+}
+
+/* Small decorative coffee icons */
+html[data-cc-theme="dark"] .auth-card .d-inline-grid.rounded-circle {
+    background: var(--cc-theme-green-soft) !important;
+    color: #91dcaf !important;
+}
+
+/* =========================================================
+   SK COFFEE — GUEST STORIES DARK MODE FIX
+   Homepage + Shop page customer reviews
+   ========================================================= */
+
+/* Main Guest Stories section */
+html[data-cc-theme="dark"] body section[style*="#f6faf7"] {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Section heading */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .section-title,
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .shop-section-title {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Guest stories eyebrow */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .shop-section-eyebrow {
+    color: #91dcaf !important;
+}
+
+/* Description and published review count */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .text-muted {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Average rating number */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .text-dark {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Individual customer review cards */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] article.bg-white {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+/* Customer review text */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] article p {
+    color: #cbd5ce !important;
+}
+
+/* Customer names */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] article .fw-bold {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Customer avatar */
+html[data-cc-theme="dark"]
+    section[style*="#f6faf7"]
+    article
+    span[style*="background:#eaf5ed"] {
+    background: var(--cc-theme-green-soft) !important;
+    color: #91dcaf !important;
+}
+
+/* Empty review state */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .bg-white {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] section[style*="#f6faf7"] h3 {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Keep the five-star rating visible */
+html[data-cc-theme="dark"] section[style*="#f6faf7"] .text-warning {
+    color: #f4c96b !important;
+}
+
+/* Smooth theme transition */
+section[style*="#f6faf7"],
+section[style*="#f6faf7"] article {
+    transition:
+        background-color 0.28s ease,
+        color 0.28s ease,
+        border-color 0.28s ease,
+        box-shadow 0.28s ease;
+}
+
+/* =========================================================
+   SK COFFEE — CUSTOMER CONTACT & SHOP ADMIN CHAT
+   Contact form / Customer inbox / Conversation
+   Dark Mode only
+   ========================================================= */
+
+/* 1. CONTACT SHOP — Main panels */
+html[data-cc-theme="dark"] .store-contact-page .store-contact-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+/* Contact panel headings */
+html[data-cc-theme="dark"] .store-contact-page .store-contact-title,
+html[data-cc-theme="dark"] .store-contact-page h1,
+html[data-cc-theme="dark"] .store-contact-page h2 {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .store-contact-page .text-muted,
+html[data-cc-theme="dark"] .store-contact-page .store-contact-method span,
+html[data-cc-theme="dark"] .store-contact-page .store-contact-method a {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Contact form labels */
+html[data-cc-theme="dark"] .store-contact-page .store-contact-label {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Input fields */
+html[data-cc-theme="dark"]
+    .store-contact-page
+    .store-contact-form
+    .form-control,
+html[data-cc-theme="dark"]
+    .store-contact-page
+    .store-contact-form
+    .form-select {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"]
+    .store-contact-page
+    .store-contact-form
+    .form-control::placeholder {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"]
+    .store-contact-page
+    .store-contact-form
+    select
+    option {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Contact method icons */
+html[data-cc-theme="dark"] .store-contact-page .store-contact-method-icon {
+    background: var(--cc-theme-green-soft) !important;
+    color: #91dcaf !important;
+}
+
+/* Contact method separators */
+html[data-cc-theme="dark"] .store-contact-page .store-contact-method {
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Helpful tip panel */
+html[data-cc-theme="dark"]
+    .store-contact-page
+    .store-contact-card
+    .rounded-4[style*="#f1f7f2"] {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    border: 1px solid var(--cc-theme-border);
+}
+
+html[data-cc-theme="dark"]
+    .store-contact-page
+    .store-contact-card
+    .rounded-4[style*="#f1f7f2"]
+    p {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Guest information notice */
+html[data-cc-theme="dark"] .store-contact-page .alert-light {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .store-contact-page .alert-light a {
+    color: #91dcaf !important;
+}
+
+/* Keep submit button branded green */
+html[data-cc-theme="dark"] .store-contact-page .store-contact-submit {
+    background: #176b4b !important;
+    color: #ffffff !important;
+}
+
+html[data-cc-theme="dark"] .store-contact-page .store-contact-submit:hover {
+    background: #23845c !important;
+}
+
+/* 2. CUSTOMER INBOX */
+html[data-cc-theme="dark"] .inbox-page .inbox-card {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .inbox-page .inbox-row {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .inbox-page .inbox-row:hover {
+    background: var(--cc-theme-surface-muted) !important;
+}
+
+html[data-cc-theme="dark"] .inbox-page .inbox-subject {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .inbox-page .inbox-meta {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .inbox-page .inbox-unread {
+    background: var(--cc-theme-green-soft) !important;
+    color: #a5e8bf !important;
+}
+
+/* 3. CUSTOMER — CONVERSATION WITH SHOP ADMIN */
+html[data-cc-theme="dark"] .thread-page .thread-card {
+    background: var(--cc-theme-surface) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    box-shadow: var(--cc-theme-shadow) !important;
+}
+
+html[data-cc-theme="dark"] .thread-page h1,
+html[data-cc-theme="dark"] .thread-page h2 {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .thread-page .text-muted,
+html[data-cc-theme="dark"] .thread-page .thread-label,
+html[data-cc-theme="dark"] .thread-page .thread-date,
+html[data-cc-theme="dark"] .thread-page .thread-live {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Customer's messages */
+html[data-cc-theme="dark"] .thread-page .thread-message.customer {
+    background: #203d2d !important;
+    color: #d6f0df !important;
+    border-color: #365b43 !important;
+}
+
+/* Shop administrator's replies */
+html[data-cc-theme="dark"] .thread-page .thread-message.staff {
+    background: var(--cc-theme-surface-muted) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Automatic system messages */
+html[data-cc-theme="dark"] .thread-page .thread-message.system {
+    background: #40351f !important;
+    color: #f4dda6 !important;
+    border-color: #68562e !important;
+}
+
+/* Reply composer */
+html[data-cc-theme="dark"] .thread-page .thread-compose textarea {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .thread-page .thread-compose textarea::placeholder {
+    color: var(--cc-theme-muted) !important;
+}
+
+html[data-cc-theme="dark"] .thread-page .thread-compose textarea:focus {
+    border-color: var(--cc-theme-green) !important;
+    box-shadow: var(--cc-theme-focus) !important;
+}
+
+/* Back to inbox */
+html[data-cc-theme="dark"] .thread-page .btn-outline-success {
+    color: #91dcaf !important;
+    border-color: #568b69 !important;
+}
+
+html[data-cc-theme="dark"] .thread-page .btn-outline-success:hover {
+    background: #294637 !important;
+    color: #ffffff !important;
+}
+
+/* Conversation live indicator */
+html[data-cc-theme="dark"] .thread-page .thread-live-dot {
+    background: #65d995 !important;
+    box-shadow: 0 0 0 4px rgba(101, 217, 149, 0.15) !important;
+}
+
+/* 4. Smooth appearance transition */
+html[data-cc-theme="dark"] .store-contact-card,
+html[data-cc-theme="dark"] .inbox-card,
+html[data-cc-theme="dark"] .inbox-row,
+html[data-cc-theme="dark"] .thread-card,
+html[data-cc-theme="dark"] .thread-message {
+    transition:
+        background-color 0.28s ease,
+        color 0.28s ease,
+        border-color 0.28s ease,
+        box-shadow 0.28s ease;
+}
+
+/* ==========================================================
+   SK COFFEE — STOREFRONT DARK MODE REFINED PALETTE
+   Rich forest green instead of near-black backgrounds
+   Applies only to the public website.
+   ========================================================== */
+
+html[data-cc-theme="dark"] body:has(.navbar-clean) {
+    --cc-theme-bg: #1a2b22;
+    --cc-theme-surface: #24372b;
+    --cc-theme-surface-raised: #2d4234;
+    --cc-theme-surface-muted: #263b2e;
+
+    --cc-theme-text: #edf4ef;
+    --cc-theme-muted: #b8c8bd;
+    --cc-theme-border: #405849;
+
+    --cc-theme-input: #1c3024;
+    --cc-theme-hover: #324b3a;
+
+    --cc-theme-green: #96d7ad;
+    --cc-theme-green-soft: #2b4a36;
+
+    /* Existing storefront layout variables */
+    --dark-bg: #223b2d;
+    --dark-card: #2c4535;
+    --light-card-bg: #263b2e;
+    --text-dark: #edf4ef;
+    --text-muted: #b8c8bd;
+
+    background-color: #1a2b22 !important;
+    background-image:
+        radial-gradient(
+            ellipse at 12% 5%,
+            rgba(91, 153, 106, 0.13),
+            transparent 42%
+        ),
+        radial-gradient(
+            ellipse at 90% 55%,
+            rgba(66, 119, 82, 0.1),
+            transparent 45%
+        ),
+        linear-gradient(160deg, #1b2c23 0%, #22372a 48%, #192b21 100%) !important;
+
+    background-attachment: fixed !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Navigation */
+html[data-cc-theme="dark"] body:has(.navbar-clean) .navbar-clean {
+    background: rgba(36, 55, 43, 0.94) !important;
+    border-bottom: 1px solid var(--cc-theme-border) !important;
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+}
+
+html[data-cc-theme="dark"] body:has(.navbar-clean) .navbar-clean .nav-link,
+html[data-cc-theme="dark"] body:has(.navbar-clean) .navbar-clean .navbar-brand,
+html[data-cc-theme="dark"]
+    body:has(.navbar-clean)
+    .navbar-clean
+    .btn.text-dark {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Homepage feature and newsletter areas */
+html[data-cc-theme="dark"] body:has(.navbar-clean) .hero-tech {
+    background: var(--dark-bg) !important;
+}
+
+html[data-cc-theme="dark"] body:has(.navbar-clean) .value-bar,
+html[data-cc-theme="dark"] body:has(.navbar-clean) .newsletter-section {
+    background: var(--dark-card) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Shop section backgrounds */
+html[data-cc-theme="dark"] body:has(.navbar-clean) section[style*="#f6faf7"] {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Section headings */
+html[data-cc-theme="dark"] body:has(.navbar-clean) .shop-section-title,
+html[data-cc-theme="dark"] body:has(.navbar-clean) .section-title {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] body:has(.navbar-clean) .shop-section-eyebrow {
+    color: #91d6aa !important;
+}
+
+/* Product cards */
+html[data-cc-theme="dark"] body:has(.navbar-clean) .shop-product-card,
+html[data-cc-theme="dark"] body:has(.navbar-clean) .product-card {
+    background: var(--cc-theme-surface) !important;
+    border-color: var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Product information */
+html[data-cc-theme="dark"] body:has(.navbar-clean) .shop-product-name,
+html[data-cc-theme="dark"] body:has(.navbar-clean) .product-title {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] body:has(.navbar-clean) .shop-price {
+    color: #96d7ad !important;
+}
+
+/* Keep the branded hero and offer gradients intact.
+   Keep the footer's deeper green as a visual anchor. */
+
+/* Smooth storefront theme transition */
+html[data-cc-theme="dark"] body:has(.navbar-clean),
+html[data-cc-theme="dark"] body:has(.navbar-clean) .shop-product-card,
+html[data-cc-theme="dark"] body:has(.navbar-clean) .navbar-clean {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+/* ==========================================================
+   SK COFFEE — PAYMENT SUCCESS PAGE DARK MODE
+   ABA PayWay · Customer Web Store
+   ========================================================== */
+
+/* 1. Main success page background */
+html[data-cc-theme="dark"] .paid-page {
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(91, 157, 108, 0.18),
+            transparent 48%
+        ),
+        linear-gradient(155deg, #1a2b22 0%, #22372a 52%, #192b21 100%) !important;
+
+    color: var(--cc-theme-text) !important;
+    transition:
+        background 0.3s ease,
+        color 0.3s ease;
+}
+
+/* 2. Main payment card */
+html[data-cc-theme="dark"] .paid-card {
+    background: #24372b !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid #405849 !important;
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 3. Keep the success banner green */
+html[data-cc-theme="dark"] .paid-banner {
+    background: linear-gradient(135deg, #15563d, #27845c) !important;
+    color: #ffffff !important;
+}
+
+html[data-cc-theme="dark"] .paid-banner h1 {
+    color: #ffffff !important;
+}
+
+html[data-cc-theme="dark"] .paid-banner p {
+    color: #d6ecde !important;
+}
+
+/* 4. Success checkmark */
+html[data-cc-theme="dark"] .paid-check {
+    background: #ffffff !important;
+    color: #176b4b !important;
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.13);
+}
+
+/* 5. Main payment details body */
+html[data-cc-theme="dark"] .paid-body {
+    background: #24372b !important;
+    color: #e8f0ea !important;
+}
+
+/* Section headings */
+html[data-cc-theme="dark"] .paid-body .text-uppercase,
+html[data-cc-theme="dark"] .paid-body .text-muted {
+    color: #b8c8bd !important;
+}
+
+/* 6. Paid amount */
+html[data-cc-theme="dark"] .paid-amount {
+    color: #91dcaf !important;
+}
+
+html[data-cc-theme="dark"] .paid-amount span {
+    color: #c4dece !important;
+}
+
+/* 7. Payment reference */
+html[data-cc-theme="dark"] .paid-reference {
+    color: #a5b9aa !important;
+}
+
+/* 8. Order summary lines */
+html[data-cc-theme="dark"] .paid-line {
+    border-color: #405849 !important;
+}
+
+html[data-cc-theme="dark"] .paid-line span {
+    color: #b8c8bd !important;
+}
+
+html[data-cc-theme="dark"] .paid-line strong {
+    color: #edf4ef !important;
+    overflow-wrap: anywhere;
+}
+
+/* 9. Ordered products */
+html[data-cc-theme="dark"] .paid-item {
+    color: #dce9df !important;
+    border-color: #405849 !important;
+}
+
+html[data-cc-theme="dark"] .paid-item span {
+    color: #dce9df !important;
+}
+
+html[data-cc-theme="dark"] .paid-item strong {
+    color: #a5e8bf !important;
+}
+
+/* 10. Border between payment sections */
+html[data-cc-theme="dark"] .paid-body .border-bottom {
+    border-color: #405849 !important;
+}
+
+/* 11. ABA verification notice */
+html[data-cc-theme="dark"] .paid-body .alert-success {
+    background: #1e4631 !important;
+    color: #c5ebd0 !important;
+    border: 1px solid #37684a !important;
+}
+
+html[data-cc-theme="dark"] .paid-body .alert-success i {
+    color: #91dcaf !important;
+}
+
+/* 12. Track order button */
+html[data-cc-theme="dark"] .paid-actions .btn-success {
+    background: #27845c !important;
+    color: #ffffff !important;
+    border-color: #27845c !important;
+}
+
+html[data-cc-theme="dark"] .paid-actions .btn-success:hover {
+    background: #31996b !important;
+    border-color: #31996b !important;
+}
+
+/* 13. Continue shopping button */
+html[data-cc-theme="dark"] .paid-actions .btn-outline-secondary {
+    background: #304538 !important;
+    color: #dce9df !important;
+    border-color: #58705f !important;
+}
+
+html[data-cc-theme="dark"] .paid-actions .btn-outline-secondary:hover {
+    background: #405c49 !important;
+    color: #ffffff !important;
+    border-color: #79a889 !important;
+}
+
+/* 14. Smooth theme transitions */
+html[data-cc-theme="dark"] .paid-card,
+html[data-cc-theme="dark"] .paid-body,
+html[data-cc-theme="dark"] .paid-line,
+html[data-cc-theme="dark"] .paid-item,
+html[data-cc-theme="dark"] .paid-reference,
+html[data-cc-theme="dark"] .paid-amount {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+/* 15. Mobile layout protection */
+@media (max-width: 575px) {
+    .paid-line {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .paid-line strong {
+        max-width: 65%;
+    }
+
+    .paid-actions .btn {
+        min-width: 100%;
+    }
+}
+
+/* =========================================================
+   SK COFFEE — SECURE CHECKOUT DARK MODE
+   Page background / Customer details / Payment / Order
+   ========================================================= */
+
+/* 1. Main checkout background */
+html[data-cc-theme="dark"] .checkout-page {
+    background:
+        radial-gradient(
+            ellipse at 10% 0%,
+            rgba(91, 153, 106, 0.12),
+            transparent 45%
+        ),
+        linear-gradient(155deg, #1a2b22, #22372a 55%, #192b21) !important;
+
+    color: var(--cc-theme-text) !important;
+}
+
+/* 2. Page heading and description */
+html[data-cc-theme="dark"] .checkout-page .checkout-title {
+    color: #edf4ef !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page h2 {
+    color: var(--cc-theme-text) !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page .text-muted {
+    color: #b8c8bd !important;
+}
+
+/* 3. All checkout cards */
+html[data-cc-theme="dark"] .checkout-page .checkout-card {
+    background: #24372b !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid #405849 !important;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 23px !important;
+}
+
+/* 4. Customer and delivery selection panels */
+html[data-cc-theme="dark"] .checkout-page label.border.rounded-4 {
+    background: #2b4032 !important;
+    color: #edf4ef !important;
+    border-color: #496451 !important;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease;
+}
+
+html[data-cc-theme="dark"] .checkout-page label.border.rounded-4:hover {
+    background: #324d3b !important;
+    border-color: #76c49a !important;
+}
+
+/* Selected delivery option */
+html[data-cc-theme="dark"]
+    .checkout-page
+    label.border.rounded-4:has(input:checked) {
+    background: #304b39 !important;
+    border-color: #76c49a !important;
+}
+
+/* Selection text */
+html[data-cc-theme="dark"] .checkout-page label.border.rounded-4 strong {
+    color: #edf4ef !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page label.border.rounded-4 small {
+    color: #b8c8bd !important;
+}
+
+/* 5. Step icons */
+html[data-cc-theme="dark"] .checkout-page .bg-success-subtle {
+    background: #294637 !important;
+    color: #91dcaf !important;
+}
+
+/* 6. Radio buttons */
+html[data-cc-theme="dark"] .checkout-page .form-check-input {
+    background-color: #263b2e;
+    border-color: #74927d;
+}
+
+html[data-cc-theme="dark"] .checkout-page .form-check-input:checked {
+    background-color: #27845c !important;
+    border-color: #27845c !important;
+}
+
+/* 7. Delivery address and order note */
+html[data-cc-theme="dark"] .checkout-page .checkout-control {
+    background: #1c3024 !important;
+    color: #edf4ef !important;
+    border: 1px solid #496451 !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page .checkout-control::placeholder {
+    color: #9cad9f !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page .checkout-control:focus {
+    background: #1c3024 !important;
+    border-color: #76c49a !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(118, 196, 154, 0.14) !important;
+}
+
+/* 8. Secure payment notice */
+html[data-cc-theme="dark"] .checkout-page .alert-success {
+    background: #1e4631 !important;
+    color: #c5ebd0 !important;
+    border: 1px solid #37684a !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page .alert-success i {
+    color: #91dcaf !important;
+}
+
+/* 9. Order summary separators */
+html[data-cc-theme="dark"] .checkout-page .border-bottom,
+html[data-cc-theme="dark"] .checkout-page .border-top {
+    border-color: #405849 !important;
+}
+
+/* Product names and amounts */
+html[data-cc-theme="dark"] .checkout-page .fw-bold:not(.text-success) {
+    color: #edf4ef !important;
+}
+
+/* Discount labels */
+html[data-cc-theme="dark"] .checkout-page .text-success {
+    color: #91dcaf !important;
+}
+
+/* 10. Total to pay */
+html[data-cc-theme="dark"] .checkout-page .checkout-total {
+    color: #91dcaf !important;
+}
+
+/* 11. Payment button */
+html[data-cc-theme="dark"] .checkout-page .checkout-pay-btn {
+    background: #27845c !important;
+    color: #ffffff !important;
+    border-color: #27845c !important;
+}
+
+html[data-cc-theme="dark"]
+    .checkout-page
+    .checkout-pay-btn:hover:not(:disabled) {
+    background: #31996b !important;
+    color: #ffffff !important;
+}
+
+/* 12. Back to cart */
+html[data-cc-theme="dark"] .checkout-page .btn-link {
+    color: #a5cbb1 !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page .btn-link:hover {
+    color: #91dcaf !important;
+}
+
+/* 13. Validation messages */
+html[data-cc-theme="dark"] .checkout-page .alert-danger {
+    background: #482b2b !important;
+    color: #ffc0ba !important;
+    border-color: #704141 !important;
+}
+
+html[data-cc-theme="dark"] .checkout-page .invalid-feedback {
+    color: #ffaaa3 !important;
+}
+
+/* 14. Smooth transition */
+html[data-cc-theme="dark"] .checkout-page,
+html[data-cc-theme="dark"] .checkout-page .checkout-card,
+html[data-cc-theme="dark"] .checkout-page label.border {
+    transition:
+        background-color 0.28s ease,
+        color 0.28s ease,
+        border-color 0.28s ease,
+        box-shadow 0.28s ease;
+}
+
+/* 15. Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .checkout-page,
+    .checkout-page * {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =========================================================
+   SK COFFEE — HERO HEADING CONTRAST FIX
+   Shop hero + Staff login showcase
+   Keep readable text in BOTH themes
+   ========================================================= */
+
+/* 1. CUSTOMER SHOP — Find your next */
+.shop-hero h1 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Preserve the warm gold highlight */
+.shop-hero h1 span {
+    color: #e9c58c !important;
+}
+
+/* 2. STAFF LOGIN — Great service starts */
+.staff-auth .auth-showcase .showcase-copy h1 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Highlight the second line with soft AURA green */
+.staff-auth .auth-showcase .showcase-copy h1 span {
+    color: #b6dfc2 !important;
+}
+
+/* Keep both headings readable during theme transitions */
+.shop-hero h1,
+.shop-hero h1 span,
+.staff-auth .auth-showcase .showcase-copy h1,
+.staff-auth .auth-showcase .showcase-copy h1 span {
+    transition:
+        color 0.3s ease,
+        text-shadow 0.3s ease;
+}
+
+/* ============================================================
+   SK COFFEE — FINAL ORDER & PAYMENT DARK MODE FIX
+   COD Amount / Order Tracking / Customer Review
+   ============================================================ */
+
+/* 1. COD — AMOUNT TO COLLECT PANEL
+   Found in admin/partials/delivery-management.blade.php
+*/
+
+html[data-cc-theme="dark"] .cod-settlement-dialog .cod-settlement-total {
+    background: linear-gradient(
+        120deg,
+        #174b32 0%,
+        #236644 72%,
+        #2d7650 100%
+    ) !important;
+
+    color: #ffffff !important;
+    border: 1px solid #43835e !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
+}
+
+html[data-cc-theme="dark"] .cod-settlement-total-copy > span {
+    color: #c2ddca !important;
+}
+
+html[data-cc-theme="dark"] .cod-settlement-total-copy strong {
+    color: #ffffff !important;
+}
+
+html[data-cc-theme="dark"] .cod-settlement-total-copy small {
+    color: #d5e8da !important;
+}
+
+html[data-cc-theme="dark"] .cod-settlement-cash-icon {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #f7dfaa !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* 2. WEB STORE — ORDER TRACKING PROGRESS
+   Order confirmed / Ready for pickup / Collected
+*/
+
+html[data-cc-theme="dark"] .order-track-page .order-step {
+    border-left-color: #405849 !important;
+}
+
+html[data-cc-theme="dark"] .order-track-page .order-step strong {
+    color: #edf4ef !important;
+    font-weight: 700 !important;
+}
+
+html[data-cc-theme="dark"] .order-track-page .order-step small {
+    color: #b8c8bd !important;
+}
+
+/* Completed progress steps */
+html[data-cc-theme="dark"] .order-track-page .order-step.done strong {
+    color: #91dcaf !important;
+}
+
+html[data-cc-theme="dark"] .order-track-page .order-step.done small {
+    color: #c3d9ca !important;
+}
+
+/* Progress timeline circles */
+html[data-cc-theme="dark"] .order-track-page .order-step::before {
+    background: #52675a !important;
+    border-color: #24372b !important;
+    box-shadow: 0 0 0 1px #64816d !important;
+}
+
+html[data-cc-theme="dark"] .order-track-page .order-step.done::before {
+    background: #27845c !important;
+    border-color: #24372b !important;
+    box-shadow: 0 0 0 2px #438c60 !important;
+}
+
+html[data-cc-theme="dark"] .order-track-page .order-step.done {
+    border-left-color: #438c60 !important;
+}
+
+/* Order status badge */
+html[data-cc-theme="dark"] #order-state-badge.text-bg-warning {
+    background: #514324 !important;
+    color: #f4d58a !important;
+}
+
+html[data-cc-theme="dark"] #order-state-badge.text-bg-success {
+    background: #244c37 !important;
+    color: #a7e3bd !important;
+}
+
+/* 3. WEB STORE — CUSTOMER REVIEW SUMMARY
+   Awaiting store approval / Submitted review
+*/
+
+html[data-cc-theme="dark"]
+    .order-track-page
+    #review
+    > .rounded-4[style*="#f6faf7"] {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+
+    border: 1px solid var(--cc-theme-border) !important;
+    color: var(--cc-theme-text) !important;
+
+    border-radius: 16px !important;
+    box-shadow: none !important;
+}
+
+/* Five-star rating */
+html[data-cc-theme="dark"] .order-track-page #review .review-stars {
+    color: #f4c96b !important;
+}
+
+/* Awaiting approval badge */
+html[data-cc-theme="dark"] .order-track-page #review .text-bg-warning {
+    background: #514324 !important;
+    color: #f4d58a !important;
+    border: 1px solid #77602f !important;
+}
+
+/* Published badge */
+html[data-cc-theme="dark"] .order-track-page #review .text-bg-success {
+    background: #244c37 !important;
+    color: #a7e3bd !important;
+    border: 1px solid #37684a !important;
+}
+
+/* Submitted review label */
+html[data-cc-theme="dark"] .order-track-page #review > .rounded-4 .text-muted {
+    color: #b8c8bd !important;
+}
+
+/* Customer's review comment */
+html[data-cc-theme="dark"] .order-track-page #review > .rounded-4 p {
+    color: #edf4ef !important;
+    line-height: 1.65;
+}
+
+/* Review form when no review has been submitted */
+html[data-cc-theme="dark"] .order-track-page #review textarea,
+html[data-cc-theme="dark"] .order-track-page #review .form-control {
+    background: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"] .order-track-page #review textarea::placeholder {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Rating selection buttons */
+html[data-cc-theme="dark"] .order-track-page #review .review-rating {
+    background: var(--cc-theme-surface-muted) !important;
+    color: #f4c96b !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+html[data-cc-theme="dark"]
+    .order-track-page
+    #review
+    .review-rating:has(input:checked) {
+    background: #514324 !important;
+    color: #ffe0a0 !important;
+    border-color: #d7aa4d !important;
+}
+
+/* Smooth transitions */
+html[data-cc-theme="dark"] .order-track-page .order-step,
+html[data-cc-theme="dark"] .order-track-page .order-step strong,
+html[data-cc-theme="dark"] .order-track-page .order-step small,
+html[data-cc-theme="dark"] .order-track-page #review > .rounded-4 {
+    transition:
+        background-color 0.28s ease,
+        color 0.28s ease,
+        border-color 0.28s ease;
+}
+
+/* =====================================================
+   SK COFFEE — POS CHECKOUT AMOUNT TO COLLECT
+   Dark Mode fix
+   ===================================================== */
+
+html[data-cc-theme="dark"]
+    #checkoutModal
+    .modal-body
+    > .d-flex.justify-content-between.align-items-center.p-3.rounded-3.mb-1[style*="#f2f7f3"] {
+    background: #263b2e !important;
+    background-image: none !important;
+    color: #edf4ef !important;
+    border: 1px solid #405849 !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+}
+
+/* Amount to collect label */
+html[data-cc-theme="dark"]
+    #checkoutModal
+    .modal-body
+    > .d-flex[style*="#f2f7f3"]
+    span {
+    color: #cbd5ce !important;
+}
+
+/* Actual amount: $2.00 */
+html[data-cc-theme="dark"] #checkoutModal #paymentPreviewTotal {
+    color: #91dcaf !important;
+}
+
+/* Approximately KHR text */
+html[data-cc-theme="dark"]
+    #checkoutModal
+    .modal-body
+    > .text-end.small.text-muted {
+    color: #b8c8bd !important;
+}
+
+html[data-cc-theme="dark"] #checkoutModal #paymentPreviewKhr {
+    color: #91dcaf !important;
+}
+
+/* Smooth transition */
+#checkoutModal .modal-body > .d-flex[style*="#f2f7f3"] {
+    transition:
+        background-color 0.28s ease,
+        color 0.28s ease,
+        border-color 0.28s ease;
+}
+
+/* ============================================================
+   SK COFFEE — ABOUT / SHIPPING / RETURNS DARK MODE
+   Shared Store Information Pages
+   ============================================================ */
+
+/* 1. Entire information page background */
+html[data-cc-theme="dark"] .store-info-page {
+    background:
+        radial-gradient(
+            ellipse at 12% 0%,
+            rgba(91, 153, 106, 0.1),
+            transparent 45%
+        ),
+        linear-gradient(155deg, #1a2b22, #22372a 55%, #192b21) !important;
+
+    color: var(--cc-theme-text) !important;
+}
+
+/* 2. Three information cards */
+html[data-cc-theme="dark"] .store-info-page .store-info-card {
+    background: #263b2e !important;
+    background-image: none !important;
+    color: #edf4ef !important;
+
+    border: 1px solid #405849 !important;
+    border-radius: 22px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18) !important;
+
+    overflow: hidden;
+}
+
+/* Card icons */
+html[data-cc-theme="dark"] .store-info-page .store-info-card-icon {
+    background: #304b39 !important;
+    color: #91dcaf !important;
+    border: 1px solid #496d53 !important;
+}
+
+/* Card titles */
+html[data-cc-theme="dark"] .store-info-page .store-info-card h2 {
+    color: #edf4ef !important;
+}
+
+/* Card descriptions */
+html[data-cc-theme="dark"] .store-info-page .store-info-card p {
+    color: #b8c8bd !important;
+}
+
+/* 3. Bottom contact / menu panel */
+html[data-cc-theme="dark"] .store-info-page .store-info-bottom {
+    background: linear-gradient(120deg, #263b2e, #304637) !important;
+
+    background-image: none !important;
+    border: 1px solid #405849 !important;
+    border-radius: 22px !important;
+    color: #edf4ef !important;
+
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+/* Bottom panel heading */
+html[data-cc-theme="dark"] .store-info-page .store-info-bottom h2 {
+    color: #edf4ef !important;
+}
+
+/* Bottom panel description */
+html[data-cc-theme="dark"] .store-info-page .store-info-bottom p {
+    color: #b8c8bd !important;
+}
+
+/* 4. Information / notice panel */
+html[data-cc-theme="dark"] .store-info-page .store-info-notice {
+    background: rgba(118, 196, 154, 0.1) !important;
+    border-color: rgba(145, 220, 175, 0.25) !important;
+    color: #e2eee5 !important;
+}
+
+/* 5. Hero description remains readable */
+html[data-cc-theme="dark"] .store-info-page .store-info-description {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Preserve the intentional green hero gradient */
+html[data-cc-theme="dark"] .store-info-page .store-info-hero {
+    color: #ffffff !important;
+}
+
+/* 6. Footer — Shipping and Returns links */
+html[data-cc-theme="dark"] .store-footer-links a[href*="/store/shipping"],
+html[data-cc-theme="dark"] .store-footer-links a[href*="/store/returns"] {
+    color: #cbdccf !important;
+    padding: 7px 9px;
+    margin-left: -9px;
+    border-radius: 9px;
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease;
+}
+
+/* Footer link icons */
+html[data-cc-theme="dark"] .store-footer-links a[href*="/store/shipping"] i,
+html[data-cc-theme="dark"] .store-footer-links a[href*="/store/returns"] i {
+    color: #e9c991 !important;
+}
+
+/* Footer link hover */
+html[data-cc-theme="dark"] .store-footer-links a[href*="/store/shipping"]:hover,
+html[data-cc-theme="dark"] .store-footer-links a[href*="/store/returns"]:hover {
+    background: rgba(145, 220, 175, 0.12) !important;
+    color: #ffffff !important;
+}
+
+/* 7. Contact / Explore button */
+html[data-cc-theme="dark"] .store-info-page .btn-success {
+    background: #27845c !important;
+    border-color: #27845c !important;
+    color: #ffffff !important;
+}
+
+html[data-cc-theme="dark"] .store-info-page .btn-success:hover {
+    background: #31996b !important;
+    color: #ffffff !important;
+}
+
+/* 8. Smooth theme transitions */
+.store-info-page,
+.store-info-card,
+.store-info-card-icon,
+.store-info-bottom,
+.store-info-notice {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.store-info-page .store-info-hero h1,
+.store-info-page .store-info-hero h1 span,
+.store-info-page .store-info-hero h2,
+.store-info-page .store-info-hero .display-4 {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-transform: none !important;
+    font-variant: normal !important;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Preserve the warm SK Coffee appearance */
+.store-info-page .store-info-hero h1 span {
+    color: #e9c58c !important;
+    -webkit-text-fill-color: #e9c58c !important;
+}
+
+/* Smooth transition */
+.store-info-page .store-info-hero h1,
+.store-info-page .store-info-hero h2 {
+    transition:
+        color 0.3s ease,
+        text-shadow 0.3s ease;
 }

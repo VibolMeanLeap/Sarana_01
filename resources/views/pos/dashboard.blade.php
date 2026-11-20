@@ -188,7 +188,7 @@
     @if ($isAdmin)
     <div class="modal fade" id="quickProductModal" tabindex="-1" aria-labelledby="quickProductTitle"
         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable quick-product-modal-dialog">
             <div class="modal-content border-0 rounded-4 shadow">
                 <form id="quickProductForm" action="{{ route('pos.products.store') }}" method="POST"
                     enctype="multipart/form-data">
@@ -197,8 +197,7 @@
                         <div>
                             <div class="mini-label">Quick catalogue update</div>
                             <h2 class="modal-title fs-5 fw-bold" id="quickProductTitle">Add product to POS</h2>
-                            <p class="small text-muted mb-0 mt-1">The new active product appears in this POS screen
-                                immediately.</p>
+                            <p class="small text-muted mb-0 mt-1">Create the catalogue item here. Inventory is received separately through Purchases or Inventory Adjustments.</p>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -211,7 +210,7 @@
                                 maxlength="255" required placeholder="e.g. Iced Americano">
                         </div>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="quickProductCategory" class="form-label fw-semibold">Category <span
                                         class="text-danger">*</span></label>
                                 <select class="form-select" id="quickProductCategory" name="category_id" required>
@@ -222,7 +221,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="quickProductSupplier" class="form-label fw-semibold">Supplier</label>
                                 <select class="form-select" id="quickProductSupplier" name="supplier_id">
                                     <option value="">No supplier / choose later</option>
@@ -233,13 +232,13 @@
                             </div>
                         </div>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="quickProductPrice" class="form-label fw-semibold">Selling price (USD) <span
                                         class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="quickProductPrice" name="price"
                                     min="0" max="99999999.99" step="0.01" required placeholder="0.00">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="quickProductCost" class="form-label fw-semibold">Unit cost (USD) <span
                                         class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="quickProductCost" name="cost"
@@ -248,23 +247,16 @@
                             </div>
                         </div>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="quickProductType" class="form-label fw-semibold">Product type <span
                                         class="text-danger">*</span></label>
                                 <select class="form-select" id="quickProductType" name="product_type" required>
                                     <option value="stock">Stock (inventory tracked)</option>
                                     <option value="non-stock">Non-stock (no inventory)</option>
                                 </select>
+                                <small class="form-text text-muted">Stock-tracked products start at 0 units. Record received stock in Purchases or Inventory Adjustments.</small>
                             </div>
-                            <div class="col-md-6" id="quickProductQtyWrap">
-                                <label for="quickProductQty" class="form-label fw-semibold">Opening stock quantity <span
-                                        class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="quickProductQty" name="qty"
-                                    min="0" max="2147483647" step="1" value="0">
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="quickProductStatus" class="form-label fw-semibold">Status <span
                                         class="text-danger">*</span></label>
                                 <select class="form-select" id="quickProductStatus" name="status" required>
@@ -272,21 +264,19 @@
                                     <option value="Inactive">Inactive</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="quickProductImage" class="form-label fw-semibold">Product image</label>
-                                <input type="file" class="form-control" id="quickProductImage" name="image"
-                                    accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp">
-                                <small class="form-text text-muted">JPEG, PNG, GIF or WEBP · maximum 4 MB</small>
-                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quickProductImage" class="form-label fw-semibold">Product image</label>
+                            <input type="file" class="form-control" id="quickProductImage" name="image"
+                                accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp">
+                            <small class="form-text text-muted">JPEG, PNG, GIF or WEBP · maximum 4 MB</small>
                         </div>
                         <div class="mb-2">
                             <label for="quickProductDescription" class="form-label fw-semibold">Description</label>
                             <textarea class="form-control" id="quickProductDescription" name="description" rows="3" maxlength="2000"
                                 placeholder="Enter product description"></textarea>
                         </div>
-                        <div class="info-note mt-3"><i class="bi bi-shield-check me-1"></i>These fields match the Product
-                            tab. Opening stock is recorded in the inventory ledger. Inactive products are saved but hidden
-                            from the POS catalogue.</div>
+                        <div class="info-note mt-3"><i class="bi bi-shield-check me-1"></i>Product details are created here; quantity is not editable in POS. New stock products begin at 0 units. Use Purchases or Inventory Adjustments to add stock. Inactive products stay hidden from the POS catalogue.</div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-pos-outline" data-bs-dismiss="modal">Cancel</button>

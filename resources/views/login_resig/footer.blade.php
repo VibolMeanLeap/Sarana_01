@@ -28,6 +28,7 @@
 </script>
 <script>window.CoffeeCornerValidationErrors = @json($errors->toArray());</script>
 <script src="{{ asset('assets/js/form-validation.js') }}"></script>
+<script src="{{ asset('assets/js/cc-theme.js') }}"></script>
 </body>
 
 </html>

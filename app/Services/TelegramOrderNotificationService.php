@@ -238,7 +238,9 @@ class TelegramOrderNotificationService
             'preparing' => '👩‍🍳 Start preparing',
             'ready' => $isDelivery ? '📦 Ready for dispatch' : '📦 Ready for pickup',
             'out_for_delivery' => '🚚 Out for delivery',
-            'completed' => $isCod ? '✅ Delivered & COD collected' : ($isDelivery ? '✅ Mark delivered' : '✅ Mark collected'),
+            'completed' => $isCod
+                ? ($isDelivery ? '✅ Delivered & COD collected' : '✅ Collected & COD paid')
+                : ($isDelivery ? '✅ Mark delivered' : '✅ Mark collected'),
         ];
 
         $callbackData = implode('|', [

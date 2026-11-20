@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('partials.locale-bootstrap')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="{{ asset('assets/js/cc-theme-boot.js') }}"></script>
     <title>Point of Sale · {{ $shopSettings?->shop_name ?: 'SK Coffee' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -383,6 +384,8 @@
     </style>
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme-interactions.css') }}">
 </head>
 
 <body data-exchange-rate="{{ (float) ($shopSettings?->exchange_rate ?: 4100) }}"
@@ -408,6 +411,7 @@
                         style="font-size:10px;letter-spacing:.5px">POINT OF SALE</span></span>
             </a>
             <div class="d-flex align-items-center flex-wrap gap-2 gap-md-3">
+                @include('partials.theme-switcher')
                 @include('partials.pos-language-settings')
                 <span class="small text-muted d-none d-sm-inline"><i
                         class="bi bi-person-circle me-1"></i>{{ auth()->user()->name ?? 'Staff' }}</span>
@@ -1302,6 +1306,7 @@
     </script>
     <script src="{{ asset('assets/js/form-validation.js') }}"></script>
     <script src="{{ asset('assets/js/password-toggle.js') }}"></script>
+    <script src="{{ asset('assets/js/cc-theme.js') }}"></script>
 </body>
 
 </html>

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @include('partials.locale-bootstrap')
+    <script src="{{ asset('assets/js/cc-theme-boot.js') }}"></script>
     <title>@yield('web_title', $shopSettings?->shop_name ?: 'SK Coffee')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -724,9 +725,10 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('assets/css/telegram-support-widget.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme-interactions.css') }}">
 </head>
 
 <body>
@@ -854,6 +856,7 @@
                 </ul>
 
                 <div class="d-flex align-items-center gap-3">
+                    @include('partials.theme-switcher')
                     @include('partials.language-switcher')
                     <!-- ១. PROFILE POPUP DROPDOWN -->
                     <div class="dropdown">
@@ -930,8 +933,6 @@
             </div>
         </div>
     </nav>
-    @include('partials.telegram-support-widget')
-
     {{-- container --}}
     @yield('content')
     @if (session('cart_success') || session('cart_error'))
@@ -1166,6 +1167,7 @@
             });
         })();
     </script>
+    <script src="{{ asset('assets/js/cc-theme.js') }}"></script>
 </body>
 
 </html>

@@ -14,7 +14,6 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Settings;
-use App\Models\StockLog;
 use App\Models\Supplier;
 use App\Services\PayWayService;
 use App\Services\TelegramOrderNotificationService;
@@ -120,10 +119,11 @@ class PosController extends Controller
     }
 
     /**
-     * Create a product from POS using the same fields and rules as the Product tab.
-     * Opening stock is written to the stock ledger. Product images use the existing
-     * public/images storage convention. The catalogue price is never affected by
-     * per-order price overrides.
+     * Create a POS catalogue product using the same product-only policy as the
+     * Admin Product tab. Inventory always starts at zero; received quantities are
+     * recorded only through Purchases or Inventory Adjustments. Any client-supplied
+     * qty field is deliberately ignored. Product images use the existing
+     * public/images storage convention.
      */
     public function storeQuickProduct(Request $request)
     {
@@ -139,21 +139,15 @@ class PosController extends Controller
             'supplier_id' => 'nullable|integer|exists:suppliers,supplier_id',
             'price' => 'required|numeric|min:0|max:99999999.99',
             'cost' => 'required|numeric|min:0|max:99999999.99',
-            'qty' => 'required_if:product_type,stock|nullable|integer|min:0|max:2147483647',
             'product_type' => 'required|in:stock,non-stock',
             'status' => 'required|in:Active,Inactive',
             'description' => 'nullable|string|max:2000',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096|dimensions:max_width=6000,max_height=6000',
         ]);
 
-        if (($validated['product_type'] ?? 'stock') === 'non-stock' && (int) ($validated['qty'] ?? 0) > 0) {
-            throw ValidationException::withMessages([
-                'qty' => 'Non-stock products do not keep an inventory quantity. Set quantity to 0.',
-            ]);
-        }
-
-        $isStockTracked = $validated['product_type'] === 'stock';
-        $initialQty = $isStockTracked ? (int) ($validated['qty'] ?? 0) : 0;
+        // Never accept opening inventory through the POS quick-create form.
+        // The qty field is not validated or read from the request, so a forged
+        // qty value cannot be used to inflate stock.
         $imageName = null;
 
         if ($request->hasFile('image')) {
@@ -161,30 +155,20 @@ class PosController extends Controller
         }
 
         try {
-            $product = DB::transaction(function () use ($validated, $initialQty, $imageName) {
+            $product = DB::transaction(function () use ($validated, $imageName) {
                 $product = Product::create([
                     'product_name' => trim($validated['product_name']),
                     'category_id' => (int) $validated['category_id'],
                     'supplier_id' => ! empty($validated['supplier_id']) ? (int) $validated['supplier_id'] : null,
                     'price' => round((float) $validated['price'], 2),
                     'cost' => round((float) $validated['cost'], 2),
-                    'qty' => $initialQty,
+                    'qty' => 0,
                     'product_type' => $validated['product_type'],
                     'description' => $validated['description'] ?? null,
                     'status' => $validated['status'],
                     'image' => $imageName,
                 ]);
 
-                if ($initialQty > 0 && $product->isStockTracked()) {
-                    StockLog::create([
-                        'product_id' => $product->product_id,
-                        'user_id' => auth()->id(),
-                        'type' => 'IN',
-                        'quantity' => $initialQty,
-                        'reason' => 'Opening stock',
-                        'note' => 'Opening quantity recorded when product #'.$product->product_id.' was created from POS.',
-                    ]);
-                }
 
                 return $product->load(['category', 'supplier']);
             }, 3);
@@ -196,8 +180,8 @@ class PosController extends Controller
         return response()->json([
             'success' => true,
             'message' => $product->status === 'Active'
-                ? 'Product created successfully and added to the active POS catalogue.'
-                : 'Product created successfully as inactive. It will not appear in the POS catalogue until activated.',
+                ? 'Product created successfully. Stock starts at zero; record received quantities through Purchases or Inventory Adjustments.'
+                : 'Product created successfully as inactive. It will not appear in the POS catalogue until activated. Stock starts at zero.',
             'product' => [
                 'id' => (int) $product->product_id,
                 'name' => (string) $product->product_name,

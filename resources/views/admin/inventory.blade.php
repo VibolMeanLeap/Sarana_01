@@ -2,66 +2,776 @@
 @section('page_title', 'Inventory & stock')
 @section('topbar_title', 'Inventory & stock control')
 @section('content')
-<style>
-.cc-stock{--g:#176b4b;--gd:#104d38;--line:#dfebe2;background:linear-gradient(180deg,#edf5ef 0,#f5f8f5 300px,#f5f8f5 100%);border-radius:22px;padding:clamp(16px,2.2vw,28px);color:#20312a}.cc-s-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:20px}.cc-s-kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#4b8768}.cc-s-title{font-size:clamp(24px,3vw,30px);font-weight:800;letter-spacing:-.04em;color:#1d3529;margin:4px 0}.cc-s-sub{font-size:13px;color:#748178;margin:0}.cc-s-actions{display:flex;gap:8px;flex-wrap:wrap}.cc-s-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;background:#176b4b;color:#fff;text-decoration:none;padding:10px 15px;font-weight:800;box-shadow:0 7px 16px #176b4b22}.cc-s-btn:hover{background:#104d38;color:#fff}.cc-s-btn.light{background:#fff;color:#315c41;border:1px solid #cfe1d3;box-shadow:none}.cc-s-btn.light:hover{background:#eaf5ed}.cc-s-stat{height:100%;border:1px solid #d6e9dc;border-radius:16px;padding:16px 17px;background:linear-gradient(135deg,#fff,#eff7f0);display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 5px 15px #204b3010}.cc-s-stat-label{font-size:10px;color:#748178;font-weight:800;letter-spacing:.07em}.cc-s-stat-value{font-size:25px;color:#1b3f2e;font-weight:800;letter-spacing:-.04em;margin-top:3px}.cc-s-stat-icon{width:43px;height:43px;display:grid;place-items:center;border-radius:14px;background:#dff0e4;color:#176b4b;font-size:20px}.cc-s-stat.warn .cc-s-stat-icon{background:#fff1d9;color:#a66c14}.cc-s-stat.danger .cc-s-stat-icon{background:#fde9e8;color:#b54c4c}.cc-s-alert{padding:11px 14px;border-radius:12px;border:1px solid #c8e4cf;background:#eef8f0;color:#285f3b;font-size:13px;margin-bottom:14px}.cc-s-alert.error{border-color:#f1cccc;background:#fff3f3;color:#a53c3c}.cc-s-filter{background:linear-gradient(120deg,#e4f1e7,#f1f8f2);border:1px solid #cfe4d4;border-radius:17px;padding:17px;margin:18px 0}.cc-s-filter-head{display:flex;gap:10px;align-items:center;margin-bottom:13px}.cc-s-filter-icon{width:34px;height:34px;border-radius:11px;background:#cfe8d5;color:#176b4b;display:grid;place-items:center}.cc-s-filter-title{margin:0;font-size:14px;font-weight:800;color:#214b35}.cc-s-filter-hint{margin:2px 0 0;font-size:12px;color:#688071}.cc-s-field label{display:block;font-size:10px;letter-spacing:.06em;font-weight:800;color:#53705e;margin-bottom:6px}.cc-stock .form-control,.cc-stock .form-select{height:42px;border:1px solid #d7e4da;border-radius:10px;background:#fff;font-size:13px;box-shadow:none}.cc-stock .form-control:focus,.cc-stock .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}.cc-s-apply{height:42px;border:0;border-radius:10px;background:#176b4b;color:#fff;padding:0 16px;font-weight:800}.cc-s-reset{height:42px;border:1px solid #cbdacf;border-radius:10px;background:#fff;color:#496452;padding:0 13px;display:inline-flex;align-items:center;text-decoration:none}.cc-s-section{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 8px 24px #204b300c;margin-top:17px}.cc-s-section-head{padding:16px 19px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:linear-gradient(90deg,#f3f8f4,#fff);border-bottom:1px solid var(--line)}.cc-s-section-title{font-size:15px;font-weight:800;color:#1d3d2c;margin:0}.cc-s-section-hint{font-size:12px;color:#7b8980;margin:3px 0 0}.cc-s-table{margin:0;width:100%}.cc-s-table thead th{background:#edf5ef;color:#567362;text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:800;padding:12px 14px;white-space:nowrap;border-bottom:1px solid #dce9df}.cc-s-table tbody td{padding:12px 14px;border-bottom:1px solid #edf2ed;font-size:13px;vertical-align:middle;color:#2c3c32}.cc-s-table tbody tr:hover{background:#f7faf7}.cc-s-product{font-weight:800;color:#294a35}.cc-s-id{font-weight:800;color:#557464}.cc-s-chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800;white-space:nowrap}.cc-s-chip.good{background:#e7f4e9;color:#277347}.cc-s-chip.low{background:#fff2d8;color:#976414}.cc-s-chip.out{background:#ffebeb;color:#b34646}.cc-s-chip.in{background:#e7f4e9;color:#277347}.cc-s-chip.outmove{background:#ffebeb;color:#b34646}.cc-s-qty{font-size:14px;font-weight:900;color:#254a34}.cc-s-qty.negative{color:#b34646}.cc-s-empty{padding:42px 20px;text-align:center;color:#829087}.cc-s-empty i{font-size:32px;color:#8ab99a}.cc-s-pagination{padding:13px 17px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.cc-s-pagination .pagination{margin:0;gap:4px}.cc-s-pagination .page-link{border-radius:9px!important;border-color:#dce8df;color:#3d664e}.cc-s-pagination .page-item.active .page-link{background:#176b4b;border-color:#176b4b}.cc-s-modal .modal-content{border:1px solid #dce9df;border-radius:18px;overflow:hidden;box-shadow:0 18px 50px #183d2b28}.cc-s-modal .modal-header{background:linear-gradient(100deg,#e6f2e9,#f7fbf7);border-bottom:1px solid #dce9df;padding:18px 21px}.cc-s-modal .modal-title{font-weight:800;color:#214b35}.cc-s-modal .modal-body{padding:21px}.cc-s-modal .form-label{font-size:11px;font-weight:800;color:#496553}.cc-s-modal .form-control,.cc-s-modal .form-select{border:1px solid #d7e4da;border-radius:10px;min-height:43px;font-size:13px}.cc-s-modal .form-control:focus,.cc-s-modal .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}.cc-s-modal .modal-footer{background:#f2f8f3;border-top:1px solid #e0ece3;padding:14px 20px}.cc-s-modal .btn-success{background:#176b4b;border-color:#176b4b;border-radius:10px;font-weight:800}.cc-s-modal .btn-light{border:1px solid #d5e2d8;border-radius:10px;color:#476450;font-weight:700}
-@media(max-width:767px){.cc-stock{padding:14px;border-radius:16px}.cc-s-filter{padding:13px}}
-</style>
-<div class="cc-stock">
-    @if(session('success'))<div class="cc-s-alert"><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</div>@endif
-    @if(session('error'))<div class="cc-s-alert error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</div>@endif
-    @if($errors->any())<div class="cc-s-alert error"><strong>Please check the adjustment:</strong> {{ $errors->first() }}</div>@endif
-    <div class="cc-s-head"><div><div class="cc-s-kicker">Inventory operations</div><h1 class="cc-s-title">Inventory & stock</h1><p class="cc-s-sub">Monitor current quantities, spot low stock early and review every stock movement.</p></div><div class="cc-s-actions"><a href="{{ route('purchase.create') }}" class="cc-s-btn light"><i class="bi bi-bag-plus"></i> Record purchase</a><button type="button" class="cc-s-btn" data-bs-toggle="modal" data-bs-target="#adjustStockModal"><i class="bi bi-sliders"></i> Manual adjustment</button></div></div>
-    <div class="row g-3">
-        <div class="col-6 col-xl-3"><div class="cc-s-stat"><div><div class="cc-s-stat-label">TRACKED PRODUCTS</div><div class="cc-s-stat-value">{{ number_format($stockSummary->total_products ?? 0) }}</div></div><span class="cc-s-stat-icon"><i class="bi bi-boxes"></i></span></div></div>
-        <div class="col-6 col-xl-3"><div class="cc-s-stat"><div><div class="cc-s-stat-label">UNITS ON HAND</div><div class="cc-s-stat-value">{{ number_format($stockSummary->total_units ?? 0) }}</div></div><span class="cc-s-stat-icon"><i class="bi bi-box-seam"></i></span></div></div>
-        <div class="col-6 col-xl-3"><div class="cc-s-stat warn"><div><div class="cc-s-stat-label">LOW STOCK · 1–{{ $lowStockThreshold }}</div><div class="cc-s-stat-value">{{ number_format($stockSummary->low_stock ?? 0) }}</div></div><span class="cc-s-stat-icon"><i class="bi bi-exclamation-triangle"></i></span></div></div>
-        <div class="col-6 col-xl-3"><div class="cc-s-stat danger"><div><div class="cc-s-stat-label">OUT OF STOCK</div><div class="cc-s-stat-value">{{ number_format($stockSummary->out_of_stock ?? 0) }}</div></div><span class="cc-s-stat-icon"><i class="bi bi-box2"></i></span></div></div>
+    <style>
+        .cc-stock {
+            --g: #176b4b;
+            --gd: #104d38;
+            --line: #dfebe2;
+            background: linear-gradient(180deg, #edf5ef 0, #f5f8f5 300px, #f5f8f5 100%);
+            border-radius: 22px;
+            padding: clamp(16px, 2.2vw, 28px);
+            color: #20312a
+        }
+
+        .cc-s-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px
+        }
+
+        .cc-s-kicker {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: #4b8768
+        }
+
+        .cc-s-title {
+            font-size: clamp(24px, 3vw, 30px);
+            font-weight: 800;
+            letter-spacing: -.04em;
+            color: #1d3529;
+            margin: 4px 0
+        }
+
+        .cc-s-sub {
+            font-size: 13px;
+            color: #748178;
+            margin: 0
+        }
+
+        .cc-s-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .cc-s-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 0;
+            border-radius: 12px;
+            background: #176b4b;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 15px;
+            font-weight: 800;
+            box-shadow: 0 7px 16px #176b4b22
+        }
+
+        .cc-s-btn:hover {
+            background: #104d38;
+            color: #fff
+        }
+
+        .cc-s-btn.light {
+            background: #fff;
+            color: #315c41;
+            border: 1px solid #cfe1d3;
+            box-shadow: none
+        }
+
+        .cc-s-btn.light:hover {
+            background: #eaf5ed
+        }
+
+        .cc-s-stat {
+            height: 100%;
+            border: 1px solid #d6e9dc;
+            border-radius: 16px;
+            padding: 16px 17px;
+            background: linear-gradient(135deg, #fff, #eff7f0);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: 0 5px 15px #204b3010
+        }
+
+        .cc-s-stat-label {
+            font-size: 10px;
+            color: #748178;
+            font-weight: 800;
+            letter-spacing: .07em
+        }
+
+        .cc-s-stat-value {
+            font-size: 25px;
+            color: #1b3f2e;
+            font-weight: 800;
+            letter-spacing: -.04em;
+            margin-top: 3px
+        }
+
+        .cc-s-stat-icon {
+            width: 43px;
+            height: 43px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: #dff0e4;
+            color: #176b4b;
+            font-size: 20px
+        }
+
+        .cc-s-stat.warn .cc-s-stat-icon {
+            background: #fff1d9;
+            color: #a66c14
+        }
+
+        .cc-s-stat.danger .cc-s-stat-icon {
+            background: #fde9e8;
+            color: #b54c4c
+        }
+
+        .cc-s-alert {
+            padding: 11px 14px;
+            border-radius: 12px;
+            border: 1px solid #c8e4cf;
+            background: #eef8f0;
+            color: #285f3b;
+            font-size: 13px;
+            margin-bottom: 14px
+        }
+
+        .cc-s-alert.error {
+            border-color: #f1cccc;
+            background: #fff3f3;
+            color: #a53c3c
+        }
+
+        .cc-s-filter {
+            background: linear-gradient(120deg, #e4f1e7, #f1f8f2);
+            border: 1px solid #cfe4d4;
+            border-radius: 17px;
+            padding: 17px;
+            margin: 18px 0
+        }
+
+        .cc-s-filter-head {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 13px
+        }
+
+        .cc-s-filter-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            background: #cfe8d5;
+            color: #176b4b;
+            display: grid;
+            place-items: center
+        }
+
+        .cc-s-filter-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 800;
+            color: #214b35
+        }
+
+        .cc-s-filter-hint {
+            margin: 2px 0 0;
+            font-size: 12px;
+            color: #688071
+        }
+
+        .cc-s-field label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: .06em;
+            font-weight: 800;
+            color: #53705e;
+            margin-bottom: 6px
+        }
+
+        .cc-stock .form-control,
+        .cc-stock .form-select {
+            height: 42px;
+            border: 1px solid #d7e4da;
+            border-radius: 10px;
+            background: #fff;
+            font-size: 13px;
+            box-shadow: none
+        }
+
+        .cc-stock .form-control:focus,
+        .cc-stock .form-select:focus {
+            border-color: #64a77b;
+            box-shadow: 0 0 0 3px #176b4b18
+        }
+
+        .cc-s-apply {
+            height: 42px;
+            border: 0;
+            border-radius: 10px;
+            background: #176b4b;
+            color: #fff;
+            padding: 0 16px;
+            font-weight: 800
+        }
+
+        .cc-s-reset {
+            height: 42px;
+            border: 1px solid #cbdacf;
+            border-radius: 10px;
+            background: #fff;
+            color: #496452;
+            padding: 0 13px;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none
+        }
+
+        .cc-s-section {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 17px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px #204b300c;
+            margin-top: 17px
+        }
+
+        .cc-s-section-head {
+            padding: 16px 19px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(90deg, #f3f8f4, #fff);
+            border-bottom: 1px solid var(--line)
+        }
+
+        .cc-s-section-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #1d3d2c;
+            margin: 0
+        }
+
+        .cc-s-section-hint {
+            font-size: 12px;
+            color: #7b8980;
+            margin: 3px 0 0
+        }
+
+        .cc-s-table {
+            margin: 0;
+            width: 100%
+        }
+
+        .cc-s-table thead th {
+            background: #edf5ef;
+            color: #567362;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 12px 14px;
+            white-space: nowrap;
+            border-bottom: 1px solid #dce9df
+        }
+
+        .cc-s-table tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #edf2ed;
+            font-size: 13px;
+            vertical-align: middle;
+            color: #2c3c32
+        }
+
+        .cc-s-table tbody tr:hover {
+            background: #f7faf7
+        }
+
+        .cc-s-product {
+            font-weight: 800;
+            color: #0b0
+        }
+
+        .cc-s-id {
+            font-weight: 800;
+            color: #557464
+        }
+
+        .cc-s-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 10px;
+            font-weight: 800;
+            white-space: nowrap
+        }
+
+        .cc-s-chip.good {
+            background: #e7f4e9;
+            color: #277347
+        }
+
+        .cc-s-chip.low {
+            background: #fff2d8;
+            color: #976414
+        }
+
+        .cc-s-chip.out {
+            background: #ffebeb;
+            color: #b34646
+        }
+
+        .cc-s-chip.in {
+            background: #e7f4e9;
+            color: #277347
+        }
+
+        .cc-s-chip.outmove {
+            background: #ffebeb;
+            color: #b34646
+        }
+
+        .cc-s-qty {
+            font-size: 14px;
+            font-weight: 900;
+            color: #254a34
+        }
+
+        .cc-s-qty.negative {
+            color: #b34646
+        }
+
+        .cc-s-empty {
+            padding: 42px 20px;
+            text-align: center;
+            color: #829087
+        }
+
+        .cc-s-empty i {
+            font-size: 32px;
+            color: #8ab99a
+        }
+
+        .cc-s-pagination {
+            padding: 13px 17px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .cc-s-pagination .pagination {
+            margin: 0;
+            gap: 4px
+        }
+
+        .cc-s-pagination .page-link {
+            border-radius: 9px !important;
+            border-color: #dce8df;
+            color: #3d664e
+        }
+
+        .cc-s-pagination .page-item.active .page-link {
+            background: #176b4b;
+            border-color: #176b4b
+        }
+
+        .cc-s-modal .modal-content {
+            border: 1px solid #dce9df;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 18px 50px #183d2b28
+        }
+
+        .cc-s-modal .modal-header {
+            background: linear-gradient(100deg, #e6f2e9, #f7fbf7);
+            border-bottom: 1px solid #dce9df;
+            padding: 18px 21px
+        }
+
+        .cc-s-modal .modal-title {
+            font-weight: 800;
+            color: #214b35
+        }
+
+        .cc-s-modal .modal-body {
+            padding: 21px
+        }
+
+        .cc-s-modal .form-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #496553
+        }
+
+        .cc-s-modal .form-control,
+        .cc-s-modal .form-select {
+            border: 1px solid #d7e4da;
+            border-radius: 10px;
+            min-height: 43px;
+            font-size: 13px
+        }
+
+        .cc-s-modal .form-control:focus,
+        .cc-s-modal .form-select:focus {
+            border-color: #64a77b;
+            box-shadow: 0 0 0 3px #176b4b18
+        }
+
+        .cc-s-modal .modal-footer {
+            background: #f2f8f3;
+            border-top: 1px solid #e0ece3;
+            padding: 14px 20px
+        }
+
+        .cc-s-modal .btn-success {
+            background: #176b4b;
+            border-color: #176b4b;
+            border-radius: 10px;
+            font-weight: 800
+        }
+
+        .cc-s-modal .btn-light {
+            border: 1px solid #d5e2d8;
+            border-radius: 10px;
+            color: #476450;
+            font-weight: 700
+        }
+
+        @media(max-width:767px) {
+            .cc-stock {
+                padding: 14px;
+                border-radius: 16px
+            }
+
+            .cc-s-filter {
+                padding: 13px
+            }
+        }
+    </style>
+    <div class="cc-stock">
+        @if (session('success'))
+            <div class="cc-s-alert"><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="cc-s-alert error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</div>
+        @endif
+        @if ($errors->any())
+            <div class="cc-s-alert error"><strong>Please check the adjustment:</strong> {{ $errors->first() }}</div>
+        @endif
+        <div class="cc-s-head">
+            <div>
+                <div class="cc-s-kicker">Inventory operations</div>
+                <h1 class="cc-s-title">Inventory & stock</h1>
+                <p class="cc-s-sub">Monitor current quantities, spot low stock early and review every stock movement.</p>
+            </div>
+            <div class="cc-s-actions"><a href="{{ route('purchase.create') }}" class="cc-s-btn light"><i
+                        class="bi bi-bag-plus"></i> Record purchase</a><button type="button" class="cc-s-btn"
+                    data-bs-toggle="modal" data-bs-target="#adjustStockModal"><i class="bi bi-sliders"></i> Manual
+                    adjustment</button></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-xl-3">
+                <div class="cc-s-stat">
+                    <div>
+                        <div class="cc-s-stat-label">TRACKED PRODUCTS</div>
+                        <div class="cc-s-stat-value">{{ number_format($stockSummary->total_products ?? 0) }}</div>
+                    </div><span class="cc-s-stat-icon"><i class="bi bi-boxes"></i></span>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="cc-s-stat">
+                    <div>
+                        <div class="cc-s-stat-label">UNITS ON HAND</div>
+                        <div class="cc-s-stat-value">{{ number_format($stockSummary->total_units ?? 0) }}</div>
+                    </div><span class="cc-s-stat-icon"><i class="bi bi-box-seam"></i></span>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="cc-s-stat warn">
+                    <div>
+                        <div class="cc-s-stat-label">LOW STOCK · 1–{{ $lowStockThreshold }}</div>
+                        <div class="cc-s-stat-value">{{ number_format($stockSummary->low_stock ?? 0) }}</div>
+                    </div><span class="cc-s-stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="cc-s-stat danger">
+                    <div>
+                        <div class="cc-s-stat-label">OUT OF STOCK</div>
+                        <div class="cc-s-stat-value">{{ number_format($stockSummary->out_of_stock ?? 0) }}</div>
+                    </div><span class="cc-s-stat-icon"><i class="bi bi-box2"></i></span>
+                </div>
+            </div>
+        </div>
+        <section class="cc-s-filter">
+            <div class="cc-s-filter-head"><span class="cc-s-filter-icon"><i class="bi bi-funnel"></i></span>
+                <div>
+                    <h2 class="cc-s-filter-title">Inventory & movement filters</h2>
+                    <p class="cc-s-filter-hint">Product and category filters apply to both sections. Date and movement type
+                        apply to stock history.</p>
+                </div>
+            </div>
+            <form method="GET" action="{{ route('inventory.index') }}" id="inventoryFilterForm">
+                @include('admin.partials.date-filter-panel', [
+                    'dateFilter' => $dateFilter,
+                    'dateFromField' => 'date_from',
+                    'dateToField' => 'date_to',
+                    'dateFilterTitle' => 'Stock movement date',
+                    'dateFilterHint' =>
+                        'The selected period filters movement history only; current stock quantities remain live.',
+                ])
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4 col-xl-3 cc-s-field"><label for="filterProduct">PRODUCT</label><select
+                            name="product_id" id="filterProduct" class="form-select">
+                            <option value="">All products</option>
+                            @foreach ($products as $p)
+                                <option value="{{ $p->product_id }}" @selected(request('product_id') == $p->product_id)>{{ $p->product_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterCategory">CATEGORY</label><select
+                            name="category_id" id="filterCategory" class="form-select">
+                            <option value="">All categories</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->category_id }}" @selected(request('category_id') == $category->category_id)>
+                                    {{ $category->category_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterStockStatus">STOCK
+                            LEVEL</label><select name="stock_status" id="filterStockStatus" class="form-select">
+                            <option value="all" @selected(request('stock_status', 'all') === 'all')>All levels</option>
+                            <option value="healthy" @selected(request('stock_status') === 'healthy')>Healthy stock</option>
+                            <option value="low" @selected(request('stock_status') === 'low')>Low stock</option>
+                            <option value="out" @selected(request('stock_status') === 'out')>Out of stock</option>
+                        </select></div>
+                    <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterType">MOVEMENT</label><select
+                            name="type" id="filterType" class="form-select">
+                            <option value="">All movements</option>
+                            <option value="in" @selected(request('type') === 'in')>Stock In</option>
+                            <option value="out" @selected(request('type') === 'out')>Stock Out</option>
+                        </select></div>
+                </div>
+                <div class="row g-2 align-items-end mt-1">
+                    <div class="col-12 col-md-7 col-xl-6 cc-s-field"><label for="filterSearch">SEARCH</label><input
+                            id="filterSearch" type="search" name="search" class="form-control"
+                            value="{{ request('search') }}" placeholder="Product name, movement reason or note"></div>
+                    <div class="col-6 col-md-2 col-xl-2 cc-s-field"><label for="filterSort">HISTORY SORT</label><select
+                            id="filterSort" name="sort_dir" class="form-select">
+                            <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest</option>
+                            <option value="asc" @selected(request('sort_dir') === 'asc')>Oldest</option>
+                        </select></div>
+                    <div class="col-6 col-md-3 col-xl-4 d-flex justify-content-end align-items-end gap-2"><button
+                            type="submit" class="cc-s-apply flex-grow-1"><i class="bi bi-filter me-1"></i> Apply
+                            filters</button><a href="{{ route('inventory.index') }}" class="cc-s-reset"><i
+                                class="bi bi-arrow-counterclockwise me-1"></i> Reset</a></div>
+                </div>
+            </form>
+        </section>
+        <section class="cc-s-section">
+            <div class="cc-s-section-head">
+                <div>
+                    <h2 class="cc-s-section-title"><i class="bi bi-boxes text-success me-2"></i>Current stock snapshot
+                    </h2>
+                    <p class="cc-s-section-hint">Current product quantity, independent of the movement date range. Low
+                        stock is a visual warning at {{ $lowStockThreshold }} units or fewer.</p>
+                </div><span class="badge rounded-pill text-bg-light border">{{ $stockItems->total() }} products</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table cc-s-table">
+                    <thead>
+                        <tr>
+                            <th>PRODUCT</th>
+                            <th>CATEGORY</th>
+                            <th>PRODUCT TYPE</th>
+                            <th class="text-end">ON HAND</th>
+                            <th>STOCK STATUS</th>
+                            <th class="text-end">SELLING PRICE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($stockItems as $item)
+                            @php($qty = (int) ($item->qty ?? 0))
+                            <tr>
+                                <td>
+                                    <div class="cc-s-product">{{ $item->product_name }}</div>
+                                    <div class="small text-muted">Product #{{ $item->product_id }}</div>
+                                </td>
+                                <td>{{ $item->category->category_name ?? 'Uncategorised' }}</td>
+                                <td><span
+                                        class="badge rounded-pill text-bg-light border">{{ ucfirst($item->product_type ?: 'stock') }}</span>
+                                </td>
+                                <td class="text-end cc-s-qty">{{ number_format($qty) }}</td>
+                                <td>
+                                    @if ($qty <= 0)
+                                        <span class="cc-s-chip out"><i class="bi bi-x-circle-fill"></i> Out of
+                                            stock</span>
+                                    @elseif($qty <= $lowStockThreshold)
+                                        <span class="cc-s-chip low"><i class="bi bi-exclamation-circle-fill"></i> Low
+                                        stock</span>@else<span class="cc-s-chip good"><i
+                                                class="bi bi-check-circle-fill"></i> Healthy</span>
+                                    @endif
+                                </td>
+                                <td class="text-end fw-semibold">${{ number_format((float) $item->price, 2) }}</td>
+                            </tr>
+                        @empty<tr>
+                                <td colspan="6">
+                                    <div class="cc-s-empty"><i class="bi bi-box-seam d-block mb-2"></i>
+                                        <div class="fw-bold text-dark">No stock products match</div>
+                                        <div class="small">Change the product/category/stock-level filters or add a
+                                            stock-tracked product.</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="cc-s-pagination"><span class="small text-muted">Showing
+                    {{ $stockItems->firstItem() ?? 0 }}–{{ $stockItems->lastItem() ?? 0 }} of {{ $stockItems->total() }}
+                    products</span>{{ $stockItems->appends(request()->except('stock_page'))->links() }}</div>
+        </section>
+        <section class="cc-s-section">
+            <div class="cc-s-section-head">
+                <div>
+                    <h2 class="cc-s-section-title"><i class="bi bi-arrow-left-right text-success me-2"></i>Stock movement
+                        history</h2>
+                    <p class="cc-s-section-hint">Append-only audit history for purchases, sales and manual adjustments.</p>
+                </div>
+                <div class="d-flex gap-2 align-items-center">@include('admin.partials.export-actions', ['exportType' => 'inventory'])<span
+                        class="badge rounded-pill text-bg-light border">{{ $logs->total() }} movements</span></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table cc-s-table">
+                    <thead>
+                        <tr>
+                            <th>LOG</th>
+                            <th>PRODUCT</th>
+                            <th>MOVEMENT</th>
+                            <th class="text-end">QUANTITY</th>
+                            <th>REASON</th>
+                            <th>NOTE</th>
+                            <th>RECORDED BY</th>
+                            <th>DATE & TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($logs as $log)
+                            @php($isIn = strtolower((string) $log->type) === 'in')
+                            <tr>
+                                <td class="cc-s-id">#{{ $log->log_id }}</td>
+                                <td>
+                                    <div class="cc-s-product">{{ $log->product->product_name ?? 'Deleted product' }}</div>
+                                    <div class="small text-muted">{{ $log->product?->category?->category_name ?? '—' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    @if ($isIn)
+                                        <span class="cc-s-chip in"><i class="bi bi-arrow-down-left-circle-fill"></i> Stock
+                                        In</span>@else<span class="cc-s-chip outmove"><i
+                                                class="bi bi-arrow-up-right-circle-fill"></i> Stock Out</span>
+                                    @endif
+                                </td>
+                                <td class="text-end fw-bold {{ $isIn ? 'text-success' : 'text-danger' }}">
+                                    {{ $isIn ? '+' : '−' }}{{ number_format($log->quantity) }}</td>
+                                <td>{{ $log->reason ?: 'Adjustment' }}</td>
+                                <td class="text-muted">{{ $log->note ?: '—' }}</td>
+                                <td>{{ $log->user->name ?? 'System' }}</td>
+                                <td class="text-nowrap">
+                                    @if ($log->log_date)
+                                        {{ \Carbon\Carbon::parse($log->log_date)->format('d M Y · H:i') }}
+                                    @elseif($log->created_at)
+                                        {{ $log->created_at->format('d M Y · H:i') }}@else—
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty<tr>
+                                <td colspan="8">
+                                    <div class="cc-s-empty"><i class="bi bi-clock-history d-block mb-2"></i>
+                                        <div class="fw-bold text-dark">No stock movements found</div>
+                                        <div class="small">Adjust the movement filters or record a purchase/stock
+                                            adjustment.</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="cc-s-pagination"><span class="small text-muted">Showing
+                    {{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }}
+                    movements</span>{{ $logs->appends(request()->except('log_page'))->links() }}</div>
+        </section>
     </div>
-    <section class="cc-s-filter"><div class="cc-s-filter-head"><span class="cc-s-filter-icon"><i class="bi bi-funnel"></i></span><div><h2 class="cc-s-filter-title">Inventory & movement filters</h2><p class="cc-s-filter-hint">Product and category filters apply to both sections. Date and movement type apply to stock history.</p></div></div>
-        <form method="GET" action="{{ route('inventory.index') }}" id="inventoryFilterForm">
-            @include('admin.partials.date-filter-panel', [
-                'dateFilter' => $dateFilter,
-                'dateFromField' => 'date_from',
-                'dateToField' => 'date_to',
-                'dateFilterTitle' => 'Stock movement date',
-                'dateFilterHint' => 'The selected period filters movement history only; current stock quantities remain live.',
-            ])
-            <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-4 col-xl-3 cc-s-field"><label for="filterProduct">PRODUCT</label><select name="product_id" id="filterProduct" class="form-select"><option value="">All products</option>@foreach($products as $p)<option value="{{ $p->product_id }}" @selected(request('product_id')==$p->product_id)>{{ $p->product_name }}</option>@endforeach</select></div>
-            <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterCategory">CATEGORY</label><select name="category_id" id="filterCategory" class="form-select"><option value="">All categories</option>@foreach($categories as $category)<option value="{{ $category->category_id }}" @selected(request('category_id')==$category->category_id)>{{ $category->category_name }}</option>@endforeach</select></div>
-            <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterStockStatus">STOCK LEVEL</label><select name="stock_status" id="filterStockStatus" class="form-select"><option value="all" @selected(request('stock_status','all')==='all')>All levels</option><option value="healthy" @selected(request('stock_status')==='healthy')>Healthy stock</option><option value="low" @selected(request('stock_status')==='low')>Low stock</option><option value="out" @selected(request('stock_status')==='out')>Out of stock</option></select></div>
-            <div class="col-6 col-md-4 col-xl-2 cc-s-field"><label for="filterType">MOVEMENT</label><select name="type" id="filterType" class="form-select"><option value="">All movements</option><option value="in" @selected(request('type')==='in')>Stock In</option><option value="out" @selected(request('type')==='out')>Stock Out</option></select></div>
+    <div class="modal fade cc-s-modal" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{{ route('inventory.store') }}" method="POST" class="modal-content">@csrf
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title fs-5" id="adjustStockModalLabel"><i class="bi bi-sliders me-2"></i>Manual
+                            stock adjustment</h2>
+                        <div class="small text-muted">Record a new movement; existing history is never overwritten.</div>
+                    </div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label" for="adjustProduct">PRODUCT <span
+                                class="text-danger">*</span></label><select id="adjustProduct" name="product_id"
+                            class="form-select" required>
+                            <option value="">Choose a stock product</option>
+                            @foreach ($products as $p)
+                                <option value="{{ $p->product_id }}" @selected(old('product_id') == $p->product_id)>{{ $p->product_name }}
+                                    · {{ (int) $p->qty }} on hand</option>
+                            @endforeach
+                        </select></div>
+                    <div class="row g-3">
+                        <div class="col-6"><label class="form-label" for="adjustType">MOVEMENT <span
+                                    class="text-danger">*</span></label><select id="adjustType" name="type"
+                                class="form-select" required>
+                                <option value="in" @selected(old('type', 'in') === 'in')>Stock In (+)</option>
+                                <option value="out" @selected(old('type') === 'out')>Stock Out (−)</option>
+                            </select></div>
+                        <div class="col-6"><label class="form-label" for="adjustQty">QUANTITY <span
+                                    class="text-danger">*</span></label><input id="adjustQty" type="number"
+                                name="quantity" min="1" max="1000000" class="form-control"
+                                value="{{ old('quantity') }}" placeholder="e.g. 5" required></div>
+                    </div>
+                    <div class="mt-3"><label class="form-label" for="adjustReason">REASON <span
+                                class="text-danger">*</span></label><input id="adjustReason" type="text"
+                            name="reason" class="form-control" value="{{ old('reason') }}" maxlength="255"
+                            placeholder="Damaged, correction, stock take..." required></div>
+                    <div class="mt-3"><label class="form-label" for="adjustNote">NOTE <span
+                                class="text-muted fw-normal">(OPTIONAL)</span></label>
+                        <textarea id="adjustNote" name="note" class="form-control" rows="3" maxlength="2000"
+                            placeholder="Add details for the stock history..." data-optional>{{ old('note') }}</textarea>
+                    </div>
+                    <div class="alert alert-light border small mt-3 mb-0"><i
+                            class="bi bi-info-circle text-success me-1"></i> Stock Out is blocked when there is not enough
+                        quantity available.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light"
+                        data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success"><i
+                            class="bi bi-check2-circle me-1"></i> Save movement</button></div>
+            </form>
         </div>
-        <div class="row g-2 align-items-end mt-1">
-            <div class="col-12 col-md-7 col-xl-6 cc-s-field"><label for="filterSearch">SEARCH</label><input id="filterSearch" type="search" name="search" class="form-control" value="{{ request('search') }}" placeholder="Product name, movement reason or note"></div>
-            <div class="col-6 col-md-2 col-xl-2 cc-s-field"><label for="filterSort">HISTORY SORT</label><select id="filterSort" name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir','desc')==='desc')>Newest</option><option value="asc" @selected(request('sort_dir')==='asc')>Oldest</option></select></div>
-            <div class="col-6 col-md-3 col-xl-4 d-flex justify-content-end align-items-end gap-2"><button type="submit" class="cc-s-apply flex-grow-1"><i class="bi bi-filter me-1"></i> Apply filters</button><a href="{{ route('inventory.index') }}" class="cc-s-reset"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</a></div>
-        </div>
-        </form>
-    </section>
-    <section class="cc-s-section"><div class="cc-s-section-head"><div><h2 class="cc-s-section-title"><i class="bi bi-boxes text-success me-2"></i>Current stock snapshot</h2><p class="cc-s-section-hint">Current product quantity, independent of the movement date range. Low stock is a visual warning at {{ $lowStockThreshold }} units or fewer.</p></div><span class="badge rounded-pill text-bg-light border">{{ $stockItems->total() }} products</span></div>
-        <div class="table-responsive"><table class="table cc-s-table"><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>PRODUCT TYPE</th><th class="text-end">ON HAND</th><th>STOCK STATUS</th><th class="text-end">SELLING PRICE</th></tr></thead><tbody>
-            @forelse($stockItems as $item)
-                @php($qty = (int)($item->qty ?? 0))
-                <tr><td><div class="cc-s-product">{{ $item->product_name }}</div><div class="small text-muted">Product #{{ $item->product_id }}</div></td><td>{{ $item->category->category_name ?? 'Uncategorised' }}</td><td><span class="badge rounded-pill text-bg-light border">{{ ucfirst($item->product_type ?: 'stock') }}</span></td><td class="text-end cc-s-qty">{{ number_format($qty) }}</td><td>@if($qty <= 0)<span class="cc-s-chip out"><i class="bi bi-x-circle-fill"></i> Out of stock</span>@elseif($qty <= $lowStockThreshold)<span class="cc-s-chip low"><i class="bi bi-exclamation-circle-fill"></i> Low stock</span>@else<span class="cc-s-chip good"><i class="bi bi-check-circle-fill"></i> Healthy</span>@endif</td><td class="text-end fw-semibold">${{ number_format((float)$item->price,2) }}</td></tr>
-            @empty<tr><td colspan="6"><div class="cc-s-empty"><i class="bi bi-box-seam d-block mb-2"></i><div class="fw-bold text-dark">No stock products match</div><div class="small">Change the product/category/stock-level filters or add a stock-tracked product.</div></div></td></tr>@endforelse
-        </tbody></table></div><div class="cc-s-pagination"><span class="small text-muted">Showing {{ $stockItems->firstItem() ?? 0 }}–{{ $stockItems->lastItem() ?? 0 }} of {{ $stockItems->total() }} products</span>{{ $stockItems->appends(request()->except('stock_page'))->links() }}</div>
-    </section>
-    <section class="cc-s-section"><div class="cc-s-section-head"><div><h2 class="cc-s-section-title"><i class="bi bi-arrow-left-right text-success me-2"></i>Stock movement history</h2><p class="cc-s-section-hint">Append-only audit history for purchases, sales and manual adjustments.</p></div><div class="d-flex gap-2 align-items-center">@include('admin.partials.export-actions', ['exportType' => 'inventory'])<span class="badge rounded-pill text-bg-light border">{{ $logs->total() }} movements</span></div></div>
-        <div class="table-responsive"><table class="table cc-s-table"><thead><tr><th>LOG</th><th>PRODUCT</th><th>MOVEMENT</th><th class="text-end">QUANTITY</th><th>REASON</th><th>NOTE</th><th>RECORDED BY</th><th>DATE & TIME</th></tr></thead><tbody>
-            @forelse($logs as $log)
-                @php($isIn = strtolower((string)$log->type) === 'in')
-                <tr><td class="cc-s-id">#{{ $log->log_id }}</td><td><div class="cc-s-product">{{ $log->product->product_name ?? 'Deleted product' }}</div><div class="small text-muted">{{ $log->product?->category?->category_name ?? '—' }}</div></td><td>@if($isIn)<span class="cc-s-chip in"><i class="bi bi-arrow-down-left-circle-fill"></i> Stock In</span>@else<span class="cc-s-chip outmove"><i class="bi bi-arrow-up-right-circle-fill"></i> Stock Out</span>@endif</td><td class="text-end fw-bold {{ $isIn ? 'text-success' : 'text-danger' }}">{{ $isIn ? '+' : '−' }}{{ number_format($log->quantity) }}</td><td>{{ $log->reason ?: 'Adjustment' }}</td><td class="text-muted">{{ $log->note ?: '—' }}</td><td>{{ $log->user->name ?? 'System' }}</td><td class="text-nowrap">@if($log->log_date){{ \Carbon\Carbon::parse($log->log_date)->format('d M Y · H:i') }}@elseif($log->created_at){{ $log->created_at->format('d M Y · H:i') }}@else—@endif</td></tr>
-            @empty<tr><td colspan="8"><div class="cc-s-empty"><i class="bi bi-clock-history d-block mb-2"></i><div class="fw-bold text-dark">No stock movements found</div><div class="small">Adjust the movement filters or record a purchase/stock adjustment.</div></div></td></tr>@endforelse
-        </tbody></table></div><div class="cc-s-pagination"><span class="small text-muted">Showing {{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }} of {{ $logs->total() }} movements</span>{{ $logs->appends(request()->except('log_page'))->links() }}</div>
-    </section>
-</div>
-<div class="modal fade cc-s-modal" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form action="{{ route('inventory.store') }}" method="POST" class="modal-content">@csrf
-    <div class="modal-header"><div><h2 class="modal-title fs-5" id="adjustStockModalLabel"><i class="bi bi-sliders me-2"></i>Manual stock adjustment</h2><div class="small text-muted">Record a new movement; existing history is never overwritten.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-    <div class="modal-body"><div class="mb-3"><label class="form-label" for="adjustProduct">PRODUCT <span class="text-danger">*</span></label><select id="adjustProduct" name="product_id" class="form-select" required><option value="">Choose a stock product</option>@foreach($products as $p)<option value="{{ $p->product_id }}" @selected(old('product_id')==$p->product_id)>{{ $p->product_name }} · {{ (int)$p->qty }} on hand</option>@endforeach</select></div>
-        <div class="row g-3"><div class="col-6"><label class="form-label" for="adjustType">MOVEMENT <span class="text-danger">*</span></label><select id="adjustType" name="type" class="form-select" required><option value="in" @selected(old('type','in')==='in')>Stock In (+)</option><option value="out" @selected(old('type')==='out')>Stock Out (−)</option></select></div><div class="col-6"><label class="form-label" for="adjustQty">QUANTITY <span class="text-danger">*</span></label><input id="adjustQty" type="number" name="quantity" min="1" max="1000000" class="form-control" value="{{ old('quantity') }}" placeholder="e.g. 5" required></div></div>
-        <div class="mt-3"><label class="form-label" for="adjustReason">REASON <span class="text-danger">*</span></label><input id="adjustReason" type="text" name="reason" class="form-control" value="{{ old('reason') }}" maxlength="255" placeholder="Damaged, correction, stock take..." required></div><div class="mt-3"><label class="form-label" for="adjustNote">NOTE <span class="text-muted fw-normal">(OPTIONAL)</span></label><textarea id="adjustNote" name="note" class="form-control" rows="3" maxlength="2000" placeholder="Add details for the stock history..." data-optional>{{ old('note') }}</textarea></div><div class="alert alert-light border small mt-3 mb-0"><i class="bi bi-info-circle text-success me-1"></i> Stock Out is blocked when there is not enough quantity available.</div>
-    </div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i> Save movement</button></div>
-</form></div></div>
-@if($errors->any())<script>document.addEventListener('DOMContentLoaded',()=>{const modal=document.getElementById('adjustStockModal');if(modal&&window.bootstrap){bootstrap.Modal.getOrCreateInstance(modal).show();}});</script>@endif
+    </div>
+    @if ($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = document.getElementById('adjustStockModal');
+                if (modal && window.bootstrap) {
+                    bootstrap.Modal.getOrCreateInstance(modal).show();
+                }
+            });
+        </script>
+    @endif
 @endsection

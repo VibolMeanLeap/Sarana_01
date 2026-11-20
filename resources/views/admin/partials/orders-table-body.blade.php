@@ -3,15 +3,19 @@
           $orderStatus = strtolower((string) ($row->order_status ?: ($row->is_paid ? 'completed' : 'pending')));
           $payment = $row->payments->sortByDesc('id')->first();
           $paymentStatus = $row->is_paid ? 'paid' : strtolower((string) ($payment?->status ?: 'unpaid'));
-          $isDeliveryOrder = strtolower(trim((string) ($row->orderType?->order_name ?? ''))) === 'delivery';
+          $orderTypeName = strtolower(trim((string) ($row->orderType?->order_name ?? '')));
+          $isDeliveryOrder = $orderTypeName === 'delivery';
+          $isTakeawayOrder = in_array(preg_replace('/[\s_-]+/u', ' ', $orderTypeName), ['takeaway', 'take away', 'pickup', 'pick up', 'store pickup'], true);
+          $isFulfillmentOrder = $isDeliveryOrder || $isTakeawayOrder;
+          $fulfillmentHint = $isDeliveryOrder ? 'Delivery controls' : 'Pickup controls';
           @endphp
           <tr class="order-summary-row" data-order-row="{{ $row->order_id }}" data-current-order-status="{{ $orderStatus }}" tabindex="0" aria-expanded="false"
-            title="Click to view order items and delivery management">
+            title="Click to view order items and fulfilment management">
             <td>
               <span class="order-id">#{{ $row->order_id }}</span>
               <span class="order-expand-hint"><i class="bi bi-chevron-down"></i> {{ (int) $row->order_items_count }} items</span>
-              @if($isDeliveryOrder)
-                <span class="order-expand-hint text-success"><i class="bi bi-truck"></i> Delivery controls · {{ strtoupper($row->order_source ?: 'POS') }}</span>
+              @if($isFulfillmentOrder)
+                <span class="order-expand-hint text-success"><i class="bi {{ $isDeliveryOrder ? 'bi-truck' : 'bi-bag-check' }}"></i> {{ $fulfillmentHint }} · {{ strtoupper($row->order_source ?: 'POS') }}</span>
               @endif
             </td>
             <td>
@@ -143,7 +147,7 @@
                   </div>
                 @endif
 
-                @if ($isDeliveryOrder)
+                @if ($isFulfillmentOrder)
                   @include('admin.partials.delivery-management', ['row' => $row])
                 @endif
               </div>

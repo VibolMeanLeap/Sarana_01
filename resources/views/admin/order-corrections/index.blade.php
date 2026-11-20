@@ -288,7 +288,7 @@
                     <div class="d-flex align-items-center gap-2">
                         <span class="audit-kpi-icon"><i class="bi bi-funnel"></i></span>
                         <div>
-                            <div class="fw-bold" style="color:#294c37">Correction filters</div>
+                            <div class="fw-bold" style="color:#91DCAF">Correction filters</div>
                             <div class="small text-muted">Narrow results by staff, cash adjustment, receipt or notes.</div>
                         </div>
                     </div>
@@ -429,7 +429,7 @@
         <section class="audit-panel overflow-hidden">
             <div class="p-3 p-lg-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div>
-                    <h2 class="h6 fw-bold mb-1" style="color:#294c37">Corrected receipt history</h2>
+                    <h2 class="h6 fw-bold mb-1" style="color:#91DCAF">Corrected receipt history</h2>
                     <div class="small text-muted">Showing
                         {{ $corrections->firstItem() ?? 0 }}–{{ $corrections->lastItem() ?? 0 }} of
                         {{ number_format($corrections->total()) }} correction records</div>

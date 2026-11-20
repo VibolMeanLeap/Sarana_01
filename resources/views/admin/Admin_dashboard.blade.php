@@ -469,6 +469,83 @@
     padding-right: 15px
   }
 }
+
+
+/* SK Coffee Overview: accessible entrance and data animations. */
+.aura-hero h1,
+.aura-hero .aura-greeting {
+  color: #fff !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .12);
+}
+
+.aura-dashboard .aura-stat-value,
+.aura-dashboard .aura-live-card .value,
+.aura-dashboard .aura-bar-count,
+.aura-dashboard [data-count-up] {
+  font-variant-numeric: tabular-nums;
+}
+
+.aura-dashboard.aura-motion-ready [data-aura-enter] {
+  opacity: 0;
+  transform: translateY(14px) scale(.995);
+}
+
+.aura-dashboard.aura-motion-ready [data-aura-enter].is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity .55s ease, transform .62s cubic-bezier(.2,.75,.25,1);
+}
+
+.aura-dashboard .aura-bar-fill[data-aura-bar] {
+  transform: scaleY(1);
+  transform-origin: bottom center;
+  transition: transform .85s cubic-bezier(.2,.75,.25,1);
+}
+
+.aura-dashboard .aura-stock-progress span[data-aura-stock-bar] {
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform .85s cubic-bezier(.2,.75,.25,1);
+}
+
+.aura-dashboard .aura-svg-chart [data-aura-area] {
+  opacity: 1;
+  transition: opacity .9s ease;
+}
+
+.aura-dashboard .aura-svg-chart [data-aura-line] {
+  transition: stroke-dashoffset 1.25s cubic-bezier(.2,.75,.25,1);
+}
+
+.aura-dashboard .aura-svg-chart [data-aura-point] {
+  opacity: 1;
+  transform: scale(1);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity .35s ease, transform .45s cubic-bezier(.2,.75,.25,1);
+}
+
+.aura-dashboard .aura-live-card .progress-bar[data-aura-progress] {
+  transition: width 1.1s cubic-bezier(.2,.75,.25,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-dashboard,
+  .aura-dashboard *,
+  .aura-dashboard *::before,
+  .aura-dashboard *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+
+  .aura-dashboard.aura-motion-ready [data-aura-enter] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 </style>
 @endpush
 
@@ -477,13 +554,13 @@
 $firstName = collect(preg_split('/\s+/', trim(auth()->user()->name ?? 'there')))->first() ?: 'there';
 $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
 @endphp
-<div class="d-flex flex-column gap-4">
+<div class="d-flex flex-column gap-4 aura-dashboard">
   @include('admin.partials.dashboard-date-filter')
-  <section class="aura-hero">
+  <section class="aura-hero" data-aura-enter>
     <div class="row align-items-center g-4">
       <div class="col-lg-8">
         <div class="aura-kicker"><i class="bi bi-stars"></i> {{ __('Your command center') }} · {{ now()->locale(app()->getLocale())->translatedFormat('l, d M Y') }}</div>
-        <h1>{{ __('Good to see you, :name.', ['name' => $firstName]) }}</h1>
+        <h1 class="aura-greeting">{{ __('Good to see you, :name.', ['name' => $firstName]) }}</h1>
         <p>{{ __('Here is your store at a glance. Keep the team moving, watch the numbers, and make every cup count.') }}</p>
         <div class="aura-hero-actions">
           <a href="{{ route('pos.dashboard') }}" class="btn aura-btn-white"><i
@@ -495,11 +572,11 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
       <div class="col-lg-4 d-flex justify-content-lg-end">
         <div class="aura-live-card w-100">
           <div class="label"><i class="bi bi-activity me-1"></i> {{ __('Period performance') }}</div>
-          <div class="value">${{ number_format($todayRevenue, 2) }}</div>
-          <div class="foot">{{ number_format($todayOrderCount) }} {{ __('orders recorded in selected period') }}</div>
-          <div class="mt-3 d-flex align-items-center justify-content-between small"><span class="text-white-50">{{ __('Payment completion') }}</span><strong>{{ $paymentCompletionRate }}%</strong></div>
+          <div class="value" data-count-up data-count-target="{{ number_format((float) $todayRevenue, 2, '.', '') }}" data-count-prefix="$" data-count-decimals="2">${{ number_format($todayRevenue, 2) }}</div>
+          <div class="foot"><span data-count-up data-count-target="{{ (int) $todayOrderCount }}">{{ number_format($todayOrderCount) }}</span> {{ __('orders recorded in selected period') }}</div>
+          <div class="mt-3 d-flex align-items-center justify-content-between small"><span class="text-white-50">{{ __('Payment completion') }}</span><strong data-count-up data-count-target="{{ (int) $paymentCompletionRate }}" data-count-suffix="%">{{ $paymentCompletionRate }}%</strong></div>
           <div class="progress mt-2" style="height:6px;background:rgba(255,255,255,.2)">
-            <div class="progress-bar bg-white" style="width:{{ $paymentCompletionRate }}%"></div>
+            <div class="progress-bar bg-white" data-aura-progress data-progress-target="{{ (int) $paymentCompletionRate }}" style="width:{{ $paymentCompletionRate }}%"></div>
           </div>
         </div>
       </div>
@@ -508,34 +585,34 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
 
   <section class="row g-3">
     <div class="col-6 col-xl-3">
-      <div class="aura-stat" style="--orb:#e8f5ed;--accent:#238052">
+      <div class="aura-stat" data-aura-enter style="--orb:#e8f5ed;--accent:#238052">
         <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Total revenue') }}</span><span class="aura-stat-icon"><i
               class="bi bi-wallet2"></i></span></div>
-        <div class="aura-stat-value">${{ number_format($totalRevenue, 2) }}</div>
+        <div class="aura-stat-value" data-count-up data-count-target="{{ number_format((float) $totalRevenue, 2, '.', '') }}" data-count-prefix="$" data-count-decimals="2">${{ number_format($totalRevenue, 2) }}</div>
         <div class="aura-stat-foot">{{ __('From :count verified paid orders in this period', ['count' => number_format($paidOrders)]) }}</div>
       </div>
     </div>
     <div class="col-6 col-xl-3">
-      <div class="aura-stat" style="--orb:#edf1ff;--accent:#5869ad">
+      <div class="aura-stat" data-aura-enter style="--orb:#edf1ff;--accent:#5869ad">
         <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Total orders') }}</span><span class="aura-stat-icon"><i
               class="bi bi-receipt-cutoff"></i></span></div>
-        <div class="aura-stat-value">{{ number_format($totalOrders) }}</div>
+        <div class="aura-stat-value" data-count-up data-count-target="{{ (int) $totalOrders }}">{{ number_format($totalOrders) }}</div>
         <div class="aura-stat-foot">{{ __(':count awaiting payment in this period', ['count' => number_format($pendingOrders)]) }}</div>
       </div>
     </div>
     <div class="col-6 col-xl-3">
-      <div class="aura-stat" style="--orb:#fff3df;--accent:#a8792f">
+      <div class="aura-stat" data-aura-enter style="--orb:#fff3df;--accent:#a8792f">
         <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Active products') }}</span><span class="aura-stat-icon"><i
               class="bi bi-cup-hot"></i></span></div>
-        <div class="aura-stat-value">{{ number_format($productCount) }}</div>
+        <div class="aura-stat-value" data-count-up data-count-target="{{ (int) $productCount }}">{{ number_format($productCount) }}</div>
         <div class="aura-stat-foot">{{ __('Across :count registered customers', ['count' => number_format($customerCount)]) }}</div>
       </div>
     </div>
     <div class="col-6 col-xl-3">
-      <div class="aura-stat" style="--orb:#f2eafa;--accent:#8055a3">
+      <div class="aura-stat" data-aura-enter style="--orb:#f2eafa;--accent:#8055a3">
         <div class="aura-stat-top"><span class="aura-stat-label">{{ __('Stock units') }}</span><span class="aura-stat-icon"><i
               class="bi bi-box-seam"></i></span></div>
-        <div class="aura-stat-value">{{ number_format($stockUnits) }}</div>
+        <div class="aura-stat-value" data-count-up data-count-target="{{ (int) $stockUnits }}">{{ number_format($stockUnits) }}</div>
         <div class="aura-stat-foot">{{ __(':count products need attention', ['count' => number_format($lowStockProducts->count())]) }}</div>
       </div>
     </div>
@@ -543,7 +620,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
 
   <section class="row g-3">
     <div class="col-12 col-xl-8">
-      <div class="aura-panel">
+      <div class="aura-panel" data-aura-enter>
         <div class="aura-panel-head">
           <div>
             <div class="aura-section-title">{{ __('Revenue momentum') }}</div>
@@ -565,7 +642,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
           @endphp
           <div class="aura-chart-legend"><span><i></i> {{ __('Paid revenue (USD)') }}</span><small>{{ __($dateRangeLabel) }} ·
               {{ $overviewTrend->sum('orders') }} {{ __('orders') }}</small></div>
-          <div class="aura-svg-chart" role="img" aria-label="{{ __('Paid sales for the selected period') }}">
+          <div class="aura-svg-chart" data-aura-chart="revenue" role="img" aria-label="{{ __('Paid sales for the selected period') }}">
             <svg viewBox="0 0 740 232" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="revenueAreaFill" x1="0" x2="0" y1="0" y2="1">
@@ -577,11 +654,11 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
               <line x1="38" y1="{{ $gridY }}" x2="702" y2="{{ $gridY }}" stroke="#edf2ee" stroke-width="1"
                 stroke-dasharray="4 5" />
               @endforeach
-              <polygon points="{{ $revenueArea }}" fill="url(#revenueAreaFill)" />
-              <polyline points="{{ $revenueLine }}" fill="none" stroke="#238052" stroke-width="3.5"
+              <polygon points="{{ $revenueArea }}" fill="url(#revenueAreaFill)" data-aura-area />
+              <polyline points="{{ $revenueLine }}" fill="none" stroke="#238052" stroke-width="3.5" data-aura-line
                 stroke-linecap="round" stroke-linejoin="round" />
               @foreach($trendPoints as $point)
-              <circle cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="5" fill="#fff" stroke="#238052"
+              <circle cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="5" fill="#fff" stroke="#238052" data-aura-point
                 stroke-width="2.5" />
               <text x="{{ $point['x'] }}" y="218" text-anchor="middle" fill="#87938b"
                 font-size="11">{{ $point['row']['label'] }}</text>
@@ -595,7 +672,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
     </div>
 </div>
 <div class="col-12 col-xl-4">
-  <div class="aura-panel">
+  <div class="aura-panel" data-aura-enter>
     <div class="aura-panel-head">
       <div>
         <div class="aura-section-title">{{ __('Top sellers') }}</div>
@@ -609,15 +686,15 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
         <div class="flex-grow-1 min-w-0">
           <div class="small fw-bold text-truncate">{{ $product->product_name }}</div>
           <div class="aura-stock-progress"><span
-              style="width:{{ min(100, ((int)$product->units_sold / $topSellingMax) * 100) }}%"></span></div>
+              data-aura-stock-bar style="width:{{ min(100, ((int)$product->units_sold / $topSellingMax) * 100) }}%"></span></div>
         </div>
-        <span class="small fw-bold text-dark">{{ number_format((int)$product->units_sold) }} <span
+        <span class="small fw-bold text-dark"><span data-count-up data-count-target="{{ (int) $product->units_sold }}">{{ number_format((int)$product->units_sold) }}</span> <span
             class="text-muted fw-normal">sold</span></span>
       </div>
       @empty
       <div class="aura-empty"><i class="bi bi-cup-hot"></i>{{ __('No paid product sales yet. Your best sellers will appear here.') }}</div>
       @endforelse
-      <div class="border-top mt-3 pt-3 d-flex justify-content-between"><span class="small text-muted">{{ __('Average paid order') }}</span><strong class="small">${{ number_format($averageOrderValue, 2) }}</strong></div>
+      <div class="border-top mt-3 pt-3 d-flex justify-content-between"><span class="small text-muted">{{ __('Average paid order') }}</span><strong class="small" data-count-up data-count-target="{{ number_format((float) $averageOrderValue, 2, '.', '') }}" data-count-prefix="$" data-count-decimals="2">${{ number_format($averageOrderValue, 2) }}</strong></div>
     </div>
   </div>
 </div>
@@ -625,7 +702,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
 
 <section class="row g-3">
   <div class="col-12 col-xl-5">
-    <div class="aura-panel">
+    <div class="aura-panel" data-aura-enter>
       <div class="aura-panel-head">
         <div>
           <div class="aura-section-title">{{ __('Order activity') }}</div>
@@ -633,7 +710,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
         </div><span class="aura-mini-badge">{{ __($dateRangeLabel) }}</span>
       </div>
       <div class="aura-panel-body">
-        <div class="aura-bar-chart" role="img" aria-label="{{ __('Orders recorded in the selected period, paid or pending') }}">
+        <div class="aura-bar-chart" data-aura-chart="orders" role="img" aria-label="{{ __('Orders recorded in the selected period, paid or pending') }}">
           @foreach($overviewTrend as $row)
 
           @php
@@ -643,9 +720,9 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
           @endphp
 
           <div class="aura-bar-item">
-            <span class="aura-bar-count">{{ (int) ($row['orders'] ?? 0) }}</span>
+            <span class="aura-bar-count" data-count-up data-count-target="{{ (int) ($row['orders'] ?? 0) }}">{{ (int) ($row['orders'] ?? 0) }}</span>
             <div class="aura-bar-track">
-              <div class="aura-bar-fill" style="height:{{ max(3, $barHeight) }}px"></div>
+              <div class="aura-bar-fill" data-aura-bar style="height:{{ max(3, $barHeight) }}px"></div>
             </div>
             <span class="aura-bar-label">{{ $row['label'] }}</span>
           </div>
@@ -656,7 +733,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
     </div>
   </div>
   <div class="col-12 col-xl-7">
-    <div class="aura-panel">
+    <div class="aura-panel" data-aura-enter>
       <div class="aura-panel-head">
         <div>
           <div class="aura-section-title">{{ __('Latest orders') }}</div>
@@ -708,13 +785,13 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
     </div>
   </div>
   <div class="col-12">
-    <div class="aura-panel">
+    <div class="aura-panel" data-aura-enter>
       <div class="aura-panel-head">
         <div>
           <div class="aura-section-title">{{ __('Stock watch') }}</div>
           <div class="aura-section-sub">{{ __('Low inventory that needs a restock') }}</div>
         </div><span
-          class="aura-mini-badge {{ $lowStockProducts->count() ? 'pending' : '' }}">{{ $lowStockProducts->count() }}
+          class="aura-mini-badge {{ $lowStockProducts->count() ? 'pending' : '' }}"><span data-count-up data-count-target="{{ (int) $lowStockProducts->count() }}">{{ $lowStockProducts->count() }}</span>
           {{ __('alerts') }}</span>
       </div>
       <div class="aura-panel-body">
@@ -725,7 +802,7 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
             <div class="small fw-bold text-truncate">{{ $product->product_name }}</div>
             <div class="small text-muted">{{ $product->category->category_name ?? __('Uncategorized') }}</div>
           </div><span
-            class="aura-mini-badge {{ (int)$product->qty <= 2 ? 'cancelled' : 'pending' }}">{{ (int)$product->qty }}
+            class="aura-mini-badge {{ (int)$product->qty <= 2 ? 'cancelled' : 'pending' }}"><span data-count-up data-count-target="{{ (int) $product->qty }}">{{ (int)$product->qty }}</span>
             {{ __('left') }}</span>
         </div>
         @empty
@@ -738,4 +815,158 @@ $shopName = $shopSettings?->shop_name ?: 'SK Coffee';
   </div>
 </section>
 </div>
+@endsection
+
+
+@section('scripts')
+<script>
+(() => {
+    const dashboard = document.querySelector('.aura-dashboard');
+    if (!dashboard || dashboard.dataset.auraMotionInitialized === '1') return;
+    dashboard.dataset.auraMotionInitialized = '1';
+
+    const reduceMotion = Boolean(
+        window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+
+    const formatNumber = (value, decimals) => {
+        const fixed = Number(value).toFixed(decimals);
+        const parts = fixed.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    };
+
+    const renderFinalCounter = (element) => {
+        const target = Number(element.dataset.countTarget);
+        if (!Number.isFinite(target)) return;
+        const decimals = Math.max(0, Math.min(4, Number(element.dataset.countDecimals || 0)));
+        element.textContent = `${element.dataset.countPrefix || ''}${formatNumber(target, decimals)}${element.dataset.countSuffix || ''}`;
+    };
+
+    const animateCounter = (element) => {
+        if (element.dataset.countAnimated === '1') return;
+        const target = Number(element.dataset.countTarget);
+        if (!Number.isFinite(target)) return;
+        element.dataset.countAnimated = '1';
+
+        if (reduceMotion || target === 0) {
+            renderFinalCounter(element);
+            return;
+        }
+
+        const decimals = Math.max(0, Math.min(4, Number(element.dataset.countDecimals || 0)));
+        const prefix = element.dataset.countPrefix || '';
+        const suffix = element.dataset.countSuffix || '';
+        const duration = 1250;
+        let startedAt = null;
+        element.textContent = `${prefix}${formatNumber(0, decimals)}${suffix}`;
+
+        const tick = (timestamp) => {
+            if (startedAt === null) startedAt = timestamp;
+            const progress = Math.min(1, Math.max(0, (timestamp - startedAt) / duration));
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = target * eased;
+            element.textContent = `${prefix}${formatNumber(progress >= 1 ? target : current, decimals)}${suffix}`;
+            if (progress < 1) window.requestAnimationFrame(tick);
+        };
+        window.requestAnimationFrame(tick);
+    };
+
+    const animateProgress = (element) => {
+        if (element.dataset.auraProgressAnimated === '1') return;
+        element.dataset.auraProgressAnimated = '1';
+        const target = Math.max(0, Math.min(100, Number(element.dataset.progressTarget || 0)));
+        if (reduceMotion) {
+            element.style.width = `${target}%`;
+            return;
+        }
+        element.style.width = '0%';
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+            element.style.width = `${target}%`;
+        }));
+    };
+
+    const animateChart = (chart) => {
+        if (chart.dataset.auraChartAnimated === '1') return;
+        chart.dataset.auraChartAnimated = '1';
+        if (reduceMotion) return;
+
+        if (chart.classList.contains('aura-svg-chart')) {
+            const area = chart.querySelector('[data-aura-area]');
+            const line = chart.querySelector('[data-aura-line]');
+            const points = Array.from(chart.querySelectorAll('[data-aura-point]'));
+            if (area) area.style.opacity = '0';
+            if (line && typeof line.getTotalLength === 'function') {
+                try {
+                    const length = line.getTotalLength();
+                    line.style.strokeDasharray = `${length}`;
+                    line.style.strokeDashoffset = `${length}`;
+                    window.requestAnimationFrame(() => { line.style.strokeDashoffset = '0'; });
+                } catch (error) {
+                    // Preserve the fully-rendered SVG if geometry is unavailable.
+                }
+            }
+            points.forEach((point, index) => {
+                point.style.opacity = '0';
+                point.style.transform = 'scale(.35)';
+                window.setTimeout(() => {
+                    point.style.opacity = '1';
+                    point.style.transform = 'scale(1)';
+                }, 180 + index * 65);
+            });
+            if (area) window.requestAnimationFrame(() => { area.style.opacity = '1'; });
+            return;
+        }
+
+        if (chart.classList.contains('aura-bar-chart')) {
+            Array.from(chart.querySelectorAll('[data-aura-bar]')).forEach((bar, index) => {
+                bar.style.transform = 'scaleY(0)';
+                window.requestAnimationFrame(() => window.setTimeout(() => {
+                    bar.style.transform = 'scaleY(1)';
+                }, index * 65));
+            });
+        }
+    };
+
+    const animateHorizontalProgress = (element) => {
+        if (element.dataset.auraStockBarAnimated === '1') return;
+        element.dataset.auraStockBarAnimated = '1';
+        if (reduceMotion) return;
+        element.style.transform = 'scaleX(0)';
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => { element.style.transform = 'scaleX(1)'; });
+        });
+    };
+
+    const observeOnce = (elements, callback) => {
+        const nodes = Array.from(elements || []);
+        if (!nodes.length) return;
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+            nodes.forEach(callback);
+            return;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                observer.unobserve(entry.target);
+                callback(entry.target);
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -30px 0px' });
+        nodes.forEach((node) => observer.observe(node));
+    };
+
+    const entranceItems = dashboard.querySelectorAll('[data-aura-enter]');
+    if (reduceMotion) {
+        entranceItems.forEach((item) => item.classList.add('is-visible'));
+    } else {
+        dashboard.classList.add('aura-motion-ready');
+        observeOnce(entranceItems, (item) => item.classList.add('is-visible'));
+    }
+
+    observeOnce(dashboard.querySelectorAll('[data-count-up]'), animateCounter);
+    observeOnce(dashboard.querySelectorAll('[data-aura-progress]'), animateProgress);
+    observeOnce(dashboard.querySelectorAll('[data-aura-stock-bar]'), animateHorizontalProgress);
+    observeOnce(dashboard.querySelectorAll('[data-aura-chart]'), animateChart);
+})();
+</script>
 @endsection

@@ -150,14 +150,15 @@ class OrderWorkflowController extends Controller
                 ]);
             }
 
-            // Website and delivery orders use the shared state machine so orders,
-            // delivery records, Telegram messages and the customer timeline stay aligned.
-            if (($order->order_source ?? '') === 'website' || $order->delivery || app(OrderFulfillmentService::class)->isDeliveryOrder($order)) {
-                app(OrderFulfillmentService::class)->transitionLocked($order, $targetStatus, $actor);
+            // Website orders, deliveries and store pickups use the shared state machine
+            // so Admin controls, Telegram actions and customer timelines stay aligned.
+            $fulfillment = app(OrderFulfillmentService::class);
+            if (($order->order_source ?? '') === 'website' || $order->delivery || $fulfillment->isManagedFulfillmentOrder($order)) {
+                $fulfillment->transitionLocked($order, $targetStatus, $actor);
                 return;
             }
 
-            // Preserve the legacy POS workflow for dine-in/takeaway orders without a delivery record.
+            // Keep the legacy POS workflow for dine-in orders only.
             $sequence = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
             $currentIndex = array_search($currentStatus, $sequence, true);
             $targetIndex = array_search($targetStatus, $sequence, true);
@@ -198,7 +199,7 @@ class OrderWorkflowController extends Controller
         $shouldRefreshTelegram = (
             ($updatedOrder->order_source ?? '') === 'website'
             || $updatedOrder->delivery
-            || app(OrderFulfillmentService::class)->isDeliveryOrder($updatedOrder)
+            || app(OrderFulfillmentService::class)->isManagedFulfillmentOrder($updatedOrder)
         );
 
         // Do not make the administrator wait for Telegram's remote editMessageText
@@ -219,11 +220,11 @@ class OrderWorkflowController extends Controller
         $successMessage = 'Order #'.$orderId.' status updated to '.str_replace('_', ' ', $targetStatus).'.';
 
         if ($request->expectsJson()) {
-            // POS-created delivery orders (including Cash on Delivery) and website
-            // delivery orders share the same inline management panel in Admin → Orders.
-            $hasDeliveryWorkflow = $isAdmin && app(OrderFulfillmentService::class)->isDeliveryOrder($updatedOrder);
+            // Delivery and takeaway orders share the inline fulfilment panel in Admin → Orders.
+            $hasFulfillmentWorkflow = $isAdmin
+                && app(OrderFulfillmentService::class)->isManagedFulfillmentOrder($updatedOrder);
 
-            $panelHtml = $hasDeliveryWorkflow
+            $panelHtml = $hasFulfillmentWorkflow
                 ? view('admin.partials.delivery-management', ['row' => $updatedOrder])->render()
                 : null;
 

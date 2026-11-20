@@ -144,9 +144,17 @@
                                 <td><span
                                         class="badge rounded-pill text-bg-{{ $badge }}">{{ str($state)->replace('_', ' ')->title() }}</span>
                                 </td>
-                                <td class="text-end text-nowrap"><a
-                                        href="{{ route('delivery.edit', $delivery->delivery_id) }}"
-                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Update</a>
+                                <td class="text-end text-nowrap">
+                                    @if ($state === 'delivered')
+                                        <span class="delivery-complete-indicator" role="img"
+                                            aria-label="Delivery completed" title="Delivery completed">
+                                            <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Completed</span>
+                                        </span>
+                                    @else
+                                        <a href="{{ route('delivery.edit', $delivery->delivery_id) }}"
+                                            class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Update</a>
+                                    @endif
                                     @if (!in_array($state, ['delivered', 'cancelled'], true))
                                         <form action="{{ route('delivery.destroy', $delivery->delivery_id) }}"
                                             method="POST" class="d-inline"

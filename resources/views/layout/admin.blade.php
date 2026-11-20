@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('partials.locale-bootstrap')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('page_title', 'Overview') · {{ $shopSettings?->shop_name ?: config('app.name', 'Coffee Corner') }}</title>
+    <script src="{{ asset('assets/js/cc-theme-boot.js') }}"></script>
+    <title>@yield('page_title', 'Overview') · {{ $shopSettings?->shop_name ?: config('app.name', 'SK Coffee') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -125,7 +126,7 @@
             padding: 10px 12px;
             border-radius: 10px;
             text-decoration: none;
-            color: #176b4b;
+            color: #59655e;
             font-weight: 600;
             transition: .18s
         }
@@ -157,8 +158,8 @@
             height: 21px;
             padding: 0 6px;
             border-radius: 999px;
-            background: #e9f4ee;
-            color: #176b4b;
+            background: var(--cc-green-soft);
+            color: var(--cc-green);
             font-size: 10px;
             font-weight: 900;
             display: inline-flex;
@@ -602,14 +603,14 @@
             min-width: 0;
         }
 
-        .nav-group-title>i {
+        .nav-group-title > i {
             width: 20px;
             text-align: center;
             color: #829087;
             font-size: 17px;
         }
 
-        .nav-group-toggle.group-active .nav-group-title>i {
+        .nav-group-toggle.group-active .nav-group-title > i {
             color: var(--cc-green);
         }
 
@@ -626,15 +627,15 @@
             height: 22px;
             padding: 0 7px;
             border-radius: 999px;
-            background: var(--cc-green);
-            box-shadow: 0 2px 7px rgba(23, 107, 75, .20);
-            color: #fff;
+            background: var(--cc-green-soft);
+            color: var(--cc-green);
             font-size: 10px;
             font-weight: 900;
             line-height: 1;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 7px rgba(23, 107, 75, .16);
         }
 
         .nav-group-action-count[hidden] {
@@ -647,7 +648,7 @@
             transition: transform .18s ease;
         }
 
-        .nav-group[open]>.nav-group-toggle .nav-group-chevron {
+        .nav-group[open] > .nav-group-toggle .nav-group-chevron {
             transform: rotate(180deg);
         }
 
@@ -667,18 +668,6 @@
             padding: 9px 10px;
             gap: 10px;
             font-size: 12.5px;
-            color: #526b5e;
-        }
-
-        /* Hover color */
-        .nav-group-items a:hover {
-            color: #176b4b;
-        }
-
-        /* Active child tab */
-        .nav-group-items a.active {
-            color: #176b4b;
-            font-weight: 800;
         }
 
         .nav-group-items a i {
@@ -687,7 +676,6 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-
             .nav-group-toggle,
             .nav-group-chevron {
                 transition: none;
@@ -695,133 +683,54 @@
         }
     </style>
     <style id="admin-green-filter-theme">
-        :root {
-            --cc-bg: #edf4ef;
-            --cc-green-soft: #e4f1e8;
-            --cc-line: #dce9df;
+        :root { --cc-bg: #edf4ef; --cc-green-soft: #e4f1e8; --cc-line: #dce9df; }
+        body { background: #edf4ef; }
+        .content-area { background: linear-gradient(145deg, rgba(228,241,232,.48), rgba(247,251,248,.76)); border-radius: 22px; }
+        .content-area .card, .content-area .orders-panel, .content-area .panel {
+            background-color: #fbfefc; border-color: #dce9df;
         }
-
-        body {
-            background: #edf4ef;
-        }
-
-        .content-area {
-            background: linear-gradient(145deg, rgba(228, 241, 232, .48), rgba(247, 251, 248, .76));
-            border-radius: 22px;
-        }
-
-        .content-area .card,
-        .content-area .orders-panel,
-        .content-area .panel {
-            background-color: #fbfefc;
-            border-color: #dce9df;
-        }
-
-        .content-area .card-header {
-            background: #edf6ef;
-            border-bottom-color: #dce9df;
-        }
-
-        .content-area .table thead th {
-            background: #eaf4ed;
-            color: #315d43;
-            border-bottom-color: #d8e7dc;
-        }
-
-        .content-area .table tbody tr:hover {
-            background: #f1f8f3;
-        }
-
+        .content-area .card-header { background: #edf6ef; border-bottom-color: #dce9df; }
+        .content-area .table thead th { background: #eaf4ed; color: #315d43; border-bottom-color: #d8e7dc; }
+        .content-area .table tbody tr:hover { background: #f1f8f3; }
         .content-area form[method="GET"]:not(#ordersFilterForm),
         .content-area form[method="get"]:not(#ordersFilterForm) {
-            padding: 15px 16px;
-            margin-bottom: 16px;
-            border: 1px solid #cfe2d4;
-            border-radius: 15px;
-            background: linear-gradient(135deg, #e8f4eb 0%, #f3faf5 100%);
+            padding: 15px 16px; margin-bottom: 16px; border: 1px solid #cfe2d4;
+            border-radius: 15px; background: linear-gradient(135deg, #e8f4eb 0%, #f3faf5 100%);
             box-shadow: 0 6px 18px rgba(28, 91, 55, .055);
         }
-
         .content-area form[method="GET"]:not(#ordersFilterForm)::before,
         .content-area form[method="get"]:not(#ordersFilterForm)::before {
-            content: "FILTERS & SEARCH";
-            display: block;
-            width: 100%;
-            flex: 0 0 100%;
-            grid-column: 1 / -1;
-            margin: 0 0 2px;
-            color: #286344;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: .12em;
-            text-transform: uppercase;
+            content: "FILTERS & SEARCH"; display: block; width: 100%; flex: 0 0 100%;
+            grid-column: 1 / -1; margin: 0 0 2px; color: #286344; font-size: 10px;
+            font-weight: 900; letter-spacing: .12em; text-transform: uppercase;
         }
-
         .content-area form[method="GET"]:not(#ordersFilterForm) .form-control,
         .content-area form[method="GET"]:not(#ordersFilterForm) .form-select,
         .content-area form[method="get"]:not(#ordersFilterForm) .form-control,
         .content-area form[method="get"]:not(#ordersFilterForm) .form-select {
-            background-color: #fff;
-            border-color: #cfdfd3;
+            background-color: #fff; border-color: #cfdfd3;
         }
-
         .content-area form[method="GET"]:not(#ordersFilterForm) label,
         .content-area form[method="get"]:not(#ordersFilterForm) label {
-            color: #315b42;
-            font-weight: 700;
+            color: #315b42; font-weight: 700;
         }
-
-        .content-area .btn-outline-secondary {
-            border-color: #bfd4c5;
-            color: #42644f;
-        }
-
-        .content-area .btn-outline-secondary:hover {
-            background: #e2f0e6;
-            color: #174d32;
-        }
-
-        .content-area .table,
-        .content-area .table-responsive {
-            border-color: #dce9df;
-        }
-
-        /* AURA CHILD NAVIGATION TEXT */
-        .sidebar .app-nav.nav-group-items>a {
-            color: #526b5e !important;
-        }
-
-        /* CHILD NAVIGATION ICONS */
-        .sidebar .app-nav.nav-group-items>a>i {
-            color: #526b5e !important;
-        }
-
-        /* HOVER AND ACTIVE TEXT */
-        .sidebar .app-nav.nav-group-items>a:hover,
-        .sidebar .app-nav.nav-group-items>a.active {
-            color: #176b4b !important;
-        }
-
-        /* HOVER AND ACTIVE ICONS */
-        .sidebar .app-nav.nav-group-items>a:hover>i,
-        .sidebar .app-nav.nav-group-items>a.active>i {
-            color: #176b4b !important;
-        }
-
+        .content-area .btn-outline-secondary { border-color: #bfd4c5; color: #42644f; }
+        .content-area .btn-outline-secondary:hover { background: #e2f0e6; color: #174d32; }
+        .content-area .table, .content-area .table-responsive { border-color: #dce9df; }
         @media (max-width: 575.98px) {
-
             .content-area form[method="GET"]:not(#ordersFilterForm),
-            .content-area form[method="get"]:not(#ordersFilterForm) {
-                padding: 12px;
-            }
+            .content-area form[method="get"]:not(#ordersFilterForm) { padding: 12px; }
         }
     </style>
     <link rel="stylesheet" href="{{ asset('assets/css/form-validation.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/password-toggle.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cc-theme-interactions.css') }}">
 </head>
 
 <body data-admin-updates-url="{{ route('admin.operations.updates') }}"
-    data-admin-orders-url="{{ route('admin.orders.index') }}" data-admin-sound-user="{{ auth()->id() }}"
+    data-admin-orders-url="{{ route('admin.orders.index') }}"
+    data-admin-sound-user="{{ auth()->id() }}"
     data-last-website-order-id="{{ $adminLatestWebsiteOrderId ?? 0 }}">
     <div class="app-shell">
         <aside class="sidebar" id="appSidebar">
@@ -834,40 +743,21 @@
                 @else
                     <span class="brand-mark"><i class="bi bi-cup-hot-fill"></i></span>
                 @endif
-                <span><span class="brand-name d-block">{{ $shopSettings?->shop_name ?: 'Coffee Corner' }}</span><span
+                <span><span class="brand-name d-block">{{ $shopSettings?->shop_name ?: 'SK Coffee' }}</span><span
                         class="brand-caption">Management workspace</span></span>
             </a>
             @php
-                $catalogNavActive = request()->is(
-                    'admin/product',
-                    'admin/product/*',
-                    'products*',
-                    'admin/category*',
-                    'categories*',
-                    'admin/offer*',
-                );
+                $catalogNavActive = request()->is('admin/product', 'admin/product/*', 'products*', 'admin/category*', 'categories*', 'admin/offer*');
                 $customerNavActive = request()->is('admin/user*', 'admin/customer-service*', 'admin/reviews*');
-                $salesNavActive = request()->is(
-                    'admin/orders*',
-                    'admin/olders*',
-                    'admin/product-sales*',
-                    'admin/order-corrections*',
-                    'admin/pos-price-discount-audit*',
-                );
-                $operationsNavActive = request()->is(
-                    'admin/purchases*',
-                    'admin/inventory*',
-                    'admin/expense-income*',
-                    'admin/reports*',
-                    'admin/delivery*',
-                );
+                $salesNavActive = request()->is('admin/orders*', 'admin/olders*', 'admin/product-sales*', 'admin/order-corrections*', 'admin/pos-price-discount-audit*');
+                $operationsNavActive = request()->is('admin/purchases*', 'admin/inventory*', 'admin/expense-income*', 'admin/reports*', 'admin/delivery*');
                 $adminNavActive = request()->is('admin/supplier*', 'admin/meanleap/setting*', 'admin/backups*');
                 // Parent navigation badges summarize the actionable child queues.
-                $customerGroupActionCount =
-                    (int) ($adminActionCounts['enquiries'] ?? 0) + (int) ($adminActionCounts['reviews'] ?? 0);
+                $customerGroupActionCount = (int) ($adminActionCounts['enquiries'] ?? 0)
+                    + (int) ($adminActionCounts['reviews'] ?? 0);
                 $salesGroupActionCount = (int) ($adminActionCounts['orders'] ?? 0);
-                $operationsGroupActionCount =
-                    (int) ($adminActionCounts['inventory'] ?? 0) + (int) ($adminActionCounts['delivery'] ?? 0);
+                $operationsGroupActionCount = (int) ($adminActionCounts['inventory'] ?? 0)
+                    + (int) ($adminActionCounts['delivery'] ?? 0);
             @endphp
 
             <div class="sidebar-navigation">
@@ -899,8 +789,7 @@
 
                 <details class="nav-group" {{ $customerNavActive ? 'open' : '' }}>
                     <summary class="nav-group-toggle {{ $customerNavActive ? 'group-active' : '' }}">
-                        <span class="nav-group-title"><i class="bi bi-people"></i><span>Customers &amp;
-                                support</span></span>
+                        <span class="nav-group-title"><i class="bi bi-people"></i><span>Customers &amp; support</span></span>
                         <span class="nav-group-end">
                             <span class="nav-group-action-count" data-action-group-count="customers"
                                 title="{{ $customerGroupActionCount }} actions need attention"
@@ -914,25 +803,20 @@
                                 class="bi bi-person-vcard"></i><span>Customer accounts</span></a>
                         <a href="{{ route('admin.customer-service.index') }}"
                             class="{{ request()->is('admin/customer-service*') ? 'active' : '' }}"><i
-                                class="bi bi-chat-square-text"></i><span>Customer enquiries</span><span
-                                class="nav-action-count" data-action-count="enquiries"
-                                data-action-count-value="{{ (int) ($adminActionCounts['enquiries'] ?? 0) }}"
-                                title="Unread customer enquiries or replies"
+                                class="bi bi-chat-square-text"></i><span>Customer enquiries</span><span class="nav-action-count"
+                                data-action-count="enquiries" data-action-count-value="{{ (int) ($adminActionCounts['enquiries'] ?? 0) }}" title="Unread customer enquiries or replies"
                                 @if (($adminActionCounts['enquiries'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['enquiries'] ?? 0) }}{{ ($adminActionCounts['enquiries'] ?? 0) > 99 ? '+' : '' }}</span></a>
                         <a href="{{ route('reviews.index') }}"
                             class="{{ request()->is('admin/reviews*') ? 'active' : '' }}"><i
                                 class="bi bi-star"></i><span>Reviews</span><span class="nav-action-count"
-                                data-action-count="reviews"
-                                data-action-count-value="{{ (int) ($adminActionCounts['reviews'] ?? 0) }}"
-                                title="Reviews awaiting approval"
+                                data-action-count="reviews" data-action-count-value="{{ (int) ($adminActionCounts['reviews'] ?? 0) }}" title="Reviews awaiting approval"
                                 @if (($adminActionCounts['reviews'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['reviews'] ?? 0) }}{{ ($adminActionCounts['reviews'] ?? 0) > 99 ? '+' : '' }}</span></a>
                     </nav>
                 </details>
 
                 <details class="nav-group" {{ $salesNavActive ? 'open' : '' }}>
                     <summary class="nav-group-toggle {{ $salesNavActive ? 'group-active' : '' }}">
-                        <span class="nav-group-title"><i class="bi bi-receipt-cutoff"></i><span>Sales &amp;
-                                audit</span></span>
+                        <span class="nav-group-title"><i class="bi bi-receipt-cutoff"></i><span>Sales &amp; audit</span></span>
                         <span class="nav-group-end">
                             <span class="nav-group-action-count" data-action-group-count="sales"
                                 title="{{ $salesGroupActionCount }} actions need attention"
@@ -944,9 +828,7 @@
                         <a href="{{ route('admin.orders.index') }}"
                             class="{{ request()->is('admin/orders*') || request()->is('admin/olders*') ? 'active' : '' }}"><i
                                 class="bi bi-receipt"></i><span>Orders</span><span class="nav-action-count"
-                                data-action-count="orders"
-                                data-action-count-value="{{ (int) ($adminActionCounts['orders'] ?? 0) }}"
-                                title="Orders waiting for review"
+                                data-action-count="orders" data-action-count-value="{{ (int) ($adminActionCounts['orders'] ?? 0) }}" title="Orders waiting for review"
                                 @if (($adminActionCounts['orders'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['orders'] ?? 0) }}{{ ($adminActionCounts['orders'] ?? 0) > 99 ? '+' : '' }}</span></a>
                         <a href="{{ route('admin.product-sales.index') }}"
                             class="{{ request()->is('admin/product-sales*') ? 'active' : '' }}"><i
@@ -962,8 +844,7 @@
 
                 <details class="nav-group" {{ $operationsNavActive ? 'open' : '' }}>
                     <summary class="nav-group-toggle {{ $operationsNavActive ? 'group-active' : '' }}">
-                        <span class="nav-group-title"><i class="bi bi-boxes"></i><span>Inventory &amp;
-                                operations</span></span>
+                        <span class="nav-group-title"><i class="bi bi-boxes"></i><span>Inventory &amp; operations</span></span>
                         <span class="nav-group-end">
                             <span class="nav-group-action-count" data-action-group-count="operations"
                                 title="{{ $operationsGroupActionCount }} actions need attention"
@@ -977,10 +858,8 @@
                                 class="bi bi-cart-check"></i><span>Purchases</span></a>
                         <a href="{{ route('inventory.index') }}"
                             class="{{ request()->is('admin/inventory*') ? 'active' : '' }}"><i
-                                class="bi bi-box-seam"></i><span>Inventory &amp; stock</span><span
-                                class="nav-action-count" data-action-count="inventory"
-                                data-action-count-value="{{ (int) ($adminActionCounts['inventory'] ?? 0) }}"
-                                title="Active stock-tracked products out of stock"
+                                class="bi bi-box-seam"></i><span>Inventory &amp; stock</span><span class="nav-action-count"
+                                data-action-count="inventory" data-action-count-value="{{ (int) ($adminActionCounts['inventory'] ?? 0) }}" title="Active stock-tracked products out of stock"
                                 @if (($adminActionCounts['inventory'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['inventory'] ?? 0) }}{{ ($adminActionCounts['inventory'] ?? 0) > 99 ? '+' : '' }}</span></a>
                         <a href="{{ route('expense_income.index') }}"
                             class="{{ request()->is('admin/expense-income*') ? 'active' : '' }}"><i
@@ -988,9 +867,7 @@
                         <a href="{{ route('delivery.index') }}"
                             class="{{ request()->is('admin/delivery*') ? 'active' : '' }}"><i
                                 class="bi bi-truck"></i><span>Delivery</span><span class="nav-action-count"
-                                data-action-count="delivery"
-                                data-action-count-value="{{ (int) ($adminActionCounts['delivery'] ?? 0) }}"
-                                title="Active deliveries"
+                                data-action-count="delivery" data-action-count-value="{{ (int) ($adminActionCounts['delivery'] ?? 0) }}" title="Active deliveries"
                                 @if (($adminActionCounts['delivery'] ?? 0) < 1) hidden @endif>{{ min(99, $adminActionCounts['delivery'] ?? 0) }}{{ ($adminActionCounts['delivery'] ?? 0) > 99 ? '+' : '' }}</span></a>
                         <a href="{{ route('reports.index') }}"
                             class="{{ request()->is('admin/reports*') ? 'active' : '' }}"><i
@@ -1029,52 +906,44 @@
                     <button class="mobile-menu" id="mobileMenuButton" aria-label="Open navigation"><i
                             class="bi bi-list"></i></button>
                     <div>
-                        <div class="topbar-eyebrow">{{ $shopSettings?->shop_name ?: 'Coffee Corner' }} · Store
+                        <div class="topbar-eyebrow">{{ $shopSettings?->shop_name ?: 'SK Coffee' }} · Store
                             operations</div>
                         <div class="topbar-title">@yield('topbar_title', 'Management overview')</div>
                     </div>
                 </div>
                 <div class="user-chip">
                     <div class="dropdown admin-order-sound-control">
-                        <button class="btn btn-cc-light btn-sm dropdown-toggle" type="button"
-                            id="adminOrderSoundMenu" data-bs-toggle="dropdown" aria-expanded="false"
-                            title="Order sound alerts">
+                        <button class="btn btn-cc-light btn-sm dropdown-toggle" type="button" id="adminOrderSoundMenu"
+                            data-bs-toggle="dropdown" aria-expanded="false" title="Order sound alerts">
                             <i class="bi bi-volume-mute" data-order-sound-icon aria-hidden="true"></i>
                             <span class="d-none d-md-inline" data-order-sound-button-label>Sound off</span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end p-3 shadow border-0"
-                            aria-labelledby="adminOrderSoundMenu"
+                        <div class="dropdown-menu dropdown-menu-end p-3 shadow border-0" aria-labelledby="adminOrderSoundMenu"
                             style="width:min(290px,calc(100vw - 28px));border-radius:14px">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <strong class="small">Order sound alerts</strong>
                                 <span class="badge text-bg-light" data-order-sound-state>Muted</span>
                             </div>
                             <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                    id="adminOrderSoundEnabled">
-                                <label class="form-check-label small" for="adminOrderSoundEnabled">Enable sound for
-                                    new website orders</label>
+                                <input class="form-check-input" type="checkbox" role="switch" id="adminOrderSoundEnabled">
+                                <label class="form-check-label small" for="adminOrderSoundEnabled">Enable sound for new website orders</label>
                             </div>
-                            <label for="adminOrderSoundVolume"
-                                class="form-label small fw-semibold mb-1">Volume</label>
+                            <label for="adminOrderSoundVolume" class="form-label small fw-semibold mb-1">Volume</label>
                             <div class="d-flex align-items-center gap-2 mb-3">
                                 <i class="bi bi-volume-down text-muted" aria-hidden="true"></i>
-                                <input type="range" class="form-range mb-0" min="0" max="100"
-                                    step="5" value="65" id="adminOrderSoundVolume"
-                                    aria-label="Order notification volume">
-                                <span class="small text-muted" style="min-width:34px;text-align:right"
-                                    data-order-sound-volume-label>65%</span>
+                                <input type="range" class="form-range mb-0" min="0" max="100" step="5" value="65"
+                                    id="adminOrderSoundVolume" aria-label="Order notification volume">
+                                <span class="small text-muted" style="min-width:34px;text-align:right" data-order-sound-volume-label>65%</span>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-success w-100"
-                                id="adminOrderSoundTest">
+                            <button type="button" class="btn btn-sm btn-outline-success w-100" id="adminOrderSoundTest">
                                 <i class="bi bi-play-fill me-1" aria-hidden="true"></i>Test sound
                             </button>
-                            <div class="small text-muted mt-2" id="adminOrderSoundStatus" role="status"
-                                aria-live="polite">
+                            <div class="small text-muted mt-2" id="adminOrderSoundStatus" role="status" aria-live="polite">
                                 Sound is off. Enable it to hear new website orders.
                             </div>
                         </div>
                     </div>
+                    @include('partials.theme-switcher')
                     @include('partials.language-switcher')
                     <div class="avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</div>
                     <div class="user-meta">
@@ -1111,7 +980,7 @@
                 @yield('content')
             </main>
             <footer class="px-4 pb-4 text-center text-muted small">
-                <div>{{ $shopSettings?->shop_name ?: 'Coffee Corner' }} Management System <span
+                <div>{{ $shopSettings?->shop_name ?: 'SK Coffee' }} Management System <span
                         class="mx-1">·</span> Graduation Demonstration</div>
                 @if ($shopSettings?->address || $shopSettings?->tel)
                     <div class="mt-1">{{ $shopSettings?->address }}@if ($shopSettings?->address && $shopSettings?->tel)
@@ -1192,8 +1061,7 @@
                 Object.entries(actionGroupSources).forEach(([group, sourceKeys]) => {
                     const total = sourceKeys.reduce((sum, key) => {
                         const sourceBadge = document.querySelector(`[data-action-count="${key}"]`);
-                        return sum + Math.max(0, Number(sourceBadge?.dataset.actionCountValue ||
-                            0));
+                        return sum + Math.max(0, Number(sourceBadge?.dataset.actionCountValue || 0));
                     }, 0);
                     const groupBadge = document.querySelector(`[data-action-group-count="${group}"]`);
                     if (!groupBadge) return;
@@ -1296,6 +1164,7 @@
     </script>
     <script src="{{ asset('assets/js/form-validation.js') }}"></script>
     <script src="{{ asset('assets/js/password-toggle.js') }}"></script>
+    <script src="{{ asset('assets/js/cc-theme.js') }}"></script>
 </body>
 
 </html>

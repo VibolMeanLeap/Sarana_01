@@ -1,4 +1,4 @@
-/* SK Coffee Aura theme controller: Light / Dark / Follow system. */
+/* SK Coffee theme controller: one-click Light / Dark toggle with a smooth transition. */
 (function () {
     "use strict";
 
@@ -8,31 +8,27 @@
     var media = window.matchMedia
         ? window.matchMedia("(prefers-color-scheme: dark)")
         : null;
+    var animationTimer = null;
+    var animationFrame = null;
     var labels = {
         en: {
-            light: "Light",
-            dark: "Dark",
-            system: "Follow system",
-            changed: "Appearance set to {mode}.",
+            light: "Light mode enabled",
+            dark: "Dark mode enabled",
+            switchToLight: "Switch to light mode",
+            switchToDark: "Switch to dark mode",
         },
         km: {
-            light: "ពន្លឺ",
-            dark: "ងងឹត",
-            system: "តាមប្រព័ន្ធ",
-            changed: "បានប្តូររូបរាងទៅជា {mode}។",
+            light: "បានបើករូបរាងភ្លឺ",
+            dark: "បានបើករូបរាងងងឹត",
+            switchToLight: "ប្តូរទៅរូបរាងភ្លឺ",
+            switchToDark: "ប្តូរទៅរូបរាងងងឹត",
         },
     };
 
     function currentLocale() {
-        var switcher = document.querySelector(
-            "[data-cc-theme-switcher][data-cc-locale]",
-        );
-        var locale = switcher
-            ? switcher.getAttribute("data-cc-locale")
-            : document.documentElement.lang || "en";
-        return String(locale || "en")
-            .toLowerCase()
-            .slice(0, 2);
+        var switcher = document.querySelector("[data-cc-theme-switcher][data-cc-locale]");
+        var locale = switcher ? switcher.getAttribute("data-cc-locale") : (root.lang || "en");
+        return String(locale || "en").toLowerCase().slice(0, 2);
     }
 
     function getPreference() {
@@ -41,7 +37,7 @@
             var stored = window.localStorage.getItem(STORAGE_KEY);
             if (allowed.indexOf(stored) !== -1) value = stored;
         } catch (error) {
-            /* Continue with the preference already applied by the bootstrap. */
+            /* Use the preference already applied by the synchronous bootstrap. */
         }
         return allowed.indexOf(value) !== -1 ? value : "system";
     }
@@ -51,8 +47,43 @@
         return media && media.matches ? "dark" : "light";
     }
 
-    function apply(preference, announce) {
-        if (allowed.indexOf(preference) === -1) preference = "system";
+    function updateCharts(theme) {
+        if (!window.Chart || !window.Chart.defaults) return;
+        window.Chart.defaults.color = theme === "dark" ? "#c5d3c9" : "#596a60";
+        window.Chart.defaults.borderColor = theme === "dark" ? "#34463b" : "#e3eae5";
+        if (window.Chart.instances) {
+            Object.keys(window.Chart.instances).forEach(function (key) {
+                var chart = window.Chart.instances[key];
+                if (chart && typeof chart.update === "function") chart.update("none");
+            });
+        }
+    }
+
+    function updateToggle(preference, resolved, announce) {
+        var locale = currentLocale();
+        var copy = labels[locale] || labels.en;
+        var switchToLight = resolved === "dark";
+        var nextLabel = switchToLight ? copy.switchToLight : copy.switchToDark;
+
+        document.querySelectorAll("[data-cc-theme-toggle]").forEach(function (button) {
+            var icon = button.querySelector("[data-cc-theme-icon]");
+            button.setAttribute("aria-label", nextLabel);
+            button.setAttribute("title", nextLabel);
+            button.setAttribute("aria-pressed", resolved === "dark" ? "true" : "false");
+            if (icon) {
+                icon.classList.toggle("bi-sun-fill", switchToLight);
+                icon.classList.toggle("bi-moon-stars-fill", !switchToLight);
+            }
+        });
+
+        if (announce) {
+            document.querySelectorAll("[data-cc-theme-live]").forEach(function (node) {
+                node.textContent = copy[resolved];
+            });
+        }
+    }
+
+    function commit(preference, announce) {
         var resolved = resolve(preference);
         root.setAttribute("data-cc-theme", resolved);
         root.setAttribute("data-cc-theme-preference", preference);
@@ -61,98 +92,69 @@
         try {
             window.localStorage.setItem(STORAGE_KEY, preference);
         } catch (error) {
-            /* Theme still applies for the current page even if storage is blocked. */
+            /* Theme still applies for this page if storage is unavailable. */
         }
 
-        var locale = currentLocale();
-        var copy = labels[locale] || labels.en;
-        document
-            .querySelectorAll("[data-cc-theme-current]")
-            .forEach(function (node) {
-                node.textContent = copy[preference];
-            });
-        document
-            .querySelectorAll("[data-cc-theme-mode]")
-            .forEach(function (button) {
-                var selected =
-                    button.getAttribute("data-cc-theme-mode") === preference;
-                button.setAttribute(
-                    "aria-pressed",
-                    selected ? "true" : "false",
-                );
-                button.classList.toggle("is-active", selected);
-            });
-
-        if (announce) {
-            var live = document.querySelector("[data-cc-theme-live]");
-            if (live)
-                live.textContent = copy.changed.replace(
-                    "{mode}",
-                    copy[preference],
-                );
-        }
+        updateCharts(resolved);
+        updateToggle(preference, resolved, announce);
+        window.dispatchEvent(new CustomEvent("cc-theme-change", {
+            detail: { preference: preference, theme: resolved }
+        }));
     }
 
-    function closeAll(except) {
-        document
-            .querySelectorAll("[data-cc-theme-switcher]")
-            .forEach(function (wrap) {
-                if (wrap === except) return;
-                var trigger = wrap.querySelector("[data-cc-theme-trigger]");
-                var menu = wrap.querySelector("[data-cc-theme-menu]");
-                if (trigger) trigger.setAttribute("aria-expanded", "false");
-                if (menu) menu.hidden = true;
-            });
+    function prefersReducedMotion() {
+        return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    }
+
+    function apply(preference, announce, animate) {
+        if (allowed.indexOf(preference) === -1) preference = "system";
+
+        if (!animate || prefersReducedMotion()) {
+            commit(preference, announce);
+            return;
+        }
+
+        if (animationTimer) window.clearTimeout(animationTimer);
+        if (animationFrame) window.cancelAnimationFrame(animationFrame);
+        root.classList.add("cc-theme-animating");
+        /* Commit the transition rules before changing the theme attributes. */
+        void root.offsetWidth;
+        document.querySelectorAll("[data-cc-theme-icon]").forEach(function (icon) {
+            icon.classList.remove("is-switching");
+            void icon.offsetWidth;
+            icon.classList.add("is-switching");
+        });
+
+        animationFrame = window.requestAnimationFrame(function () {
+            commit(preference, announce);
+            animationTimer = window.setTimeout(function () {
+                root.classList.remove("cc-theme-animating");
+                document.querySelectorAll("[data-cc-theme-icon]").forEach(function (icon) {
+                    icon.classList.remove("is-switching");
+                });
+                animationTimer = null;
+                animationFrame = null;
+            }, 420);
+        });
     }
 
     document.addEventListener("click", function (event) {
-        var trigger = event.target.closest("[data-cc-theme-trigger]");
-        if (trigger) {
-            var wrap = trigger.closest("[data-cc-theme-switcher]");
-            var menu = wrap && wrap.querySelector("[data-cc-theme-menu]");
-            var willOpen = !!menu && menu.hidden;
-            closeAll(wrap);
-            if (menu) menu.hidden = !willOpen;
-            trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
-            return;
-        }
+        var button = event.target.closest("[data-cc-theme-toggle]");
+        if (!button) return;
 
-        var choice = event.target.closest("[data-cc-theme-mode]");
-        if (choice) {
-            apply(choice.getAttribute("data-cc-theme-mode"), true);
-            var parent = choice.closest("[data-cc-theme-switcher]");
-            var parentMenu =
-                parent && parent.querySelector("[data-cc-theme-menu]");
-            var parentTrigger =
-                parent && parent.querySelector("[data-cc-theme-trigger]");
-            if (parentMenu) parentMenu.hidden = true;
-            if (parentTrigger)
-                parentTrigger.setAttribute("aria-expanded", "false");
-            return;
-        }
-
-        if (!event.target.closest("[data-cc-theme-switcher]")) closeAll(null);
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            closeAll(null);
-            var active = document.activeElement;
-            if (active && active.matches("[data-cc-theme-trigger]"))
-                active.blur();
-        }
+        var currentTheme = root.getAttribute("data-cc-theme") || resolve(getPreference());
+        var nextTheme = currentTheme === "dark" ? "light" : "dark";
+        apply(nextTheme, true, true);
     });
 
     if (media) {
         var onSystemChange = function () {
-            if (getPreference() === "system") apply("system", false);
+            if (getPreference() === "system") apply("system", false, false);
         };
-        if (typeof media.addEventListener === "function")
-            media.addEventListener("change", onSystemChange);
-        else if (typeof media.addListener === "function")
-            media.addListener(onSystemChange);
+        if (typeof media.addEventListener === "function") media.addEventListener("change", onSystemChange);
+        else if (typeof media.addListener === "function") media.addListener(onSystemChange);
     }
 
-    /* Re-apply after page navigation and synchronize all selector instances. */
-    apply(getPreference(), false);
+    /* Apply the saved preference without animating page load. */
+    apply(getPreference(), false, false);
 })();

@@ -331,6 +331,26 @@
             color: #176b4b
         }
 
+        /* STAFF LOGIN — VISIT STORE BUTTON */
+        html[data-cc-theme="dark"] .auth-public-link {
+            background: var(--cc-theme-surface-muted) !important;
+            color: var(--cc-theme-text) !important;
+            border-color: var(--cc-theme-border) !important;
+            transition: background-color .25s ease,
+                color .25s ease,
+                border-color .25s ease;
+        }
+
+        html[data-cc-theme="dark"] .auth-public-link:hover {
+            background: #294637 !important;
+            color: #a5e8bf !important;
+            border-color: #527c61 !important;
+        }
+
+        html[data-cc-theme="dark"] .auth-public-link i {
+            color: inherit !important;
+        }
+
         .auth-error {
             border-radius: 11px;
             font-size: 11px
@@ -427,8 +447,19 @@
             height: 19px;
             flex: 0 0 19px
         }
+
+        /* STAFF LOGIN — FLOATING THEME BUTTON */
+        .auth-login-theme-toggle {
+            position: fixed;
+            top: 22px;
+            right: 24px;
+            z-index: 1080;
+        }
     </style>
     <div class="staff-auth">
+        {{-- <div class="auth-login-theme-toggle">
+            @include('partials.theme-switcher')
+        </div> --}}
         <section class="auth-showcase">
             <div class="d-flex justify-content-between align-items-start gap-3">
                 <a class="auth-brand" href="{{ route('showlogin') }}">
@@ -521,7 +552,8 @@
                         </svg>
                         <span>Continue with Google</span>
                     </a>
-                    <div class="google-security-note" style="display:flex;align-items:center;gap:8px;margin-top:11px;color:#728177;font-size:10px;line-height:1.6;">
+                    <div class="google-security-note"
+                        style="display:flex;align-items:center;gap:8px;margin-top:11px;color:#728177;font-size:10px;line-height:1.6;">
                         <i class="bi bi-shield-lock-fill" style="color:#176b4b;"></i>
                         <span>Administrator Google sign-ins require an additional email verification code.</span>
                     </div>

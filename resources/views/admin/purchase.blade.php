@@ -2,48 +2,555 @@
 @section('page_title', 'Purchases')
 @section('topbar_title', 'Purchasing & suppliers')
 @section('content')
-<style>
-.cc-purchase{--g:#176b4b;--gd:#104d38;--gs:#e9f4ee;--line:#e1ebe4;background:linear-gradient(180deg,#edf5ef 0,#f5f8f5 270px,#f5f8f5 100%);border-radius:22px;padding:clamp(16px,2.2vw,28px);color:#20312a}.cc-p-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}.cc-p-kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#4b8768}.cc-p-title{font-size:clamp(24px,3vw,30px);font-weight:800;letter-spacing:-.04em;margin:4px 0;color:#1d3529}.cc-p-sub{color:#748178;font-size:13px;margin:0}.cc-p-add{background:#176b4b;color:#fff;border-radius:12px;padding:10px 16px;text-decoration:none;font-weight:800;box-shadow:0 7px 16px #176b4b22}.cc-p-add:hover{background:#104d38;color:#fff}.cc-p-stat{height:100%;border:1px solid #d6e9dc;border-radius:16px;padding:17px;background:linear-gradient(135deg,#fff,#eff7f0);display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 5px 15px #204b3010}.cc-p-stat-label{font-size:11px;font-weight:800;color:#748178}.cc-p-stat-value{font-size:24px;font-weight:800;letter-spacing:-.04em;color:#1b3f2e;margin-top:3px}.cc-p-stat-icon{width:44px;height:44px;border-radius:14px;background:#dff0e4;color:#176b4b;display:grid;place-items:center;font-size:20px}.cc-p-panel{background:linear-gradient(120deg,#e4f1e7,#f1f8f2);border:1px solid #cfe4d4;border-radius:17px;padding:17px;margin:18px 0}.cc-p-panel.secondary{background:linear-gradient(120deg,#f0f6f0,#f8fbf8);border-color:#dce9df}.cc-p-panel-head{display:flex;gap:10px;align-items:center;margin-bottom:13px}.cc-p-panel-icon{width:34px;height:34px;border-radius:11px;background:#cfe8d5;color:#176b4b;display:grid;place-items:center}.cc-p-panel-title{font-size:14px;font-weight:800;color:#214b35;margin:0}.cc-p-panel-hint{font-size:12px;color:#688071;margin:2px 0 0}.cc-p-field label{display:block;font-size:10px;letter-spacing:.06em;font-weight:800;color:#53705e;margin-bottom:6px}.cc-purchase .form-control,.cc-purchase .form-select{height:42px;border:1px solid #d7e4da;border-radius:10px;font-size:13px;box-shadow:none}.cc-purchase .form-control:focus,.cc-purchase .form-select:focus{border-color:#64a77b;box-shadow:0 0 0 3px #176b4b18}.cc-p-apply{height:42px;border:0;border-radius:10px;background:#176b4b;color:#fff;padding:0 17px;font-weight:800}.cc-p-reset{height:42px;border:1px solid #cbdacf;border-radius:10px;background:#fff;color:#496452;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none}.cc-preset-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.cc-preset{border:1px solid #bcd5c3;background:#f9fcfa;color:#346149;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:800}.cc-preset:hover,.cc-preset.active{background:#176b4b;border-color:#176b4b;color:#fff}.cc-p-table{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 8px 24px #204b300c}.cc-p-table-head{padding:16px 19px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:linear-gradient(90deg,#f3f8f4,#fff);border-bottom:1px solid var(--line)}.cc-p-table-title{font-size:15px;font-weight:800;color:#1d3d2c;margin:0}.cc-p-table-meta{font-size:12px;color:#7b8980}.cc-p-table table{margin:0}.cc-p-table thead th{background:#edf5ef;color:#567362;text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:800;padding:13px 14px;white-space:nowrap;border-bottom:1px solid #dce9df}.cc-p-table tbody td{padding:13px 14px;border-bottom:1px solid #edf2ed;font-size:13px;vertical-align:middle;color:#2c3c32}.cc-p-table tbody tr:hover{background:#f7faf7}.cc-p-id{font-weight:800;color:#315d42}.cc-p-product{font-weight:800;color:#294a35}.cc-p-total{font-weight:800;color:#176b4b}.cc-p-iconbtn{width:33px;height:33px;display:inline-grid;place-items:center;border-radius:10px;background:#f3f8f4;border:1px solid #dce9df;color:#416d50;text-decoration:none}.cc-p-iconbtn:hover{background:#e0f0e4;color:#176b4b}.cc-p-iconbtn.danger{color:#b65353;background:#fffafa;border-color:#f1d8d8}.cc-p-empty{padding:46px 20px;text-align:center;color:#829087}.cc-p-empty i{font-size:32px;color:#8ab99a}.cc-p-pagination{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.cc-p-pagination .pagination{margin:0;gap:4px}.cc-p-pagination .page-link{border-radius:9px!important;border-color:#dce8df;color:#3d664e}.cc-p-pagination .page-item.active .page-link{background:#176b4b;border-color:#176b4b}.cc-p-alert{border-radius:12px;padding:11px 14px;border:1px solid #c8e4cf;background:#eef8f0;color:#285f3b;margin-bottom:14px;font-size:13px}.cc-p-alert.error{border-color:#f1cccc;background:#fff3f3;color:#a53c3c}
-@media(max-width:767px){.cc-purchase{padding:14px;border-radius:16px}.cc-p-panel{padding:13px}}
-</style>
-<div class="cc-purchase">
-    @if(session('success'))<div class="cc-p-alert"><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</div>@endif
-    @if(session('error'))<div class="cc-p-alert error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</div>@endif
-    @if($errors->any())<div class="cc-p-alert error"><strong>Please review:</strong> {{ $errors->first() }}</div>@endif
-    <div class="cc-p-head"><div><div class="cc-p-kicker">Inventory operations</div><h1 class="cc-p-title">Purchases</h1><p class="cc-p-sub">Receive supplier stock, track unit costs and keep purchase expenses linked.</p></div><div class="d-flex gap-2 flex-wrap">@include('admin.partials.export-actions', ['exportType' => 'purchases'])<a href="{{ route('purchase.create') }}" class="cc-p-add"><i class="bi bi-plus-lg me-1"></i> Record purchase</a></div></div>
-    <div class="row g-3 mb-2">
-        <div class="col-12 col-md-4"><div class="cc-p-stat"><div><div class="cc-p-stat-label">MATCHING PURCHASES</div><div class="cc-p-stat-value">{{ number_format($summary['count']) }}</div></div><span class="cc-p-stat-icon"><i class="bi bi-receipt"></i></span></div></div>
-        <div class="col-12 col-md-4"><div class="cc-p-stat"><div><div class="cc-p-stat-label">UNITS RECEIVED</div><div class="cc-p-stat-value">{{ number_format($summary['quantity']) }}</div></div><span class="cc-p-stat-icon"><i class="bi bi-box-seam"></i></span></div></div>
-        <div class="col-12 col-md-4"><div class="cc-p-stat"><div><div class="cc-p-stat-label">FILTERED PURCHASE OUTFLOW</div><div class="cc-p-stat-value">${{ number_format($summary['spend'], 2) }}</div></div><span class="cc-p-stat-icon"><i class="bi bi-cash-stack"></i></span></div></div>
-    </div>
-    <form method="GET" action="{{ route('purchase.index') }}" id="purchaseFilterForm">
-        @include('admin.partials.date-filter-panel', [
-            'dateFilter' => $dateFilter,
-            'dateFromField' => 'date_from',
-            'dateToField' => 'date_to',
-            'dateFilterTitle' => 'Purchase date',
-            'dateFilterHint' => 'Filter purchase records and matching totals by purchase date.',
-        ])
-        <section class="cc-p-panel secondary">
-            <div class="cc-p-panel-head"><span class="cc-p-panel-icon"><i class="bi bi-funnel"></i></span><div><h2 class="cc-p-panel-title">Purchase filters</h2><p class="cc-p-panel-hint">Narrow records by product, supplier or purchase reference.</p></div></div>
-            <div class="row g-2 align-items-end">
-                <div class="col-12 col-lg-3 cc-p-field"><label for="purchaseSearch">SEARCH</label><input id="purchaseSearch" type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="ID, product or supplier"></div>
-                <div class="col-6 col-lg-2 cc-p-field"><label for="purchaseProduct">PRODUCT</label><select id="purchaseProduct" name="product_id" class="form-select"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>{{ $product->product_name }}</option>@endforeach</select></div>
-                <div class="col-6 col-lg-2 cc-p-field"><label for="purchaseSupplier">SUPPLIER</label><select id="purchaseSupplier" name="supplier_id" class="form-select"><option value="">All suppliers</option>@foreach($suppliers as $supplier)<option value="{{ $supplier->supplier_id }}" @selected(request('supplier_id') == $supplier->supplier_id)>{{ $supplier->name }}</option>@endforeach</select></div>
-                <div class="col-6 col-lg-2 cc-p-field"><label for="purchaseSort">SORT</label><select id="purchaseSort" name="sort_dir" class="form-select"><option value="desc" @selected(request('sort_dir','desc')==='desc')>Newest first</option><option value="asc" @selected(request('sort_dir')==='asc')>Oldest first</option></select></div>
-                <div class="col-6 col-lg-1 cc-p-field"><label for="purchaseRows">ROWS</label><select id="purchaseRows" name="per_page" class="form-select">@foreach([10,15,25,50,100] as $size)<option value="{{ $size }}" @selected((string)request('per_page',15)===(string)$size)>{{ $size }}</option>@endforeach</select></div>
-                <div class="col-12 col-lg-2 d-flex gap-2"><button class="cc-p-apply flex-grow-1" type="submit"><i class="bi bi-search me-1"></i> Apply</button><a href="{{ route('purchase.index') }}" class="cc-p-reset" title="Reset filters"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+    <style>
+        .cc-purchase {
+            --g: #176b4b;
+            --gd: #104d38;
+            --gs: #e9f4ee;
+            --line: #e1ebe4;
+            background: linear-gradient(180deg, #edf5ef 0, #f5f8f5 270px, #f5f8f5 100%);
+            border-radius: 22px;
+            padding: clamp(16px, 2.2vw, 28px);
+            color: #20312a
+        }
+
+        .cc-p-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px
+        }
+
+        .cc-p-kicker {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: #4b8768
+        }
+
+        .cc-p-title {
+            font-size: clamp(24px, 3vw, 30px);
+            font-weight: 800;
+            letter-spacing: -.04em;
+            margin: 4px 0;
+            color: #1d3529
+        }
+
+        .cc-p-sub {
+            color: #748178;
+            font-size: 13px;
+            margin: 0
+        }
+
+        .cc-p-add {
+            background: #176b4b;
+            color: #fff;
+            border-radius: 12px;
+            padding: 10px 16px;
+            text-decoration: none;
+            font-weight: 800;
+            box-shadow: 0 7px 16px #176b4b22
+        }
+
+        .cc-p-add:hover {
+            background: #104d38;
+            color: #fff
+        }
+
+        .cc-p-stat {
+            height: 100%;
+            border: 1px solid #d6e9dc;
+            border-radius: 16px;
+            padding: 17px;
+            background: linear-gradient(135deg, #fff, #eff7f0);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 5px 15px #204b3010
+        }
+
+        .cc-p-stat-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #748178
+        }
+
+        .cc-p-stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -.04em;
+            color: #1b3f2e;
+            margin-top: 3px
+        }
+
+        .cc-p-stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: #dff0e4;
+            color: #176b4b;
+            display: grid;
+            place-items: center;
+            font-size: 20px
+        }
+
+        .cc-p-panel {
+            background: linear-gradient(120deg, #e4f1e7, #f1f8f2);
+            border: 1px solid #cfe4d4;
+            border-radius: 17px;
+            padding: 17px;
+            margin: 18px 0
+        }
+
+        .cc-p-panel.secondary {
+            background: linear-gradient(120deg, #f0f6f0, #f8fbf8);
+            border-color: #dce9df
+        }
+
+        .cc-p-panel-head {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 13px
+        }
+
+        .cc-p-panel-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            background: #cfe8d5;
+            color: #176b4b;
+            display: grid;
+            place-items: center
+        }
+
+        .cc-p-panel-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #214b35;
+            margin: 0
+        }
+
+        .cc-p-panel-hint {
+            font-size: 12px;
+            color: #688071;
+            margin: 2px 0 0
+        }
+
+        .cc-p-field label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: .06em;
+            font-weight: 800;
+            color: #53705e;
+            margin-bottom: 6px
+        }
+
+        .cc-purchase .form-control,
+        .cc-purchase .form-select {
+            height: 42px;
+            border: 1px solid #d7e4da;
+            border-radius: 10px;
+            font-size: 13px;
+            box-shadow: none
+        }
+
+        .cc-purchase .form-control:focus,
+        .cc-purchase .form-select:focus {
+            border-color: #64a77b;
+            box-shadow: 0 0 0 3px #176b4b18
+        }
+
+        .cc-p-apply {
+            height: 42px;
+            border: 0;
+            border-radius: 10px;
+            background: #176b4b;
+            color: #fff;
+            padding: 0 17px;
+            font-weight: 800
+        }
+
+        .cc-p-reset {
+            height: 42px;
+            border: 1px solid #cbdacf;
+            border-radius: 10px;
+            background: #fff;
+            color: #496452;
+            padding: 0 14px;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none
+        }
+
+        .cc-preset-row {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: 12px
+        }
+
+        .cc-preset {
+            border: 1px solid #bcd5c3;
+            background: #f9fcfa;
+            color: #346149;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800
+        }
+
+        .cc-preset:hover,
+        .cc-preset.active {
+            background: #176b4b;
+            border-color: #176b4b;
+            color: #fff
+        }
+
+        .cc-p-table {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 17px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px #204b300c
+        }
+
+        .cc-p-table-head {
+            padding: 16px 19px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(90deg, #f3f8f4, #fff);
+            border-bottom: 1px solid var(--line)
+        }
+
+        .cc-p-table-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #1d3d2c;
+            margin: 0
+        }
+
+        .cc-p-table-meta {
+            font-size: 12px;
+            color: #7b8980
+        }
+
+        .cc-p-table table {
+            margin: 0
+        }
+
+        .cc-p-table thead th {
+            background: #edf5ef;
+            color: #567362;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 13px 14px;
+            white-space: nowrap;
+            border-bottom: 1px solid #dce9df
+        }
+
+        .cc-p-table tbody td {
+            padding: 13px 14px;
+            border-bottom: 1px solid #edf2ed;
+            font-size: 13px;
+            vertical-align: middle;
+            color: #2c3c32
+        }
+
+        .cc-p-table tbody tr:hover {
+            background: #f7faf7
+        }
+
+        .cc-p-id {
+            font-weight: 800;
+            color: #315d42
+        }
+
+        .cc-p-product {
+            font-weight: 800;
+            color: #0b0
+        }
+
+        .cc-p-total {
+            font-weight: 800;
+            color: #176b4b
+        }
+
+        .cc-p-iconbtn {
+            width: 33px;
+            height: 33px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 10px;
+            background: #f3f8f4;
+            border: 1px solid #dce9df;
+            color: #416d50;
+            text-decoration: none
+        }
+
+        .cc-p-iconbtn:hover {
+            background: #e0f0e4;
+            color: #176b4b
+        }
+
+        .cc-p-iconbtn.danger {
+            color: #b65353;
+            background: #fffafa;
+            border-color: #f1d8d8
+        }
+
+        .cc-p-empty {
+            padding: 46px 20px;
+            text-align: center;
+            color: #829087
+        }
+
+        .cc-p-empty i {
+            font-size: 32px;
+            color: #8ab99a
+        }
+
+        .cc-p-pagination {
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .cc-p-pagination .pagination {
+            margin: 0;
+            gap: 4px
+        }
+
+        .cc-p-pagination .page-link {
+            border-radius: 9px !important;
+            border-color: #dce8df;
+            color: #3d664e
+        }
+
+        .cc-p-pagination .page-item.active .page-link {
+            background: #176b4b;
+            border-color: #176b4b
+        }
+
+        .cc-p-alert {
+            border-radius: 12px;
+            padding: 11px 14px;
+            border: 1px solid #c8e4cf;
+            background: #eef8f0;
+            color: #285f3b;
+            margin-bottom: 14px;
+            font-size: 13px
+        }
+
+        .cc-p-alert.error {
+            border-color: #f1cccc;
+            background: #fff3f3;
+            color: #a53c3c
+        }
+
+        @media(max-width:767px) {
+            .cc-purchase {
+                padding: 14px;
+                border-radius: 16px
+            }
+
+            .cc-p-panel {
+                padding: 13px
+            }
+        }
+    </style>
+    <div class="cc-purchase">
+        @if (session('success'))
+            <div class="cc-p-alert"><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="cc-p-alert error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</div>
+        @endif
+        @if ($errors->any())
+            <div class="cc-p-alert error"><strong>Please review:</strong> {{ $errors->first() }}</div>
+        @endif
+        <div class="cc-p-head">
+            <div>
+                <div class="cc-p-kicker">Inventory operations</div>
+                <h1 class="cc-p-title">Purchases</h1>
+                <p class="cc-p-sub">Receive supplier stock, track unit costs and keep purchase expenses linked.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">@include('admin.partials.export-actions', ['exportType' => 'purchases'])<a href="{{ route('purchase.create') }}"
+                    class="cc-p-add"><i class="bi bi-plus-lg me-1"></i> Record purchase</a></div>
+        </div>
+        <div class="row g-3 mb-2">
+            <div class="col-12 col-md-4">
+                <div class="cc-p-stat">
+                    <div>
+                        <div class="cc-p-stat-label">MATCHING PURCHASES</div>
+                        <div class="cc-p-stat-value">{{ number_format($summary['count']) }}</div>
+                    </div><span class="cc-p-stat-icon"><i class="bi bi-receipt"></i></span>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="cc-p-stat">
+                    <div>
+                        <div class="cc-p-stat-label">UNITS RECEIVED</div>
+                        <div class="cc-p-stat-value">{{ number_format($summary['quantity']) }}</div>
+                    </div><span class="cc-p-stat-icon"><i class="bi bi-box-seam"></i></span>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="cc-p-stat">
+                    <div>
+                        <div class="cc-p-stat-label">FILTERED PURCHASE OUTFLOW</div>
+                        <div class="cc-p-stat-value">${{ number_format($summary['spend'], 2) }}</div>
+                    </div><span class="cc-p-stat-icon"><i class="bi bi-cash-stack"></i></span>
+                </div>
+            </div>
+        </div>
+        <form method="GET" action="{{ route('purchase.index') }}" id="purchaseFilterForm">
+            @include('admin.partials.date-filter-panel', [
+                'dateFilter' => $dateFilter,
+                'dateFromField' => 'date_from',
+                'dateToField' => 'date_to',
+                'dateFilterTitle' => 'Purchase date',
+                'dateFilterHint' => 'Filter purchase records and matching totals by purchase date.',
+            ])
+            <section class="cc-p-panel secondary">
+                <div class="cc-p-panel-head"><span class="cc-p-panel-icon"><i class="bi bi-funnel"></i></span>
+                    <div>
+                        <h2 class="cc-p-panel-title">Purchase filters</h2>
+                        <p class="cc-p-panel-hint">Narrow records by product, supplier or purchase reference.</p>
+                    </div>
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-lg-3 cc-p-field"><label for="purchaseSearch">SEARCH</label><input
+                            id="purchaseSearch" type="search" name="search" value="{{ request('search') }}"
+                            class="form-control" placeholder="ID, product or supplier"></div>
+                    <div class="col-6 col-lg-2 cc-p-field"><label for="purchaseProduct">PRODUCT</label><select
+                            id="purchaseProduct" name="product_id" class="form-select">
+                            <option value="">All products</option>
+                            @foreach ($products as $product)
+                                <option value="{{ $product->product_id }}" @selected(request('product_id') == $product->product_id)>
+                                    {{ $product->product_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2 cc-p-field"><label for="purchaseSupplier">SUPPLIER</label><select
+                            id="purchaseSupplier" name="supplier_id" class="form-select">
+                            <option value="">All suppliers</option>
+                            @foreach ($suppliers as $supplier)
+                                <option value="{{ $supplier->supplier_id }}" @selected(request('supplier_id') == $supplier->supplier_id)>
+                                    {{ $supplier->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2 cc-p-field"><label for="purchaseSort">SORT</label><select id="purchaseSort"
+                            name="sort_dir" class="form-select">
+                            <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option>
+                            <option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option>
+                        </select></div>
+                    <div class="col-6 col-lg-1 cc-p-field"><label for="purchaseRows">ROWS</label><select id="purchaseRows"
+                            name="per_page" class="form-select">
+                            @foreach ([10, 15, 25, 50, 100] as $size)
+                                <option value="{{ $size }}" @selected((string) request('per_page', 15) === (string) $size)>{{ $size }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-lg-2 d-flex gap-2"><button class="cc-p-apply flex-grow-1" type="submit"><i
+                                class="bi bi-search me-1"></i> Apply</button><a href="{{ route('purchase.index') }}"
+                            class="cc-p-reset" title="Reset filters"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+                </div>
+            </section>
+        </form>
+        <section class="cc-p-table">
+            <div class="cc-p-table-head">
+                <div>
+                    <h2 class="cc-p-table-title">Purchase register</h2>
+                    <div class="cc-p-table-meta">{{ $purchases->total() }} matching records · Filtered outflow <strong
+                            class="text-success">${{ number_format($summary['spend'], 2) }}</strong></div>
+                </div><span class="badge rounded-pill text-bg-light border"><i
+                        class="bi bi-journal-check text-success me-1"></i>Stock-linked records</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>REFERENCE</th>
+                            <th>PRODUCT</th>
+                            <th>SUPPLIER</th>
+                            <th class="text-end">QTY</th>
+                            <th class="text-end">UNIT COST</th>
+                            <th class="text-end">TOTAL</th>
+                            <th>RECORDED BY</th>
+                            <th>DATE</th>
+                            <th>RECEIPT</th>
+                            <th class="text-end">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($purchases as $purchase)
+                            <tr>
+                                <td><span class="cc-p-id">#{{ $purchase->purchase_id }}</span></td>
+                                <td>
+                                    <div class="cc-p-product">{{ $purchase->product->product_name ?? 'Deleted product' }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        {{ $purchase->product?->isStockTracked() ? 'Stock item' : 'Product unavailable' }}
+                                    </div>
+                                </td>
+                                <td>{{ $purchase->supplier->name ?? 'Unknown supplier' }}</td>
+                                <td class="text-end fw-semibold">{{ number_format($purchase->quantity) }}</td>
+                                <td class="text-end">${{ number_format($purchase->cost_price, 2) }}</td>
+                                <td class="text-end cc-p-total">${{ number_format($purchase->total_cost, 2) }}</td>
+                                <td>{{ $purchase->user->name ?? '—' }}</td>
+                                <td class="text-nowrap">{{ $purchase->purchase_date?->format('d M Y') ?? '—' }}</td>
+                                <td>
+                                    @if ($purchase->receipt_path)
+                                        <a href="{{ route('purchase.receipt', $purchase->purchase_id) }}"
+                                            class="cc-p-iconbtn" title="Download purchase receipt"><i
+                                            class="bi bi-file-earmark-arrow-down"></i></a>@else<span
+                                            class="small text-muted">Not attached</span>
+                                    @endif
+                                </td>
+                                <td class="text-end text-nowrap"><a
+                                        href="{{ route('purchase.edit', $purchase->purchase_id) }}" class="cc-p-iconbtn"
+                                        title="Edit purchase"><i class="bi bi-pencil-square"></i></a>
+                                    <form action="{{ route('purchase.destroy', $purchase->purchase_id) }}" method="POST"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Reverse and remove purchase #{{ $purchase->purchase_id }}? This is allowed only when sufficient stock remains.');">
+                                        @csrf @method('DELETE')<button class="cc-p-iconbtn danger" type="submit"
+                                            title="Reverse purchase"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty<tr>
+                                <td colspan="10">
+                                    <div class="cc-p-empty"><i class="bi bi-receipt-cutoff d-block mb-2"></i>
+                                        <div class="fw-bold text-dark">No purchase records found</div>
+                                        <div class="small">Adjust the filters or record a supplier purchase.</div><a
+                                            href="{{ route('purchase.create') }}" class="cc-p-add d-inline-block mt-3"><i
+                                                class="bi bi-plus-lg me-1"></i> Record purchase</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="cc-p-pagination">
+                <div class="small text-muted">Showing
+                    {{ $purchases->firstItem() ?? 0 }}–{{ $purchases->lastItem() ?? 0 }} of {{ $purchases->total() }}
+                    records</div>{{ $purchases->onEachSide(1)->links() }}
             </div>
         </section>
-    </form>
-    <section class="cc-p-table">
-        <div class="cc-p-table-head"><div><h2 class="cc-p-table-title">Purchase register</h2><div class="cc-p-table-meta">{{ $purchases->total() }} matching records · Filtered outflow <strong class="text-success">${{ number_format($summary['spend'],2) }}</strong></div></div><span class="badge rounded-pill text-bg-light border"><i class="bi bi-journal-check text-success me-1"></i>Stock-linked records</span></div>
-        <div class="table-responsive"><table class="table align-middle"><thead><tr><th>REFERENCE</th><th>PRODUCT</th><th>SUPPLIER</th><th class="text-end">QTY</th><th class="text-end">UNIT COST</th><th class="text-end">TOTAL</th><th>RECORDED BY</th><th>DATE</th><th>RECEIPT</th><th class="text-end">ACTIONS</th></tr></thead><tbody>
-            @forelse($purchases as $purchase)
-                <tr><td><span class="cc-p-id">#{{ $purchase->purchase_id }}</span></td><td><div class="cc-p-product">{{ $purchase->product->product_name ?? 'Deleted product' }}</div><div class="small text-muted">{{ $purchase->product?->isStockTracked() ? 'Stock item' : 'Product unavailable' }}</div></td><td>{{ $purchase->supplier->name ?? 'Unknown supplier' }}</td><td class="text-end fw-semibold">{{ number_format($purchase->quantity) }}</td><td class="text-end">${{ number_format($purchase->cost_price,2) }}</td><td class="text-end cc-p-total">${{ number_format($purchase->total_cost,2) }}</td><td>{{ $purchase->user->name ?? '—' }}</td><td class="text-nowrap">{{ $purchase->purchase_date?->format('d M Y') ?? '—' }}</td><td>@if($purchase->receipt_path)<a href="{{ route('purchase.receipt', $purchase->purchase_id) }}" class="cc-p-iconbtn" title="Download purchase receipt"><i class="bi bi-file-earmark-arrow-down"></i></a>@else<span class="small text-muted">Not attached</span>@endif</td><td class="text-end text-nowrap"><a href="{{ route('purchase.edit',$purchase->purchase_id) }}" class="cc-p-iconbtn" title="Edit purchase"><i class="bi bi-pencil-square"></i></a> <form action="{{ route('purchase.destroy',$purchase->purchase_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Reverse and remove purchase #{{ $purchase->purchase_id }}? This is allowed only when sufficient stock remains.');">@csrf @method('DELETE')<button class="cc-p-iconbtn danger" type="submit" title="Reverse purchase"><i class="bi bi-arrow-counterclockwise"></i></button></form></td></tr>
-            @empty<tr><td colspan="10"><div class="cc-p-empty"><i class="bi bi-receipt-cutoff d-block mb-2"></i><div class="fw-bold text-dark">No purchase records found</div><div class="small">Adjust the filters or record a supplier purchase.</div><a href="{{ route('purchase.create') }}" class="cc-p-add d-inline-block mt-3"><i class="bi bi-plus-lg me-1"></i> Record purchase</a></div></td></tr>@endforelse
-        </tbody></table></div>
-        <div class="cc-p-pagination"><div class="small text-muted">Showing {{ $purchases->firstItem() ?? 0 }}–{{ $purchases->lastItem() ?? 0 }} of {{ $purchases->total() }} records</div>{{ $purchases->onEachSide(1)->links() }}</div>
-    </section>
-</div>
+    </div>
 @endsection

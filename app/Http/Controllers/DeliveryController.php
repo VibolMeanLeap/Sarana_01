@@ -150,6 +150,10 @@ class DeliveryController extends Controller
 
     public function edit(Delivery $delivery)
     {
+        if (strtolower((string) $delivery->status) === 'delivered') {
+            return redirect()->route('delivery.index')->with('error', 'This delivery is complete and locked. Its fulfillment record can no longer be updated.');
+        }
+
         $delivery->load(['order.customer', 'order.orderType', 'order.paymentMethod']);
         $current = strtolower((string) $delivery->status);
         $allowedStatuses = [$current => self::STATUS_LABELS[$current] ?? ucfirst(str_replace('_', ' ', $current))];
@@ -183,6 +187,12 @@ class DeliveryController extends Controller
             $order->setRelation('delivery', $lockedDelivery);
             $current = strtolower((string) $lockedDelivery->status);
             $target = $validated['status'];
+
+            if ($current === 'delivered') {
+                throw ValidationException::withMessages([
+                    'status' => 'This delivery is complete and locked. Its fulfillment record can no longer be updated.',
+                ]);
+            }
 
             $lockedDelivery->address = $validated['address'];
             $lockedDelivery->cost = $validated['cost'];
