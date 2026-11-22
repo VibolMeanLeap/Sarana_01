@@ -1,10 +1,10 @@
 # SK Coffee Aura
 
-**Coffee Shop Management System · Laravel 13 · POS · Online Ordering · Inventory · Delivery · Finance · Sales Analytics · Audit Trail · Telegram OTP · English / Khmer**
+**Coffee Shop Management System · Laravel 13 · POS · Online Ordering · Inventory · Delivery · Finance · Sales Analytics · Audit Trail · PDF Receipts & Reports · Telegram OTP · English / Khmer**
 
 SK Coffee Aura (also referred to in the repository as **Sarana 01** / **SK Coffee**) is a Laravel-based coffee shop management application. It combines a customer-facing storefront, staff point of sale (POS), order and delivery workflows, product and inventory management, purchasing, finance reports, customer service, store settings, and administrator tools.
 
-> **Project status:** This is an actively developed academic / graduation-demo project. This README was updated on **17 November 2026** to document the recent customer Telegram verification, POS correction/audit, product-sales analytics, admin navigation, and security-hardening work. Use a local or staging database and sandbox payment credentials for demonstrations. Complete the security, backup, payment, and deployment checks before using it with real customer data or payments.
+> **Project status:** This is an academic / graduation-demo project. This README was updated on **22 November 2026** to document the current storefront receipt download, item-specific POS discounts, order/report totals, audit PDF exports, finance filters, and expense-summary improvements in addition to the existing Telegram verification, delivery, inventory, backup, and security features. Use a local or staging database and sandbox payment credentials for demonstrations. Complete the security, backup, payment, and deployment checks before using it with real customer data or payments.
 
 ---
 
@@ -13,9 +13,14 @@ SK Coffee Aura (also referred to in the repository as **Sarana 01** / **SK Coffe
 - [Overview](#overview)
 - [Features](#features)
 - [Customer Telegram OTP and phone verification](#customer-telegram-otp-and-phone-verification)
+- [Customer receipt downloads](#customer-receipt-downloads)
+- [POS product-specific discounts](#pos-product-specific-discounts)
+- [Order management and report totals](#order-management-and-report-totals)
 - [POS receipt corrections and audit](#pos-receipt-corrections-and-audit)
 - [Product sales analytics](#product-sales-analytics)
 - [POS price and discount audit](#pos-price-and-discount-audit)
+- [PDF and CSV report exports](#pdf-and-csv-report-exports)
+- [Finance filters and expense totals](#finance-filters-and-expense-totals)
 - [Admin navigation and date filters](#admin-navigation-and-date-filters)
 - [Security hardening](#security-hardening)
 - [Roles and access](#roles-and-access)
@@ -63,6 +68,7 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - Delivery fee shown during checkout and on the shipping-information page.
 - Optional ABA PayWay KHQR checkout when valid merchant credentials and a reachable HTTPS callback are configured.
 - Customer order tracking with payment state, fulfillment progress, and order activity.
+- Customer-owned PDF receipt download from order tracking and order history. Receipt access is restricted to the signed-in owner of the order.
 - Review submission for eligible completed orders; new reviews remain pending until an administrator approves them.
 - Contact/enquiry form for customer questions.
 - Customer inbox for signed-in users, with automatic enquiry acknowledgement, follow-up replies, store replies, and unread indicators.
@@ -70,6 +76,9 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 ### POS and cashier workspace
 
 - POS product catalogue, category/product selection, cart, checkout, and order recording.
+- Product-specific discounts: staff select the cart line to discount, choose a quick percentage preset or enter a custom percentage, and see the saving and updated line total before applying it. The discount affects only the selected product line, not every item in the cart.
+- The discount number control changes in 5-percentage-point increments when its up/down controls are used. The custom value remains editable, subject to the configured role limit.
+- Per-item discount amounts are accumulated into the order's monetary discount total. Admin order views and report totals display the discount as a currency value (for example, `$2.00`) rather than showing a percentage as the order discount amount.
 - Cash, KHQR/PayWay, card, and Cash on Delivery (COD) payment options where configured.
 - Walk-in, takeaway, and delivery fulfillment workflows.
 - POS delivery orders collect customer and delivery information and create a linked delivery record.
@@ -77,7 +86,7 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - Cashier order queue and order-status workflow.
 - Stock-tracked products are checked and deducted according to the configured stock rules; non-stock products are not deducted from inventory.
 - POS receipt correction for eligible completed, paid, cash POS orders, with original/corrected snapshots, correction reason, staff attribution, stock reconciliation, and cash-adjustment confirmation.
-- Server-side price-override and discount permissions; cashier overrides/discounts are blocked by default, while authorized administrator adjustments require a reason and are written to the order audit history.
+- Server-side price-override and item-discount permissions; cashier overrides/discounts are blocked by default, while authorized adjustments must stay within the configured role limit. Discount/price changes require a reason where the adjustment workflow requests one and are recorded in the POS audit history.
 - Quick catalogue-product creation from POS is administrator-only after the security-hardening patch.
 
 > **Important:** Cash on Delivery is a _payment method_, not an order type. For a home-delivery COD order, choose **Order type: Delivery** and **Payment method: Cash on Delivery**. A walk-in or takeaway COD selection is not a delivery order and does not receive delivery-stage controls.
@@ -98,10 +107,12 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 - Customer enquiries inbox with conversation view, administrator replies, status handling, and private internal notes.
 - Store profile/settings, including the editable **Home delivery fee (USD)** value.
 - Review moderation and approval.
-- Income/expense and business reports, with supported CSV and print exports.
-- **Product Sales Analytics** with date presets/custom range, product/category breakdown, quantities sold, item sales subtotal, order source, staff filters, and CSV export.
-- **Order Correction Audit** showing receipt correction history, staff member, before/after receipt details, correction reason, and recorded cash adjustments.
-- **POS Price & Discount Audit** showing recorded POS price overrides and discounts, the acting staff member, reason, order reference, date, and adjustment type.
+- Income/expense and business reports, with CSV exports and print-optimized PDF reports where available.
+- **Product Sales Analytics** with date presets/custom range, product/category breakdown, quantities sold, item sales subtotal, order source, staff filters, CSV export, and a print/PDF report.
+- **Order Correction Audit** showing receipt correction history, staff member, before/after receipt details, correction reason, and recorded cash adjustments, with a readable receipt-comparison PDF layout.
+- **POS Price & Discount Audit** showing recorded POS price overrides and item discounts, the acting staff member, reason, order reference, date, and adjustment type, with a readable event-based PDF layout.
+- **Order management totals and filters:** filter POS orders by administrator/cashier, show the date immediately after Order ID in the order list, and display discount as a monetary amount. The order report places Date after Queue No and totals Subtotal, Discount, and Final Total.
+- **Sales & Expenses reporting:** filters are placed above the KPI cards; date filters drive the financial summary, while ledger filters refine the expense list. Total Expenses includes the matching inventory-purchase and operating-expense outflows.
 - Shared date-filter controls across supported reporting tabs: Today, This week, This month, All time, and a custom date range.
 - The Orders tab can filter POS orders by the administrator/cashier recorded as the order staff actor; website orders can be shown separately when no POS staff actor is attached.
 - Collapsible administrator sidebar groups for workspace, catalogue, customers/support, sales/audit, inventory/operations, and administration.
@@ -121,6 +132,32 @@ The project uses Laravel routes, controllers, middleware, Eloquent models, Blade
 
 Keep `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and `TELEGRAM_WEBHOOK_SECRET` private. The webhook must use a public HTTPS URL and the configured Telegram secret header. See [Telegram notifications and fulfillment](#telegram-notifications-and-fulfillment).
 
+### Customer receipt downloads
+
+- A signed-in customer can download a PDF receipt from the customer's order-tracking page and order history.
+- The receipt is generated for the selected order and includes its order reference, customer/order details, line items, quantities, prices, discount information, applicable delivery/payment information, and order totals supported by the saved record.
+- The receipt endpoint checks order ownership. A customer must not be able to download another customer's receipt by changing the order ID in the URL.
+- Receipt downloads do not change the order, payment status, stock, or delivery state.
+- The receipt PDF feature uses `barryvdh/laravel-dompdf`. Install dependencies from the committed `composer.lock` with `composer install`; if the package is missing from the local checkout, add the project-approved version with `composer require "barryvdh/laravel-dompdf:^3.1.2"`.
+
+### POS product-specific discounts
+
+- A discount is applied to the selected POS cart line only. Other products in the same order keep their original line prices unless they are selected and discounted separately.
+- Staff can choose a quick percentage preset or enter a custom percentage. The discount control's increment/decrement arrows use **5 percentage points per click**.
+- The discount dialog previews the selected product, original line amount, discount saving in USD, and new line total before the user confirms.
+- The permitted percentage is capped by the administrator/cashier limit configured in `config/pos.php` and the corresponding environment variables. The server validates the submitted value; hiding or disabling a browser control is not sufficient authorization.
+- A reason is collected for an authorized discount adjustment where the POS discount workflow requires it. Recorded discount events are available in the POS Price & Discount Audit when audit logging is enabled.
+- The order-level Discount displayed in the Admin Orders list and reports is the **sum of the monetary discounts applied to individual product lines**, not a percentage label. Older orders may retain legacy discount data; do not rewrite historical transactions merely to make their display match the new entry workflow.
+- Test a multi-product sale by applying a discount to one line only, then verify the other line, order discount amount, final total, receipt, and audit record.
+
+### Order management and report totals
+
+- The Admin Orders list supports filtering POS records by the administrator/cashier associated with the order. Website orders without a POS staff actor can be displayed separately where the filter provides that option.
+- The Orders list places the order date immediately after Order ID and displays the order Discount as a currency amount.
+- The order report places Date immediately after Queue No, making the queue reference and transaction date easy to scan together.
+- The order report shows aggregate **Subtotal**, **Discount**, and **Final Total** values for the selected result set. The final total follows the saved order calculation, including applicable delivery charges; a delivery fee is not a product discount.
+- Exports and totals should follow the currently selected filters and include all matching records, not only rows visible on the current paginated screen.
+
 ### POS receipt corrections and audit
 
 - The Orders tab links eligible receipts to the POS correction workspace instead of relying on a simple status-marking action.
@@ -137,14 +174,14 @@ Keep `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and `TELEGRAM_WEBHOOK_SECRET
 - The **Product Sales Analytics** page aggregates saved `order_items` quantities against their parent orders and products.
 - Date presets and a custom date range are available, with filters for product, category, order source, and staff where the data supports the filter.
 - POS orders use `orders.cashier_id` to identify the staff account recorded on the order. Website orders normally have no POS staff actor and can be filtered separately.
-- The report includes units sold, affected orders, product/category rankings, item sales value, and supported daily sales trends/CSV export.
-- The documented sales view counts paid, non-cancelled orders. Item sales subtotal is calculated from recorded item quantity and item price before order-level discount; it can differ from the final amount paid on the whole order.
+- The report includes units sold, affected orders, product/category rankings, item sales value, and supported daily sales trends with CSV and print/PDF export.
+- The documented sales view counts paid, non-cancelled orders. Item sales subtotal is calculated from recorded item quantity and item price before item-specific discounts; it can differ from the final amount paid on the whole order. Review the separate discount and final-total figures when reconciling net sales.
 - Product corrections are reflected using the currently saved order items. This is not a separate immutable snapshot of every historical product-line edit unless the correction history is consulted.
 
 ### POS price and discount audit
 
 - Authorized POS price overrides and discount events are recorded in `order_status_history` using the event types `pos_price_override` and `pos_discount_applied`.
-- The **POS Price & Discount Audit** page displays the events recorded by the POS audit handler, including order reference, staff identity, event type, timestamp, and available reason/adjustment details. It supports date, staff, and event-type filtering and CSV export where installed.
+- The **POS Price & Discount Audit** page displays the events recorded by the POS audit handler, including order reference, staff identity, event type, timestamp, and available reason/adjustment details. It supports date, staff, and event-type filtering, CSV export, and a print/PDF report. The PDF presents price overrides and discount events as readable event records rather than forcing all fields into one very wide table.
 - A price-override event is written only when the submitted selling price differs from the catalogue price. A discount event is written when a non-zero discount is applied.
 - These records are prospective: events made before the audit logging patch was installed are not automatically reconstructed or backfilled.
 - The audit history is an application audit record; it does not independently prove that physical cash was received or that a refund was paid. Reconcile cash against the cash drawer/payment records.
@@ -153,9 +190,27 @@ Keep `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and `TELEGRAM_WEBHOOK_SECRET
 
 - The administrator sidebar uses collapsible groups to organize related destinations, including Customers & Support and Sales & Audit. The current page's group is expanded/highlighted according to the installed sidebar layout.
 - Supported date-bearing admin pages use the shared date-filter panel with **Today**, **This week**, **This month**, **All time**, and custom From/To dates.
-- The Orders page uses the shared date-filter UI while retaining its order-specific filters such as status, payment, staff, source, and page size. Legacy `period` query links remain supported by the Orders date-filter update.
+- The Orders page uses the shared date-filter UI while retaining its order-specific filters such as status, payment, administrator/cashier staff, source, and page size. Legacy `period` query links remain supported by the Orders date-filter update.
+- Product Sales and Sales & Expenses place their filter panels above the KPI cards so date and ledger filters are visible before the summary figures.
 - Product, Category, Supplier, and walk-in Customer Directory lists do not receive invented date filters when their underlying schema does not provide a reliable creation timestamp.
 - The customer registration form uses a consolidated validation-feedback area to avoid showing the same validation warning in multiple places.
+
+### PDF and CSV report exports
+
+- Product Sales, Order Correction Audit, and POS Price & Discount Audit provide print-optimized report views that can be saved as PDF through the browser's Print → Save as PDF workflow where the PDF action is available.
+- The Order Correction Audit PDF uses a receipt-oriented before/after layout so original and corrected values can be compared without squeezing every field into a very wide table.
+- The POS Price & Discount Audit PDF uses readable event records. Price overrides show catalogue/charged-price details where recorded; discount events show the discount amount/percentage, staff, order reference, and reason where recorded.
+- CSV and PDF/print exports should use the active date, staff, category, product, source, event-type, and other page filters supported by that report.
+- Report totals must represent the full filtered result set, not only the current page of a paginated table.
+- Customer receipt PDFs are separate from admin report PDFs: receipts are generated for an individual customer-owned order; admin reports summarize filtered business records.
+
+### Finance filters and expense totals
+
+- Product Sales and Sales & Expenses pages place their filter panels above the KPI summary cards.
+- The Sales & Expenses date range controls the financial summary period. Search, category, sort, and page-size controls refine the displayed expense ledger where supported.
+- **Total Expenses** represents the sum of the expense categories included by the report for the selected period. In this project, the finance summary combines inventory-purchase outflows and operating expenses.
+- The expense ledger's total row and the expense PDF/CSV report total should include all matching records across pagination, not just the current page.
+- A report's Total Expenses is a cash-outflow summary. It must be interpreted separately from profit/COGS: inventory purchase cash outflow is recorded when stock is bought, while the inventory cost is recognized in COGS as the related stock is sold. Do not subtract the same purchase amount twice when calculating profit.
 
 ### Security hardening
 
@@ -208,6 +263,7 @@ Role-protected routes use Laravel authentication and the project's role/administ
 - **Frontend:** Laravel Blade, HTML, CSS, JavaScript, Bootstrap-based components, Bootstrap Icons, and SweetAlert2 notifications where included by the layout.
 - **Asset tooling:** Node.js, npm, Vite, and Tailwind CSS tooling.
 - **Database backup tooling:** PHP ZIP extension (`ZipArchive`) and MySQL/MariaDB command-line clients (`mysqldump` / `mysql`, or compatible MariaDB client binaries).
+- **PDF generation:** `barryvdh/laravel-dompdf` for customer receipt PDFs; browser print-to-PDF for the print-optimized admin reports.
 - **Payments:** ABA PayWay KHQR sandbox integration (optional and credential-dependent).
 - **Other integrations:** Google OAuth sign-in and Telegram Bot notifications/fulfillment actions (both optional).
 
@@ -218,6 +274,7 @@ Install or enable:
 - PHP 8.3 or newer with Laravel-required extensions, including PDO MySQL, OpenSSL, Mbstring, cURL, DOM, Fileinfo, JSON, XML, and Tokenizer.
 - PHP **ZIP** extension for backup creation and restore (`ZipArchive`).
 - Composer 2.
+- `barryvdh/laravel-dompdf` as declared in the project's Composer dependencies for downloadable customer receipts.
 - MariaDB 10.4+ (recommended for the supplied SQL scripts).
 - `mysqldump` and `mysql` command-line tools (or MariaDB-compatible equivalents) available to the PHP process for backup and restore.
 - Node.js and npm for frontend asset installation/builds.
@@ -255,6 +312,12 @@ cd <your-project-folder>
 
 ```bash
 composer install
+```
+
+The receipt-download feature requires `barryvdh/laravel-dompdf`. It should be listed in `composer.json` and `composer.lock`. If you are updating an older checkout that does not yet include it, install the project-approved version:
+
+```bash
+composer require "barryvdh/laravel-dompdf:^3.1.2"
 ```
 
 ### 3. Create the local environment file
@@ -334,7 +397,14 @@ The repository contains historical Laravel migrations that do not fully represen
 
 4. `database/02_audit_stock_balance.sql` is a **read-only audit query**, not a schema upgrade. Run it separately when you want to compare product quantities with recorded stock movements. It does not repair or change stock.
 5. Apply scripts 12–14 only when those files are present in the checkout and have not already been applied. They belong to the Telegram OTP/customer-account upgrade series; back up first and inspect the SQL before running it on an existing database.
-6. Run `php artisan optimize:clear` after applying schema updates.
+6. If the item-specific POS discount migration is present in the checkout and has not already been applied, run it once after backing up the database:
+
+   ```powershell
+   php artisan migrate --path=database/migrations/2026_11_22_000001_add_item_specific_pos_discounts.php
+   ```
+
+   This migration is additive. Do not run it again manually after Laravel has recorded it as applied.
+7. Run `php artisan optimize:clear` after applying schema updates.
 
 The delivery-fee upgrade also has a Laravel migration at `database/migrations/2026_11_09_000001_add_delivery_fee_to_settings_table.php` for installations with a healthy migration history. Use **either** the SQL script `11_admin_delivery_fee_settings.sql` or that migration; do not apply both. For this project's SQL-first setup, the SQL script is the recommended method.
 
@@ -442,7 +512,7 @@ POS_ADMIN_MAX_DISCOUNT_PERCENT=30
 POS_CASHIER_MAX_DISCOUNT_PERCENT=0
 ```
 
-After changing these values, run `php artisan optimize:clear`. Administrator price overrides and discounts must include a reason and are recorded in POS audit history when the installed audit handler processes the sale.
+After changing these values, run `php artisan optimize:clear`. Administrator price overrides and discounts must include a reason and are recorded in POS audit history when the installed audit handler processes the sale. The POS discount selector offers quick percentage choices and a custom value; its up/down controls change the percentage in 5-point steps. The server applies the configured maximum regardless of the value submitted by the browser.
 
 ### Backup and restore settings
 
@@ -742,6 +812,7 @@ The database remains the source of truth. Notifications are a convenience layer;
 - Sales revenue is derived from paid POS/website orders.
 - Manual finance entries are intended for non-sale expenses (for example utilities, rent, maintenance, or operating supplies). Do not enter a paid order as manual income as well.
 - Inventory purchases are cash outflows; inventory cost is recognized as COGS when items are sold. Do not subtract the same purchase cost again from profit.
+- The Sales & Expenses **Total Expenses** summary combines inventory-purchase outflows and operating-expense entries for the selected reporting period. Treat this cash-outflow total separately from COGS/profit calculations to avoid counting the same inventory cost twice.
 - Historical cost backfills may be estimates where sale-time unit cost was not recorded originally.
 
 ## Useful routes
@@ -771,6 +842,7 @@ Exact route definitions are in `routes/web.php`. Main paths include:
 | Customer inbox          | `/store/inbox`                         | Customer                                 |
 | Customer checkout       | `/store/checkout`                      | Customer                                 |
 | Customer order tracking | `/store/orders/{orderId}`              | Owner customer account                   |
+| Customer receipt download | Named route `web.orders.receipt` (check its URI with the command below) | Owner customer account |
 | PayWay callback         | `POST /store/payments/payway/callback` | Provider callback                        |
 | Telegram webhook        | `POST /telegram/webhook`               | Telegram secret + configured user checks |
 | Admin orders            | `/admin/orders`                        | Administrator                            |
@@ -786,6 +858,8 @@ Exact route definitions are in `routes/web.php`. Main paths include:
 | Backup & restore        | `/admin/backups`                       | Administrator                            |
 
 Use the application navigation where possible; some legacy route names/paths are retained for compatibility. Legacy GET requests under `/web` redirect to the canonical `/store` storefront path.
+
+To inspect the exact registered receipt-download URI and middleware in your checkout, run `php artisan route:list --name=web.orders.receipt`.
 
 ## Run and test
 
@@ -827,6 +901,17 @@ php artisan test
 - [ ] Archiving a customer account releases the intended phone/Telegram identity while preserving customer/order history and reserving the email as documented.
 - [ ] Product browsing, cart updates, and checkout work.
 - [ ] Website and POS orders save the correct items, totals, source, and payment state.
+- [ ] A customer can download a PDF receipt for their own order from order tracking/order history, and cannot access another customer's receipt by changing the order ID.
+- [ ] POS item discounts affect only the selected cart line; undiscounted products retain their original line totals.
+- [ ] POS discount selector presets/custom values work, and spinner arrows change the percentage by exactly 5 points per click.
+- [ ] Discount limits and required reasons are enforced server-side for the configured staff role.
+- [ ] Admin Orders shows the order discount as a currency amount, places the date after Order ID, and filters POS orders by administrator/cashier where supported.
+- [ ] Order reports place Date after Queue No and show matching-result totals for Subtotal, Discount, and Final Total.
+- [ ] Product Sales, Order Correction Audit, and POS Price & Discount Audit PDF/print exports are readable and respect their active filters.
+- [ ] Receipt Correction PDF compares the original and corrected receipt clearly; POS Price & Discount Audit PDF displays price and discount events as readable records.
+- [ ] Product Sales and Sales & Expenses filter panels appear above KPI cards.
+- [ ] Sales & Expenses Total Expenses matches the full filtered sum of inventory-purchase and operating-expense records, including records on other pagination pages.
+- [ ] Expense PDF/CSV totals match the full filtered expense ledger.
 - [ ] KHQR is marked paid only after server-side PayWay verification.
 - [ ] POS Delivery + COD appears in Admin → Orders and remains unpaid until final cash handoff.
 - [ ] Eligible completed POS cash receipts open the POS correction workflow; ineligible orders display the correct reason.
@@ -934,7 +1019,7 @@ Suggested publish workflow (change `main` if your default branch is different):
 ```bash
 git fetch origin
 git pull --rebase origin main
-git commit -m "Update backup restore and Khmer localization"
+git commit -m "Update SK Coffee Aura README and recent POS/report features"
 git push origin HEAD
 ```
 
@@ -1054,8 +1139,9 @@ Run the read-only query in `database/02_audit_stock_balance.sql`, review the rel
 - Historical COGS may be approximate where sale-time unit cost was not originally recorded.
 - AJAX updates use timed polling, not WebSockets or guaranteed push delivery. The database is authoritative; a badge/toast is not a durable message queue.
 - The browser-side Khmer translator translates approved exact UI strings. It is not a general-purpose translator for all arbitrary/dynamic content; newly added UI phrases must be merged into both `lang/km.json` and `public/assets/lang/km-ui.json` where appropriate.
-- Product Sales Analytics uses the currently saved order items and item-price subtotal before order-level discounts; it can differ from net amount collected. Historical item edits are not necessarily reconstructed as a line-by-line time series.
+- Product Sales Analytics uses the currently saved order items and item-price subtotal before item-specific discounts; it can differ from net amount collected. Historical item edits are not necessarily reconstructed as a line-by-line time series.
 - Order Correction Audit and POS Price & Discount Audit can only display events that the relevant audit handlers actually recorded. Legacy activity that was never logged cannot be recreated reliably.
+- Item-specific discount entry is the current POS workflow. Older orders may contain legacy discount data in the earlier order-level format; preserve those historical totals and verify them when comparing old and new reports.
 - POS receipt correction is intentionally restricted to eligible order/payment/stock states. Website, external-payment, delivery, ledger-linked, unpaid, or unverifiable orders may require their own workflow rather than direct POS receipt correction.
 - The POS Price & Discount Audit is an application audit trail, not independent proof of physical cash collection or refund payment. Reconcile with cash and provider records.
 - The recent upload and POS authorization hardening patch does not by itself complete the outstanding CSV-export, payment-throttling, trusted-proxy, or dependency-audit work listed above.
@@ -1063,7 +1149,7 @@ Run the read-only query in `database/02_audit_stock_balance.sql`, review the rel
 - A failed database import may partially change the target database; use the `pre_restore` safety archive to recover.
 - Telegram and ABA PayWay require valid external configuration and reachable HTTPS endpoints for callbacks/webhooks.
 - PayWay is documented for sandbox testing unless production credentials, callback URL, and provider approval are separately configured.
-- CSV exports are spreadsheet-compatible CSV rather than native `.xlsx`; print/PDF reports use the browser's print-to-PDF function where implemented.
+- CSV exports are spreadsheet-compatible CSV rather than native `.xlsx`. Admin report PDFs use the browser's print-to-PDF workflow where implemented; customer order receipts are generated as downloadable PDF files through the configured PDF renderer.
 - A production deployment still needs environment hardening, HTTPS, least-privilege database credentials, off-site backups, monitoring, secure mail configuration, and end-to-end transaction testing.
 
 ## Contributing
