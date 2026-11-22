@@ -36,7 +36,19 @@
 </style>
 <section class="order-track-page">
     <div class="container" style="max-width:1000px">
-        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4"><div><div class="small fw-bold text-success text-uppercase mb-2" style="letter-spacing:.14em">Order tracking</div><h1 class="display-6 order-track-title mb-1">Order #{{ $order->order_id }}</h1><p class="text-muted mb-0">Placed {{ optional($order->order_date)->format('d M Y, h:i A') }}</p></div><a href="{{ route('web.shop') }}" class="btn btn-outline-success rounded-pill px-4">Continue shopping</a></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+            <div>
+                <div class="small fw-bold text-success text-uppercase mb-2" style="letter-spacing:.14em">Order tracking</div>
+                <h1 class="display-6 order-track-title mb-1">Order #{{ $order->order_id }}</h1>
+                <p class="text-muted mb-0">Placed {{ optional($order->order_date)->format('d M Y, h:i A') }}</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('web.orders.receipt', $order->order_id) }}" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Download receipt
+                </a>
+                <a href="{{ route('web.shop') }}" class="btn btn-outline-success rounded-pill px-4">Continue shopping</a>
+            </div>
+        </div>
         @include('admin.message.message')
         @if($errors->any())<div class="alert alert-danger rounded-4"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
         <div class="row g-4">

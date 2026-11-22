@@ -18,6 +18,7 @@ use App\Models\Settings;
 use App\Models\StockLog;
 use App\Services\PayWayService;
 use App\Support\StoreDeliveryFee;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -449,6 +450,29 @@ class CustomerOrderController extends Controller
         $payment = $order->payments->sortByDesc('id')->first();
 
         return view('website.order', compact('order', 'payment'));
+    }
+
+    /** Download a receipt for the authenticated customer's own order only. */
+    public function downloadReceipt(int $orderId)
+    {
+        // Reuse the same ownership scope as the order-tracking page. A customer
+        // cannot download another customer's receipt by changing the URL ID.
+        $order = $this->ownedOrder($orderId)->with([
+            'customer', 'orderItems.product', 'orderType', 'paymentMethod',
+            'delivery', 'payments',
+        ])->firstOrFail();
+
+        $payment = $order->payments->sortByDesc('id')->first();
+        $shopSettings = app('shop.settings');
+
+        $pdf = Pdf::loadView('website.receipt', compact('order', 'payment', 'shopSettings'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'defaultFont' => 'DejaVu Sans',
+                'isRemoteEnabled' => false,
+            ]);
+
+        return $pdf->download('SK-Coffee-order-'.$order->order_id.'-receipt.pdf');
     }
 
     public function orderStatus(int $orderId): JsonResponse

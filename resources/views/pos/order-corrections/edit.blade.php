@@ -144,23 +144,16 @@
                 </div>
 
                 <div class="correction-soft p-2 mb-3">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-12 col-lg-8">
-                            <label for="customer_id" class="form-label fw-semibold small">Customer</label>
-                            <select name="customer_id" id="customer_id" class="form-select">
-                                <option value="">Walk-in / no linked customer</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->customer_id }}" @selected((string) old('customer_id', $order->customer_id) === (string) $customer->customer_id)>
-                                        {{ $customer->name }}{{ $customer->phone ? ' · '.$customer->phone : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12 col-lg-4">
-                            <label for="discount" class="form-label fw-semibold small">Discount (%)</label>
-                            <input type="number" name="discount" id="discount" class="form-control" min="0" max="100" step="5" value="{{ old('discount', $order->discount) }}" required>
-                        </div>
-                    </div>
+                    <label for="customer_id" class="form-label fw-semibold small">Customer</label>
+                    <select name="customer_id" id="customer_id" class="form-select">
+                        <option value="">Walk-in / no linked customer</option>
+                        @foreach($customers as $customer)
+                            <option value="{{ $customer->customer_id }}" @selected((string) old('customer_id', $order->customer_id) === (string) $customer->customer_id)>
+                                {{ $customer->name }}{{ $customer->phone ? ' · '.$customer->phone : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="small text-muted mt-2">Discounts are applied to individual product lines only. Unselected products keep their full price.</div>
                 </div>
 
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
@@ -178,6 +171,8 @@
                                 <th style="min-width:220px">Product</th>
                                 <th style="width:105px">Quantity</th>
                                 <th style="width:135px">Unit price (USD)</th>
+                                <th style="width:115px">Discount (%)</th>
+                                <th class="text-end" style="width:115px">Discount value</th>
                                 <th class="text-end" style="width:115px">Line total</th>
                                 <th style="width:48px"></th>
                             </tr>
@@ -196,6 +191,8 @@
                                     </td>
                                     <td><input type="number" class="form-control correction-quantity" name="items[{{ $index }}][quantity]" min="1" max="1000" step="1" value="{{ $item['quantity'] ?? 1 }}" required></td>
                                     <td><input type="number" class="form-control correction-price" name="items[{{ $index }}][unit_price]" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_price'] ?? $item['price'] ?? 0 }}" required></td>
+                                    <td><input type="number" class="form-control correction-discount" name="items[{{ $index }}][discount_percent]" min="0" max="{{ $maxDiscountPercent }}" step="0.01" value="{{ $item['discount_percent'] ?? 0 }}" required></td>
+                                    <td class="text-end text-danger correction-line-discount-value">$0.00</td>
                                     <td class="text-end fw-bold correction-line-total">$0.00</td>
                                     <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-correction-item" aria-label="Remove product line"><i class="bi bi-trash"></i></button></td>
                                 </tr>
@@ -207,7 +204,7 @@
                 <div class="d-flex justify-content-end">
                     <div class="correction-soft p-2" style="min-width:min(100%,300px)">
                         <div class="d-flex justify-content-between mb-2"><span class="text-muted">New subtotal</span><strong id="correctionSubtotal">$0.00</strong></div>
-                        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Discount</span><strong id="correctionDiscount">$0.00</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Total discount value</span><strong id="correctionDiscount">$0.00</strong></div>
                         <div class="d-flex justify-content-between border-top pt-2"><span class="fw-bold">Corrected total</span><strong class="fs-5 text-success" id="correctionFinalTotal">$0.00</strong></div>
                         <div class="small text-muted mt-1">Current recorded total: ${{ number_format((float) $order->final_price, 2) }}</div>
                         <div id="correctionDifference" class="small fw-bold mt-2"></div>
@@ -291,19 +288,20 @@
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-sm mb-2">
-                                        <thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Price</th></tr></thead>
+                                        <thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Price</th><th class="text-end">Discount</th></tr></thead>
                                         <tbody>
                                             @foreach(data_get($correction->before_snapshot, 'items', []) as $line)
                                                 <tr>
                                                     <td>{{ $line['product_name'] ?? 'Product' }}</td>
                                                     <td class="text-end">{{ $line['quantity'] ?? 0 }}</td>
                                                     <td class="text-end">${{ number_format((float) ($line['unit_price'] ?? 0), 2) }}</td>
+                                                    <td class="text-end">{{ (float) ($line['discount_amount'] ?? 0) > 0 ? '−$'.number_format((float) $line['discount_amount'], 2) : '—' }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="small text-muted">Discount: {{ number_format((float) data_get($correction->before_snapshot, 'discount_percent', 0), 2) }}%</div>
+                                <div class="small text-muted">Discount value: ${{ number_format((float) data_get($correction->before_snapshot, 'discount_amount', ((float) data_get($correction->before_snapshot, 'total_amount', 0) * (float) data_get($correction->before_snapshot, 'discount_percent', 0) / 100)), 2) }}</div>
                             </div>
                         </div>
                         <div class="col-12 col-xl-6">
@@ -315,19 +313,20 @@
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-sm mb-2">
-                                        <thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Price</th></tr></thead>
+                                        <thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Price</th><th class="text-end">Discount</th></tr></thead>
                                         <tbody>
                                             @foreach(data_get($correction->after_snapshot, 'items', []) as $line)
                                                 <tr>
                                                     <td>{{ $line['product_name'] ?? 'Product' }}</td>
                                                     <td class="text-end">{{ $line['quantity'] ?? 0 }}</td>
                                                     <td class="text-end">${{ number_format((float) ($line['unit_price'] ?? 0), 2) }}</td>
+                                                    <td class="text-end">{{ (float) ($line['discount_amount'] ?? 0) > 0 ? '−$'.number_format((float) $line['discount_amount'], 2) : '—' }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="small text-muted">Discount: {{ number_format((float) data_get($correction->after_snapshot, 'discount_percent', 0), 2) }}%</div>
+                                <div class="small text-muted">Discount value: ${{ number_format((float) data_get($correction->after_snapshot, 'discount_amount', ((float) data_get($correction->after_snapshot, 'total_amount', 0) * (float) data_get($correction->after_snapshot, 'discount_percent', 0) / 100)), 2) }}</div>
                             </div>
                         </div>
                     </div>
@@ -350,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const products = @json($productOptions);
     const currentTotal = {{ json_encode((float) $order->final_price) }};
-    const discountInput = document.getElementById('discount');
+    const maximumDiscountPercent = {{ json_encode((float) $maxDiscountPercent) }};
     const saveButton = document.getElementById('saveCorrectionBtn');
     let rowIndex = body.querySelectorAll('tr').length;
 
@@ -358,18 +357,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function refreshTotals() {
         let subtotal = 0;
+        let discountAmount = 0;
         body.querySelectorAll('tr').forEach(row => {
             const quantity = Math.max(0, Number(row.querySelector('.correction-quantity')?.value || 0));
             const price = Math.max(0, Number(row.querySelector('.correction-price')?.value || 0));
-            const line = quantity * price;
-            subtotal += line;
+            const lineSubtotal = Math.round((quantity * price + Number.EPSILON) * 100) / 100;
+            const discountInput = row.querySelector('.correction-discount');
+            const discountPercent = Math.min(maximumDiscountPercent, Math.max(0, Number(discountInput?.value || 0)));
+            const lineDiscount = Math.round((lineSubtotal * discountPercent / 100 + Number.EPSILON) * 100) / 100;
+            const lineTotal = Math.max(0, Math.round((lineSubtotal - lineDiscount + Number.EPSILON) * 100) / 100);
+            subtotal += lineSubtotal;
+            discountAmount += lineDiscount;
+            const discountCell = row.querySelector('.correction-line-discount-value');
+            if (discountCell) discountCell.textContent = money(lineDiscount);
             const lineCell = row.querySelector('.correction-line-total');
-            if (lineCell) lineCell.textContent = money(line);
+            if (lineCell) lineCell.textContent = money(lineTotal);
         });
 
-        const discountPercent = Math.min(100, Math.max(0, Number(discountInput?.value || 0)));
-        const discountAmount = subtotal * discountPercent / 100;
-        const finalTotal = Math.max(0, subtotal - discountAmount);
+        subtotal = Math.round((subtotal + Number.EPSILON) * 100) / 100;
+        discountAmount = Math.round((discountAmount + Number.EPSILON) * 100) / 100;
+        const finalTotal = Math.max(0, Math.round((subtotal - discountAmount + Number.EPSILON) * 100) / 100);
         const difference = finalTotal - currentTotal;
 
         document.getElementById('correctionSubtotal').textContent = money(subtotal);
@@ -397,6 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><select class="form-select correction-product" name="items[${index}][product_id]" required></select></td>
             <td><input type="number" class="form-control correction-quantity" name="items[${index}][quantity]" min="1" max="1000" step="1" value="${Number(item.quantity || 1)}" required></td>
             <td><input type="number" class="form-control correction-price" name="items[${index}][unit_price]" min="0" max="99999999.99" step="0.01" value="${Number(item.unit_price ?? item.price ?? 0).toFixed(2)}" required></td>
+            <td><input type="number" class="form-control correction-discount" name="items[${index}][discount_percent]" min="0" max="${maximumDiscountPercent}" step="0.01" value="${Number(item.discount_percent || 0).toFixed(2)}" required></td>
+            <td class="text-end text-danger correction-line-discount-value">$0.00</td>
             <td class="text-end fw-bold correction-line-total">$0.00</td>
             <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-correction-item" aria-label="Remove product line"><i class="bi bi-trash"></i></button></td>
         `;
@@ -434,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('addCorrectionItem')?.addEventListener('click', () => addRow());
-    discountInput?.addEventListener('input', refreshTotals);
     body.querySelectorAll('input').forEach(input => input.addEventListener('input', refreshTotals));
     body.querySelectorAll('.correction-product').forEach(select => select.addEventListener('change', () => {
         const selected = select.selectedOptions[0];

@@ -28,6 +28,8 @@ class OrderController extends Controller
             'order_status' => ['nullable', 'in:pending,confirmed,preparing,ready,out_for_delivery,completed,cancelled'],
             'source' => ['nullable', 'in:pos,website'],
             'review_status' => ['nullable', 'in:open,clear'],
+            'staff_role' => ['nullable', 'in:admin,cashier'],
+            'staff_id' => ['nullable', 'integer', 'exists:users,user_id'],
             'date_preset' => ['nullable', 'in:today,week,month,all,custom'],
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
@@ -39,7 +41,7 @@ class OrderController extends Controller
         ]);
 
         $query = Order::query()
-            ->with(['customer', 'cashier', 'orderType', 'paymentMethod', 'payments', 'delivery', 'orderItems.product', 'statusHistory', 'reviewFlags.relatedOrder'])
+            ->with(['customer', 'cashier.role', 'orderType', 'paymentMethod', 'payments', 'delivery', 'orderItems.product', 'statusHistory', 'reviewFlags.relatedOrder'])
             ->withCount(['orderItems', 'payments', 'delivery', 'review', 'cashTransactions', 'openReviewFlags', 'corrections'])
             ->withExists([
                 'corrections as has_pending_correction_adjustment' => fn ($correctionQuery) =>
@@ -77,6 +79,15 @@ class OrderController extends Controller
         if (! empty($validated['source'])) {
             $query->where('order_source', $validated['source']);
         }
+        if (! empty($validated['staff_role'])) {
+            $staffRole = $validated['staff_role'];
+            $query->whereHas('cashier.role', function ($roleQuery) use ($staffRole) {
+                $roleQuery->whereRaw('LOWER(role_name) = ?', [$staffRole]);
+            });
+        }
+        if (! empty($validated['staff_id'])) {
+            $query->where('cashier_id', (int) $validated['staff_id']);
+        }
         if (($validated['review_status'] ?? null) === 'open') {
             $query->whereHas('openReviewFlags');
         } elseif (($validated['review_status'] ?? null) === 'clear') {
@@ -100,6 +111,10 @@ class OrderController extends Controller
         // These totals are calculated before pagination so the table footer
         // represents every record matching the active filters, not this page.
         $filteredOrderCount = (clone $query)->count();
+        $filteredSubtotalTotal = (float) (clone $query)->sum(DB::raw('COALESCE(total_amount, 0)'));
+        $filteredDiscountTotal = (float) (clone $query)->sum(DB::raw(
+            'COALESCE(discount_amount, ROUND(COALESCE(total_amount, 0) * COALESCE(discount, 0) / 100, 2), 0)'
+        ));
         $filteredFinalTotal = (float) (clone $query)->sum(DB::raw('COALESCE(final_price, total_amount, 0)'));
 
         $orders = $query->orderBy($sortBy, $sortDirection)
@@ -143,6 +158,8 @@ class OrderController extends Controller
                 'pagination_html' => view('admin.partials.orders-pagination', compact('orders'))->render(),
                 'summary' => $summary,
                 'filtered_order_count' => $filteredOrderCount,
+                'filtered_subtotal_total' => $filteredSubtotalTotal,
+                'filtered_discount_total' => $filteredDiscountTotal,
                 'filtered_final_total' => $filteredFinalTotal,
                 'action_counts' => app(AdminActionCountService::class)->get(),
                 'latest_order_id' => (int) (Order::max('order_id') ?? 0),
@@ -150,7 +167,18 @@ class OrderController extends Controller
             ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
         }
 
-        return view('admin.older', compact('orders', 'summary', 'filteredOrderCount', 'filteredFinalTotal', 'perPage', 'dateFilter'));
+        $staffMembers = User::query()
+            ->with('role')
+            ->whereHas('role', function ($roleQuery) {
+                $roleQuery->whereRaw("LOWER(role_name) IN ('admin', 'cashier')");
+            })
+            ->orderBy('name')
+            ->get(['user_id', 'name', 'role_id']);
+
+        return view('admin.older', compact(
+            'orders', 'summary', 'filteredOrderCount', 'filteredSubtotalTotal',
+            'filteredDiscountTotal', 'filteredFinalTotal', 'perPage', 'dateFilter', 'staffMembers'
+        ));
     }
 
     /**
@@ -339,14 +367,15 @@ class OrderController extends Controller
             'order_type_id' => 'required|exists:order_type,order_type_id',
             'payment_method_id' => 'nullable|exists:payment_method,payment_method_id',
             'total_amount' => 'required|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $discount = (float) ($validated['discount'] ?? 0);
-        $totalAmount = (float) $validated['total_amount'];
+        $totalAmount = round((float) $validated['total_amount'], 2);
         $validated['cashier_id'] = auth()->id();
-        $validated['discount'] = $discount;
-        $validated['final_price'] = round($totalAmount * (1 - ($discount / 100)), 2);
+        // Manual order shells do not contain item lines, so they cannot carry
+        // a product-specific discount. Apply discounts only through POS lines.
+        $validated['discount'] = 0;
+        $validated['discount_amount'] = 0;
+        $validated['final_price'] = $totalAmount;
         $validated['is_paid'] = false;
         $validated['payment_status'] = 'Unpaid';
         $validated['order_status'] = 'pending';
@@ -389,13 +418,14 @@ class OrderController extends Controller
             'order_type_id' => 'required|exists:order_type,order_type_id',
             'payment_method_id' => 'nullable|exists:payment_method,payment_method_id',
             'total_amount' => 'required|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $discount = (float) ($validated['discount'] ?? 0);
-        $totalAmount = (float) $validated['total_amount'];
-        $validated['discount'] = $discount;
-        $validated['final_price'] = round($totalAmount * (1 - ($discount / 100)), 2);
+        $totalAmount = round((float) $validated['total_amount'], 2);
+        // Admin draft edits cannot apply a ticket-wide discount. Product
+        // discounts must be assigned to selected product lines in the POS.
+        $validated['discount'] = 0;
+        $validated['discount_amount'] = 0;
+        $validated['final_price'] = $totalAmount;
         $validated['is_paid'] = false;
         $validated['payment_status'] = 'Unpaid';
 

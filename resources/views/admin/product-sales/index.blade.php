@@ -16,6 +16,8 @@
     .ps-product-thumb{width:43px;height:43px;border-radius:11px;object-fit:cover;background:#f1f5f2;border:1px solid #edf1ee}
     .ps-table thead th{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#849088;font-weight:850;border-bottom:1px solid #e9efeb;white-space:nowrap}
     .ps-table tbody td{padding-top:12px;padding-bottom:12px;border-color:#f0f3f1;vertical-align:middle}
+    .ps-filter-shell{padding:14px;border:1px solid #e5ede7;border-radius:18px;background:#fff;box-shadow:0 5px 18px rgba(24,65,42,.035)}
+    .ps-filter-shell-title{display:flex;align-items:center;gap:9px;font-weight:850;color:#263b30;margin:0 0 12px;font-size:13px}
     .ps-filter-label{font-size:10px;font-weight:850;color:#77827b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
     .ps-filter-select,.ps-filter-input{min-height:39px;border-color:#e1e9e3;border-radius:10px;font-size:12px}
     .ps-muted{color:#7b8980}
@@ -32,19 +34,24 @@
         <a href="{{ route('admin.product-sales.csv', request()->query()) }}" class="btn btn-outline-success">
             <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
         </a>
+        <a href="{{ route('admin.product-sales.pdf', request()->query()) }}" class="btn btn-outline-danger" target="_blank" rel="noopener">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+        </a>
     </div>
 </div>
 
 <form method="GET" action="{{ route('admin.product-sales.index') }}" class="mb-4">
-    @include('admin.partials.date-filter-panel', [
-        'dateFilter' => $filters['date_filter'],
-        'dateFromField' => 'start_date',
-        'dateToField' => 'end_date',
-        'dateFilterTitle' => 'Sales date range',
-        'dateFilterHint' => 'Quickly compare today, this week, this month, or all paid product sales. Dates use the order date.',
-    ])
+    <div class="ps-filter-shell">
+        <div class="ps-filter-shell-title"><i class="bi bi-funnel-fill text-success"></i>Filter product sales</div>
+        @include('admin.partials.date-filter-panel', [
+            'dateFilter' => $filters['date_filter'],
+            'dateFromField' => 'start_date',
+            'dateToField' => 'end_date',
+            'dateFilterTitle' => 'Sales date range',
+            'dateFilterHint' => 'Quickly compare today, this week, this month, or all paid product sales. Dates use the order date.',
+        ])
 
-    <section class="card border-0 shadow-sm rounded-4">
+        <section class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                 <div class="fw-bold"><i class="bi bi-funnel me-2 text-success"></i>Product filters</div>
@@ -91,7 +98,8 @@
             </div>
             <div class="small text-muted mt-3"><i class="bi bi-info-circle me-1"></i>Sales analytics include paid, non-cancelled orders only. Unpaid orders and cancelled orders are excluded.</div>
         </div>
-    </section>
+        </section>
+    </div>
 </form>
 
 <div class="ps-hero mb-4">

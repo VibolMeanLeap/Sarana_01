@@ -22,6 +22,7 @@ class Order extends Model
         'waiting_num',
         'total_amount',
         'discount',
+        'discount_amount',
         'final_price',
         'exchange_rate',
         'payment_method_id',
@@ -41,7 +42,8 @@ class Order extends Model
     protected $casts = [
         'is_paid' => 'boolean',
         'total_amount' => 'decimal:2',
-        'discount' => 'decimal:2',
+        'discount' => 'decimal:6',
+        'discount_amount' => 'decimal:2',
         'final_price' => 'decimal:2',
         'exchange_rate' => 'decimal:4',
         'order_date' => 'datetime',

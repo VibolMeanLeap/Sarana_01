@@ -143,6 +143,92 @@ class PosPriceDiscountAuditController extends Controller
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    /** Render a dedicated event-by-event price and discount audit report. */
+    public function pdf(Request $request)
+    {
+        $filters = $this->validatedFilters($request);
+        $events = $this->filteredQuery($filters)
+            ->select('h.*')
+            ->orderByDesc('h.created_at')
+            ->orderByDesc('h.history_id')
+            ->get();
+
+        $priceEvents = 0;
+        $discountEvents = 0;
+        $discountTotal = 0.0;
+        $priceOverrideNetChange = 0.0;
+        $records = $events->map(function (object $event) use (&$priceEvents, &$discountEvents, &$discountTotal, &$priceOverrideNetChange): array {
+            $payload = json_decode((string) ($event->note ?? ''), true);
+            $payload = is_array($payload) ? $payload : [];
+            $isPrice = $event->event_type === self::PRICE_EVENT;
+            $cataloguePrice = $isPrice ? (float) ($payload['catalogue_unit_price'] ?? 0) : null;
+            $chargedPrice = $isPrice ? (float) ($payload['charged_unit_price'] ?? 0) : null;
+            $quantity = $isPrice ? (int) ($payload['quantity'] ?? 0) : null;
+            $unitDifference = $isPrice ? round($chargedPrice - $cataloguePrice, 2) : null;
+            $totalDifference = $isPrice ? round($unitDifference * $quantity, 2) : null;
+            $discountPercent = ! $isPrice ? (float) ($payload['discount_percent'] ?? 0) : null;
+            $discountAmount = ! $isPrice ? (float) ($payload['discount_amount'] ?? 0) : null;
+
+            if ($isPrice) {
+                $priceEvents++;
+                $priceOverrideNetChange += (float) $totalDifference;
+            } else {
+                $discountEvents++;
+                $discountTotal += (float) $discountAmount;
+            }
+
+            return [
+                'id' => (int) $event->history_id,
+                'order_id' => (int) $event->order_id,
+                'created_at' => \Illuminate\Support\Carbon::parse($event->created_at)->format('d M Y · h:i A'),
+                'staff' => $event->actor_label ?: ($event->actor_id ? 'Staff #'.$event->actor_id : 'Unknown staff'),
+                'type' => $isPrice ? 'Price override' : 'Discount applied',
+                'is_price' => $isPrice,
+                'product_name' => trim((string) ($payload['product_name'] ?? 'Product')) ?: 'Product',
+                'product_id' => $payload['product_id'] ?? '—',
+                'quantity' => $quantity,
+                'catalogue_price' => $cataloguePrice,
+                'charged_price' => $chargedPrice,
+                'unit_difference' => $unitDifference,
+                'total_difference' => $totalDifference,
+                'discount_percent' => $discountPercent,
+                'discount_amount' => $discountAmount,
+                'reason' => trim((string) ($payload['reason'] ?? '')) ?: 'No reason recorded',
+            ];
+        })->values();
+
+        $staffLabel = $filters['staff_id']
+            ? (User::query()->where('user_id', $filters['staff_id'])->value('name') ?: 'Staff #'.$filters['staff_id'])
+            : 'All staff';
+        $dateLabel = ($filters['date']['from'] || $filters['date']['to'])
+            ? (($filters['date']['from'] ?: 'Beginning').' to '.($filters['date']['to'] ?: 'Today'))
+            : 'All dates';
+        $filterSummary = collect([
+            'Date: '.$dateLabel,
+            'Staff: '.$staffLabel,
+            $filters['event_type'] ? 'Event: '.($filters['event_type'] === 'price_override' ? 'Price overrides' : 'Discounts') : 'All adjustment types',
+            $filters['search'] !== '' ? 'Search: '.$filters['search'] : null,
+        ])->filter()->implode(' · ');
+
+        return view('admin.exports.audit-print', [
+            'reportType' => 'price_discount',
+            'title' => 'POS Price & Discount Audit',
+            'records' => $records,
+            'totalRows' => $records->count(),
+            'summaryItems' => [
+                'Audit events' => number_format($events->count()),
+                'Receipts affected' => number_format($events->pluck('order_id')->unique()->count()),
+                'Price override events' => number_format($priceEvents),
+                'Net price difference' => ($priceOverrideNetChange > 0 ? '+' : '').'$'.number_format($priceOverrideNetChange, 2),
+                'Discount events' => number_format($discountEvents),
+                'Discount total' => '$'.number_format($discountTotal, 2),
+            ],
+            'generatedAt' => now(),
+            'filterSummary' => $filterSummary ?: 'All POS price and discount audit events',
+            'shopSettings' => app('shop.settings'),
+        ]);
+    }
+
     private function validatedFilters(Request $request): array
     {
         $validated = $request->validate([

@@ -141,8 +141,14 @@
                                             <span class="small text-muted">After completion</span>
                                         @endif
                                     </td>
-                                    <td><a href="{{ route('web.orders.show', $order->order_id) }}"
-                                            class="btn btn-sm btn-outline-success rounded-pill">Details</a></td>
+                                    <td class="text-nowrap">
+                                        <a href="{{ route('web.orders.show', $order->order_id) }}"
+                                            class="btn btn-sm btn-outline-success rounded-pill">Details</a>
+                                        <a href="{{ route('web.orders.receipt', $order->order_id) }}"
+                                            class="btn btn-sm btn-outline-secondary rounded-pill" title="Download receipt" aria-label="Download receipt for order {{ $order->order_id }}">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>

@@ -192,10 +192,16 @@
                 <p class="text-muted small mb-0">Review administrator price overrides and discounts recorded during POS
                     checkout.</p>
             </div>
-            <a href="{{ route('admin.pos-price-discount-audit.csv', request()->query()) }}"
-                class="btn btn-outline-success btn-sm">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export filtered CSV
-            </a>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('admin.pos-price-discount-audit.csv', request()->query()) }}"
+                    class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export filtered CSV
+                </a>
+                <a href="{{ route('admin.pos-price-discount-audit.pdf', request()->query()) }}" target="_blank" rel="noopener"
+                    class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+                </a>
+            </div>
         </div>
 
         <section class="pos-audit-hero mb-3">

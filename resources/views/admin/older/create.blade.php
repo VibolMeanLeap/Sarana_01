@@ -107,15 +107,12 @@
                     </div>
                 </div>
 
+                <div class="alert alert-info py-2 small mb-3">Product discounts are applied to selected product lines in the POS. This order form does not support a whole-order discount.</div>
+
                 <div class="ord-form-row">
                     <div class="ord-form-group">
                         <label for="total_amount" class="ord-form-label">Total Amount</label>
                         <input type="number" step="0.01" min="0" name="total_amount" id="total_amount" class="ord-form-control" value="{{ old('total_amount') }}">
-                    </div>
-
-                    <div class="ord-form-group">
-                        <label for="discount" class="ord-form-label">Discount</label>
-                        <input type="number" step="0.01" min="0" name="discount" id="discount" class="ord-form-control" value="{{ old('discount') }}" data-optional>
                     </div>
                 </div>
 

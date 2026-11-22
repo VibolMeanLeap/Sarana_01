@@ -133,9 +133,10 @@ class ReportController extends Controller
         $cogsQuery = $this->costOfGoodsQuery($filters);
         $cogs = (float) (clone $cogsQuery)->selectRaw('COALESCE(SUM(COALESCE(oi.quantity,0) * COALESCE(oi.unit_cost,p.cost,0)),0) as total')->value('total');
 
+        $totalExpenses = $purchaseSpend + $operatingExpenses;
         $grossProfit = $sales - $cogs;
         $netProfit = $grossProfit - $operatingExpenses;
-        $cashMovement = $sales - $purchaseSpend - $operatingExpenses;
+        $cashMovement = $sales - $totalExpenses;
 
         // Normalize the calculated date in a derived table, then group by its
         // plain column alias. This is compatible with MySQL ONLY_FULL_GROUP_BY.
@@ -224,6 +225,7 @@ class ReportController extends Controller
             'Sales income (paid orders)' => $sales,
             'Inventory purchases (cash outflow)' => $purchaseSpend,
             'Operating expenses' => $operatingExpenses,
+            'Total expenses (all cash outflow)' => $totalExpenses,
             'Cost of goods sold (COGS)' => $cogs,
             'Gross profit' => $grossProfit,
             'Net profit (estimated)' => $netProfit,

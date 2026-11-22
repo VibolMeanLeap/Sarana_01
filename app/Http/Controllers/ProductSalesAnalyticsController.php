@@ -143,6 +143,93 @@ class ProductSalesAnalyticsController extends Controller
         ]);
     }
 
+    /**
+     * Open the same branded, print-ready report used by the standard Order exports.
+     * The export uses the complete filtered dataset rather than the current page.
+     */
+    public function pdf(Request $request)
+    {
+        $filters = $this->validatedFilters($request);
+        $itemsQuery = $this->filteredItemSalesQuery($filters);
+        $products = $this->productPerformanceQuery($itemsQuery)
+            ->orderByDesc('units_sold')
+            ->orderByDesc('item_sales_total')
+            ->orderBy('p.product_name')
+            ->get();
+
+        $summary = (clone $itemsQuery)->selectRaw('
+            COALESCE(SUM(COALESCE(oi.quantity, 0)), 0) as units_sold,
+            COUNT(DISTINCT p.product_id) as products_sold,
+            COUNT(DISTINCT o.order_id) as orders_count,
+            COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) as item_sales_total,
+            COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as cogs_total
+        ')->first();
+        $grossMargin = (float) ($summary->item_sales_total ?? 0) - (float) ($summary->cogs_total ?? 0);
+
+        $headers = [
+            'Product ID', 'Product', 'Category', 'Units sold', 'Orders',
+            'Item sales subtotal (USD)', 'Estimated COGS (USD)', 'Estimated gross margin (USD)',
+        ];
+        $rows = $products->map(fn ($row) => [
+            $row->product_id,
+            $row->product_name,
+            $row->category_name,
+            number_format((int) $row->units_sold),
+            number_format((int) $row->orders_count),
+            '$'.number_format((float) $row->item_sales_total, 2),
+            '$'.number_format((float) $row->cogs_total, 2),
+            '$'.number_format((float) $row->gross_margin, 2),
+        ])->all();
+
+        $totalRow = [
+            'TOTAL', '', '', number_format((int) ($summary->units_sold ?? 0)), '',
+            '$'.number_format((float) ($summary->item_sales_total ?? 0), 2),
+            '$'.number_format((float) ($summary->cogs_total ?? 0), 2),
+            '$'.number_format($grossMargin, 2),
+        ];
+
+        $sourceLabel = match ($filters['source']) {
+            'pos' => 'POS',
+            'website' => 'Website',
+            default => 'All sources',
+        };
+        $staffLabel = 'All staff and website';
+        if ($filters['staff_id'] === 'website') {
+            $staffLabel = 'Website / no staff';
+        } elseif ($filters['staff_id'] !== '') {
+            $staffLabel = DB::table('users')->where('user_id', $filters['staff_id'])->value('name') ?: 'Staff #'.$filters['staff_id'];
+        }
+        $dateLabel = $filters['start_date'] || $filters['end_date']
+            ? (($filters['start_date'] ?: 'Beginning').' to '.($filters['end_date'] ?: 'Today'))
+            : 'All dates';
+        $filterSummary = collect([
+            'Date: '.$dateLabel,
+            'Source: '.$sourceLabel,
+            'Category: '.($filters['category_name'] ?: 'All categories'),
+            'Staff: '.$staffLabel,
+            $filters['search'] !== '' ? 'Product: '.$filters['search'] : null,
+        ])->filter()->implode(' · ');
+
+        return view('admin.exports.print', [
+            'title' => 'Product Sales Report',
+            'headers' => $headers,
+            'rows' => $rows,
+            'totalRows' => count($rows),
+            'totalRow' => $totalRow,
+            'summaryItems' => [
+                'Units sold' => number_format((int) ($summary->units_sold ?? 0)),
+                'Products sold' => number_format((int) ($summary->products_sold ?? 0)),
+                'Orders' => number_format((int) ($summary->orders_count ?? 0)),
+                'Item sales subtotal' => '$'.number_format((float) ($summary->item_sales_total ?? 0), 2),
+                'Estimated COGS' => '$'.number_format((float) ($summary->cogs_total ?? 0), 2),
+                'Estimated gross margin' => '$'.number_format($grossMargin, 2),
+            ],
+            'generatedAt' => now(),
+            'filterSummary' => $filterSummary ?: 'All paid, non-cancelled product sales',
+            'shopSettings' => app('shop.settings'),
+        ]);
+    }
+
     private function validatedFilters(Request $request): array
     {
         $staffIds = DB::table('users as u')

@@ -176,10 +176,9 @@
 
         .finance-filter {
             display: grid;
-            grid-template-columns: minmax(180px, 1.5fr) repeat(5, minmax(105px, 1fr)) auto auto;
+            grid-template-columns: minmax(220px, 1.6fr) repeat(3, minmax(125px, 1fr)) auto auto;
             gap: 9px;
-            padding: 14px 18px;
-            border-bottom: 1px solid #edf2ee
+            padding: 0;
         }
 
         .finance-filter .form-control,
@@ -225,6 +224,15 @@
 
         .finance-table tbody tr:hover {
             background: #fbfcfb
+        }
+
+        .finance-table tfoot th {
+            padding: 14px 13px;
+            border-top: 2px solid #dfe9e2;
+            background: #f6faf7;
+            color: #43554a;
+            font-size: 11px;
+            white-space: nowrap
         }
 
         .finance-pagination {
@@ -291,6 +299,51 @@
             <div class="alert alert-danger py-2 mb-0">{{ session('error') }}</div>
         @endif
 
+        <section class="finance-panel finance-top-filters">
+            <div class="finance-panel-head">
+                <div>
+                    <h2><i class="bi bi-funnel me-2 text-success"></i>Financial & ledger filters</h2>
+                    <div class="small text-muted mt-1">Set the date range first. Search, category, sorting and page-size options refine the expense ledger.</div>
+                </div>
+                <span class="badge text-bg-light">Filters appear above the summary</span>
+            </div>
+            <div class="finance-body">
+                <form method="GET" action="{{ route('expense_income.index') }}" class="m-0">
+                    @include('admin.partials.date-filter-panel', [
+                        'dateFilter' => $dateFilter,
+                        'dateFromField' => 'from',
+                        'dateToField' => 'to',
+                        'dateFilterTitle' => 'Transaction date',
+                        'dateFilterHint' => 'The selected date range updates the financial KPIs and the expense ledger.',
+                    ])
+                    <section class="border rounded-3 p-3 bg-light-subtle">
+                        <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i class="bi bi-list-filter me-1"></i>Expense ledger filters</div>
+                        <div class="finance-filter">
+                            <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search expense reason or ID" aria-label="Search transactions">
+                            <select name="category_id" class="form-select">
+                                <option value="">All categories</option>
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category->id }}" @selected(request('category_id') == $category->id)>{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                            <select name="sort_dir" class="form-select">
+                                <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option>
+                                <option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option>
+                            </select>
+                            <select name="per_page" class="form-select">
+                                <option value="15" @selected(($perPage ?? 15) === 15)>15 / page</option>
+                                <option value="25" @selected(($perPage ?? 15) === 25)>25 / page</option>
+                                <option value="50" @selected(($perPage ?? 15) === 50)>50 / page</option>
+                                <option value="100" @selected(($perPage ?? 15) === 100)>100 / page</option>
+                            </select>
+                            <button type="submit" class="btn btn-success">Apply filters</button>
+                            <a href="{{ route('expense_income.index') }}" class="btn btn-outline-secondary">Reset</a>
+                        </div>
+                    </section>
+                    <div class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Date filters affect sales, expenses and profit summaries. Search and category filters apply to the expense ledger and its total only.</div>
+                </form>
+            </div>
+        </section>
         <div class="finance-grid">
             <div class="finance-card income">
                 <div class="label"><i class="bi bi-cup-hot me-1"></i>Sales revenue</div>
@@ -367,9 +420,9 @@
                 <div class="hint">Sales income minus sold-item cost</div>
             </div>
             <div class="finance-card neutral">
-                <div class="label">Cash outflow</div>
-                <div class="value">${{ number_format($summary['cash_outflow'], 2) }}</div>
-                <div class="hint">Inventory purchases + operating expenses</div>
+                <div class="label">Total expenses</div>
+                <div class="value">${{ number_format($summary['total_expenses'], 2) }}</div>
+                <div class="hint">All expenses: inventory purchases + operating expenses</div>
             </div>
             <div class="finance-card neutral">
                 <div class="label">Profit margin</div>
@@ -387,47 +440,10 @@
             <div class="finance-panel-head">
                 <div>
                     <h2><i class="bi bi-journal-text me-2 text-success"></i>Expense ledger</h2>
-                    <div class="small text-muted mt-1">Manual operating expenses and purchase-linked expenses. Paid sales
-                        revenue is summarized above.</div>
+                    <div class="small text-muted mt-1">All manual and purchase-linked expenses. The total below includes every matching record across all pages.</div>
                 </div>
                 <span class="badge text-bg-light">{{ number_format($transactions->total()) }} records</span>
             </div>
-            <form method="GET" action="{{ route('expense_income.index') }}" class="mb-3">
-                @include('admin.partials.date-filter-panel', [
-                    'dateFilter' => $dateFilter,
-                    'dateFromField' => 'from',
-                    'dateToField' => 'to',
-                    'dateFilterTitle' => 'Transaction date',
-                    'dateFilterHint' => 'The date range filters the ledger and financial summary above.',
-                ])
-                <section class="border rounded-3 p-3 bg-light-subtle">
-                    <div class="small text-success fw-bold text-uppercase mb-2" style="letter-spacing:.08em"><i
-                            class="bi bi-funnel me-1"></i>Ledger filters</div>
-                    <div class="finance-filter">
-                        <input type="search" name="search" value="{{ request('search') }}" class="form-control"
-                            placeholder="Search expense reason or ID" aria-label="Search transactions">
-                        <select name="category_id" class="form-select">
-                            <option value="">All categories</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}" @selected(request('category_id') == $category->id)>{{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <select name="sort_dir" class="form-select">
-                            <option value="desc" @selected(request('sort_dir', 'desc') === 'desc')>Newest first</option>
-                            <option value="asc" @selected(request('sort_dir') === 'asc')>Oldest first</option>
-                        </select>
-                        <select name="per_page" class="form-select">
-                            <option value="15" @selected(($perPage ?? 15) === 15)>15 / page</option>
-                            <option value="25" @selected(($perPage ?? 15) === 25)>25 / page</option>
-                            <option value="50" @selected(($perPage ?? 15) === 50)>50 / page</option>
-                            <option value="100" @selected(($perPage ?? 15) === 100)>100 / page</option>
-                        </select>
-                        <button type="submit" class="btn btn-success">Apply filters</button><a
-                            href="{{ route('expense_income.index') }}" class="btn btn-outline-secondary">Reset</a>
-                    </div>
-                </section>
-            </form>
             <div class="finance-table-wrap">
                 <table class="finance-table">
                     <thead>
@@ -478,6 +494,13 @@
                             </tr>
                         @endforelse
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="7" class="text-end">TOTAL FOR ALL MATCHING EXPENSES (ALL PAGES)</th>
+                            <th class="text-end text-danger">−${{ number_format((float) $filteredExpenseTotal, 2) }}</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
             <div class="finance-pagination">

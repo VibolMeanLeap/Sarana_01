@@ -43,11 +43,20 @@ class AdminExportController extends Controller
             }
             fputcsv($handle, ['Report', $this->safeCsvCell($report['title'])]);
             fputcsv($handle, ['Generated at', $generatedAt->format('Y-m-d H:i:s')]);
+            if (! empty($report['summaryItems'])) {
+                foreach ($report['summaryItems'] as $label => $value) {
+                    fputcsv($handle, [$this->safeCsvCell($label), $this->safeCsvCell($value)]);
+                }
+            }
             fputcsv($handle, []);
             fputcsv($handle, $report['headers']);
 
             foreach ($report['rows'] as $row) {
                 fputcsv($handle, array_map([$this, 'safeCsvCell'], $row));
+            }
+            if (! empty($report['totalRow'])) {
+                fputcsv($handle, []);
+                fputcsv($handle, array_map([$this, 'safeCsvCell'], $report['totalRow']));
             }
 
             fclose($handle);
@@ -78,6 +87,7 @@ class AdminExportController extends Controller
         $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'staff_id' => ['nullable', 'regex:/^(website|[1-9][0-9]*)$/'],
+            'staff_role' => ['nullable', 'in:admin,cashier'],
         ]);
 
         // Validate every legacy date-field alias used by the admin tabs, while
@@ -295,7 +305,21 @@ class AdminExportController extends Controller
             ->leftJoin('role as staff_role', 'staff_role.role_id', '=', 'u.role_id')
             ->leftJoin('order_type as ot', 'ot.order_type_id', '=', 'o.order_type_id')
             ->leftJoin('payment_method as pm', 'pm.payment_method_id', '=', 'o.payment_method_id')
-            ->select(['o.order_id as Order_ID', 'o.waiting_num as Queue_No', 'c.name as Customer', 'c.phone as Customer_Phone', DB::raw("CASE WHEN o.cashier_id IS NULL THEN 'Website / customer checkout' ELSE CONCAT(COALESCE(u.name, 'Staff'), ' · ', COALESCE(staff_role.role_name, 'Staff')) END as Created_Handled_By"), 'ot.order_name as Order_Type', 'o.order_source as Source', 'o.order_status as Order_Status', 'o.payment_status as Payment_Status', 'o.total_amount as Subtotal', 'o.discount as Discount_Percent', 'o.final_price as Final_Total', 'o.order_date as Order_Date'])
+            ->select([
+                'o.order_id as Order_ID',
+                'o.waiting_num as Queue_No',
+                'o.order_date as Order_Date',
+                'c.name as Customer',
+                'c.phone as Customer_Phone',
+                DB::raw("CASE WHEN o.cashier_id IS NULL THEN 'Website / customer checkout' ELSE CONCAT(COALESCE(u.name, 'Staff'), ' · ', COALESCE(staff_role.role_name, 'Staff')) END as Created_Handled_By"),
+                'ot.order_name as Order_Type',
+                'o.order_source as Source',
+                'o.order_status as Order_Status',
+                'o.payment_status as Payment_Status',
+                'o.total_amount as Subtotal_USD',
+                DB::raw('COALESCE(o.discount_amount, ROUND(COALESCE(o.total_amount,0) * COALESCE(o.discount,0) / 100, 2), 0) as Discount_USD'),
+                'o.final_price as Final_Total_USD',
+            ])
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
                 $q->where(fn ($w) => $w->where('o.order_id', 'like', "%{$term}%")
@@ -315,6 +339,9 @@ class AdminExportController extends Controller
         } elseif ($request->filled('staff_id') && ctype_digit((string) $request->input('staff_id'))) {
             $query->where('o.cashier_id', (int) $request->input('staff_id'));
         }
+        if (in_array($request->input('staff_role'), ['admin', 'cashier'], true)) {
+            $query->whereRaw('LOWER(staff_role.role_name) = ?', [$request->input('staff_role')]);
+        }
         if ($request->input('review_status') === 'open') {
             $query->whereExists(function ($subquery) {
                 $subquery->selectRaw('1')->from('order_review_flags as orf')
@@ -329,7 +356,16 @@ class AdminExportController extends Controller
         $this->applyDateRange($query, 'o.order_date', $request, ['start_date', 'date_from', 'from'], ['end_date', 'date_to', 'to']);
         $query->orderBy($this->sortColumn($request, ['order_date' => 'o.order_date', 'order_id' => 'o.order_id', 'final_price' => 'o.final_price'], 'o.order_date'), $this->sortDirection($request));
 
-        return $this->report('Orders', ['Order ID', 'Queue No', 'Customer', 'Customer Phone', 'Created By Staff', 'Order Type', 'Source', 'Order Status', 'Payment Status', 'Subtotal (USD)', 'Discount (%)', 'Final Total (USD)', 'Order Date'], $query);
+        return $this->report(
+            'Orders',
+            ['Order ID', 'Queue No', 'Order Date', 'Customer', 'Customer Phone', 'Created By Staff', 'Order Type', 'Source', 'Order Status', 'Payment Status', 'Subtotal (USD)', 'Discount (USD)', 'Final Total (USD)'],
+            $query,
+            [
+                'Subtotal (USD)' => 'Subtotal_USD',
+                'Discount (USD)' => 'Discount_USD',
+                'Final Total (USD)' => 'Final_Total_USD',
+            ]
+        );
     }
 
     private function orderItems(Request $request): array
@@ -407,15 +443,30 @@ class AdminExportController extends Controller
             ->when($request->filled('category_id'), fn ($q) => $q->where('ct.category_id', $request->input('category_id')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = trim((string) $request->input('search'));
-                $q->where(fn ($w) => $w->where('ct.note', 'like', "%{$term}%")
+                $q->where(fn ($w) => $w->where('ct.id', 'like', "%{$term}%")
+                    ->orWhere('ct.note', 'like', "%{$term}%")
                     ->orWhere('ac.name', 'like', "%{$term}%")
                     ->orWhere('ct.order_id', 'like', "%{$term}%")
                     ->orWhere('ct.purchase_id', 'like', "%{$term}%"));
             });
         $this->applyDateRange($query, 'ct.transaction_date', $request, ['from', 'date_from', 'start_date'], ['to', 'date_to', 'end_date']);
+
+        // Aggregate the complete filtered expense set before sorting or rendering.
+        // This includes manual expenses and purchase-linked inventory expenses.
+        $totalExpenses = (float) (clone $query)->sum('ct.amount');
+
         $query->orderBy($this->sortColumn($request, ['transaction_date' => 'ct.transaction_date', 'id' => 'ct.id', 'amount' => 'ct.amount'], 'ct.transaction_date'), $this->sortDirection($request));
 
-        return $this->report('Operating Expenses', ['Transaction ID', 'Transaction Date', 'Type', 'Category', 'Amount (USD)', 'Order ID', 'Purchase ID', 'Recorded By', 'Expense Reason'], $query);
+        $report = $this->report('All Expense Transactions', ['Transaction ID', 'Transaction Date', 'Type', 'Category', 'Amount (USD)', 'Order ID', 'Purchase ID', 'Recorded By', 'Expense Reason'], $query);
+        $report['summaryItems'] = [
+            'Total expenses (all matching records)' => '$'.number_format($totalExpenses, 2),
+            'Expense records' => number_format((int) $report['totalRows']),
+        ];
+        $report['totalRow'] = [
+            'TOTAL EXPENSES', '', '', '', number_format($totalExpenses, 2, '.', ''), '', '', '', '',
+        ];
+
+        return $report;
     }
 
     private function deliveries(Request $request): array
@@ -501,14 +552,32 @@ class AdminExportController extends Controller
         return strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
     }
 
-    private function report(string $title, array $headers, Builder $query): array
+    private function report(string $title, array $headers, Builder $query, array $totalColumns = []): array
     {
-        $rows = $query->get()->map(fn ($row) => array_values((array) $row))->all();
+        $records = $query->get();
+        $rows = $records->map(fn ($row) => array_values((array) $row))->all();
+        $totalValues = [];
+        foreach ($totalColumns as $header => $field) {
+            $totalValues[$header] = round((float) $records->sum(fn ($row) => (float) ($row->{$field} ?? 0)), 2);
+        }
+
+        $totalRow = null;
+        if ($totalValues !== []) {
+            $totalRow = [];
+            foreach ($headers as $index => $header) {
+                $totalRow[] = array_key_exists($header, $totalValues)
+                    ? number_format($totalValues[$header], 2, '.', '')
+                    : ($index === 0 ? 'TOTAL' : '');
+            }
+        }
+
         return [
             'title' => $title,
             'headers' => $headers,
             'rows' => $rows,
             'totalRows' => count($rows),
+            'totalRow' => $totalRow,
+            'totalValues' => $totalValues,
         ];
     }
 
@@ -527,7 +596,7 @@ class AdminExportController extends Controller
     private function filterSummary(Request $request): string
     {
         $labels = [];
-        foreach (['search' => 'Search', 'category_id' => 'Category ID', 'category' => 'Category ID', 'product_id' => 'Product ID', 'order_id' => 'Order ID', 'supplier_id' => 'Supplier ID', 'status' => 'Status', 'payment_status' => 'Payment', 'order_status' => 'Order status', 'source' => 'Source', 'staff_id' => 'Staff ID', 'date_preset' => 'Date range', 'period' => 'Period', 'rating' => 'Rating', 'type' => 'Type', 'role' => 'Role', 'start_date' => 'From', 'date_from' => 'From', 'from' => 'From', 'end_date' => 'To', 'date_to' => 'To', 'to' => 'To'] as $key => $label) {
+        foreach (['search' => 'Search', 'category_id' => 'Category ID', 'category' => 'Category ID', 'product_id' => 'Product ID', 'order_id' => 'Order ID', 'supplier_id' => 'Supplier ID', 'status' => 'Status', 'payment_status' => 'Payment', 'order_status' => 'Order status', 'source' => 'Source', 'staff_id' => 'Staff ID', 'staff_role' => 'Staff role', 'date_preset' => 'Date range', 'period' => 'Period', 'rating' => 'Rating', 'type' => 'Type', 'role' => 'Role', 'start_date' => 'From', 'date_from' => 'From', 'from' => 'From', 'end_date' => 'To', 'date_to' => 'To', 'to' => 'To'] as $key => $label) {
             if ($request->filled($key)) $labels[] = $label.': '.$request->input($key);
         }
         return $labels ? implode(' · ', array_unique($labels)) : 'All records';

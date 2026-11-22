@@ -121,11 +121,19 @@ class PosOrderCorrectionController extends Controller
             }
         }
 
+        // Older orders stored one order-wide percentage. When an administrator
+        // opens one for correction, carry that historical rate to each existing
+        // line so saving without changing discounts preserves the old receipt.
+        $legacyDiscountPercent = $order->discount_amount === null ? (float) $order->discount : 0.0;
         $initialItems = old('items', $order->orderItems->map(fn (OrderItem $item) => [
             'product_id' => (int) $item->product_id,
             'quantity' => (int) $item->quantity,
             'unit_price' => (float) $item->price,
+            'discount_percent' => $item->discount_percent !== null
+                ? (float) $item->discount_percent
+                : $legacyDiscountPercent,
         ])->values()->all());
+        $maxDiscountPercent = min(100, max(0, (float) config('pos.admin_max_discount_percent', 100)));
 
         return view('pos.order-corrections.edit', array_merge(
             compact(
@@ -135,7 +143,8 @@ class PosOrderCorrectionController extends Controller
                 'pendingAdjustment',
                 'initialItems',
                 'productOptions',
-                'returnTo'
+                'returnTo',
+                'maxDiscountPercent'
             ),
             $this->checkoutLayoutData()
         ));
@@ -146,7 +155,6 @@ class PosOrderCorrectionController extends Controller
         $validated = $request->validate([
             'return_to' => ['nullable', 'string', 'max:2048'],
             'customer_id' => ['nullable', 'integer', 'exists:customer,customer_id'],
-            'discount' => ['required', 'numeric', 'min:0', 'max:100'],
             'reason' => ['required', Rule::in([
                 'wrong_product',
                 'wrong_quantity',
@@ -160,6 +168,7 @@ class PosOrderCorrectionController extends Controller
             'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:product,product_id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:1000'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+            'items.*.discount_percent' => ['required', 'numeric', 'min:0', 'max:100'],
         ], [
             'confirmation.in' => 'Type CORRECT exactly to confirm this completed-order correction.',
             'items.min' => 'A corrected order must contain at least one product.',
@@ -242,13 +251,24 @@ class PosOrderCorrectionController extends Controller
                 $newStockByProduct = [];
                 $normalisedItems = [];
                 $subtotal = 0.0;
+                $discountAmount = 0.0;
+                $maximumDiscountPercent = min(100, max(0, (float) config('pos.admin_max_discount_percent', 100)));
 
                 foreach ($validated['items'] as $line) {
                     $productId = (int) $line['product_id'];
                     $product = $products->get($productId);
                     $quantity = (int) $line['quantity'];
                     $unitPrice = round((float) $line['unit_price'], 2);
-                    $subtotal += $quantity * $unitPrice;
+                    $lineSubtotal = round($quantity * $unitPrice, 2);
+                    $lineDiscountPercent = round((float) $line['discount_percent'], 2);
+                    if ($lineDiscountPercent > $maximumDiscountPercent) {
+                        throw ValidationException::withMessages([
+                            'items' => 'A product discount exceeds the administrator discount limit.',
+                        ]);
+                    }
+                    $lineDiscountAmount = round($lineSubtotal * $lineDiscountPercent / 100, 2);
+                    $subtotal += $lineSubtotal;
+                    $discountAmount += $lineDiscountAmount;
 
                     if ($product->isStockTracked()) {
                         $newStockByProduct[$productId] = ($newStockByProduct[$productId] ?? 0) + $quantity;
@@ -259,6 +279,8 @@ class PosOrderCorrectionController extends Controller
                         'product_name' => (string) $product->product_name,
                         'quantity' => $quantity,
                         'unit_price' => $unitPrice,
+                        'discount_percent' => $lineDiscountPercent,
+                        'discount_amount' => $lineDiscountAmount,
                         'unit_cost' => array_key_exists($productId, $oldUnitCosts)
                             ? $oldUnitCosts[$productId]
                             : (float) $product->cost,
@@ -294,13 +316,24 @@ class PosOrderCorrectionController extends Controller
                         'product_name' => (string) ($products->get((int) $item->product_id)?->product_name ?? 'Removed product'),
                         'quantity' => (int) $item->quantity,
                         'unit_price' => (float) $item->price,
+                        'discount_percent' => $item->discount_percent !== null
+                            ? (float) $item->discount_percent
+                            : ($order->discount_amount === null ? (float) $order->discount : 0.0),
+                        'discount_amount' => $item->discount_amount !== null
+                            ? (float) $item->discount_amount
+                            : round((float) $item->price * (int) $item->quantity * (($order->discount_amount === null ? (float) $order->discount : 0.0) / 100), 2),
                         'unit_cost' => (float) $item->unit_cost,
                     ])->values()->all()
                 );
 
                 $newTotal = round($subtotal, 2);
-                $newDiscount = round((float) $validated['discount'], 2);
-                $newFinal = round($newTotal * (1 - ($newDiscount / 100)), 2);
+                $newDiscountAmount = round($discountAmount, 2);
+                // Retain the legacy percentage field for existing database triggers,
+                // while the authoritative customer-facing discount is the money value.
+                $newDiscount = $newTotal > 0
+                    ? round(($newDiscountAmount / $newTotal) * 100, 6)
+                    : 0.0;
+                $newFinal = max(0, round($newTotal - $newDiscountAmount, 2));
                 $oldFinal = round((float) $order->final_price, 2);
                 $difference = round($newFinal - $oldFinal, 2);
                 $adjustmentStatus = abs($difference) < 0.01 ? 'not_required' : 'pending';
@@ -313,6 +346,7 @@ class PosOrderCorrectionController extends Controller
                     ] : null,
                     'total_amount' => $newTotal,
                     'discount_percent' => $newDiscount,
+                    'discount_amount' => $newDiscountAmount,
                     'final_price' => $newFinal,
                     'items' => $normalisedItems,
                 ];
@@ -360,6 +394,8 @@ class PosOrderCorrectionController extends Controller
                         'product_id' => $line['product_id'],
                         'quantity' => $line['quantity'],
                         'price' => $line['unit_price'],
+                        'discount_percent' => $line['discount_percent'],
+                        'discount_amount' => $line['discount_amount'],
                         'unit_cost' => $line['unit_cost'],
                     ]);
                 }
@@ -402,6 +438,7 @@ class PosOrderCorrectionController extends Controller
                     'customer_id' => $newCustomer?->customer_id,
                     'total_amount' => $newTotal,
                     'discount' => $newDiscount,
+                    'discount_amount' => $newDiscountAmount,
                     'final_price' => $newFinal,
                 ]);
 
@@ -681,6 +718,9 @@ class PosOrderCorrectionController extends Controller
             ] : null,
             'total_amount' => (float) $order->total_amount,
             'discount_percent' => (float) $order->discount,
+            'discount_amount' => $order->discount_amount !== null
+                ? (float) $order->discount_amount
+                : round((float) $order->total_amount * (float) $order->discount / 100, 2),
             'final_price' => (float) $order->final_price,
             'items' => $items,
         ];

@@ -50,14 +50,20 @@ class CashTransactionController extends Controller
             ->whereNotNull('purchase_id')
             ->sum('amount');
 
-        $totalExpense = (float) (clone $datedExpenses)
+        $operatingExpenses = (float) (clone $datedExpenses)
             ->whereNull('purchase_id')
             ->sum('amount');
 
+        // Total expenses is the full expense ledger for the selected dates:
+        // supplier purchases plus manual operating expenses. Net profit still
+        // subtracts COGS and operating expenses only to avoid double-counting
+        // inventory purchases before the stock is sold.
+        $totalExpenses = $inventoryPurchases + $operatingExpenses;
+
         $grossProfit = $totalSales - $totalCogs;
-        $netProfit = $grossProfit - $totalExpense;
+        $netProfit = $grossProfit - $operatingExpenses;
         $cashInflow = $totalSales;
-        $cashOutflow = $inventoryPurchases + $totalExpense;
+        $cashOutflow = $totalExpenses;
         $netCashFlow = $cashInflow - $cashOutflow;
 
         $ledgerQuery = CashTransaction::with(['category', 'user', 'purchase'])
@@ -75,6 +81,10 @@ class CashTransactionController extends Controller
                 ->orWhere('purchase_id', 'like', "%{$term}%"));
         }
 
+        // Sum every matching ledger row before pagination, so the displayed
+        // total represents the full filtered result set rather than one page.
+        $filteredExpenseTotal = (float) (clone $ledgerQuery)->sum('amount');
+
         $sortDirection = $filters['sort_dir'] ?? 'desc';
         $perPage = (int) ($filters['per_page'] ?? 15);
         $transactions = $ledgerQuery->orderBy('transaction_date', $sortDirection)
@@ -84,7 +94,8 @@ class CashTransactionController extends Controller
         $summary = [
             'sales' => $totalSales,
             'inventory_purchases' => $inventoryPurchases,
-            'operating_expenses' => $totalExpense,
+            'operating_expenses' => $operatingExpenses,
+            'total_expenses' => $totalExpenses,
             'cogs' => $totalCogs,
             'gross_profit' => $grossProfit,
             'net_profit' => $netProfit,
@@ -93,7 +104,7 @@ class CashTransactionController extends Controller
             'net_cash_flow' => $netCashFlow,
         ];
 
-        return view('admin.expense_income', compact('summary', 'transactions', 'categories', 'perPage', 'fromDate', 'toDate', 'dateFilter'));
+        return view('admin.expense_income', compact('summary', 'transactions', 'categories', 'perPage', 'fromDate', 'toDate', 'dateFilter', 'filteredExpenseTotal'));
     }
 
     public function create()

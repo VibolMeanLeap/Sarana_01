@@ -8,6 +8,9 @@
           $isTakeawayOrder = in_array(preg_replace('/[\s_-]+/u', ' ', $orderTypeName), ['takeaway', 'take away', 'pickup', 'pick up', 'store pickup'], true);
           $isFulfillmentOrder = $isDeliveryOrder || $isTakeawayOrder;
           $fulfillmentHint = $isDeliveryOrder ? 'Delivery controls' : 'Pickup controls';
+          $discountAmount = $row->discount_amount !== null
+              ? (float) $row->discount_amount
+              : round((float) $row->total_amount * (float) $row->discount / 100, 2);
           @endphp
           <tr class="order-summary-row" data-order-row="{{ $row->order_id }}" data-current-order-status="{{ $orderStatus }}" tabindex="0" aria-expanded="false"
             title="Click to view order items and fulfilment management">
@@ -18,17 +21,24 @@
                 <span class="order-expand-hint text-success"><i class="bi {{ $isDeliveryOrder ? 'bi-truck' : 'bi-bag-check' }}"></i> {{ $fulfillmentHint }} · {{ strtoupper($row->order_source ?: 'POS') }}</span>
               @endif
             </td>
+            <td class="text-nowrap" style="min-width:96px;padding-left:10px;padding-right:10px">
+              <div style="color:#294233;font-size:11px;font-weight:850;line-height:1.25">{{ $row->order_date?->format('d M Y') ?: '—' }}</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;color:#839087;font-size:10px;line-height:1.2"><i class="bi bi-clock" aria-hidden="true"></i><span>{{ $row->order_date?->format('h:i A') ?: '—' }}</span></div>
+            </td>
             <td>
               <strong class="d-block">{{ $row->customer?->name ?: 'Walk-in' }}</strong>
               <span class="small text-muted">{{ $row->customer?->phone ?: 'No phone recorded' }}</span>
             </td>
-            <td>{{ $row->cashier?->name ?: 'Website' }}</td>
+            <td>
+              <strong class="d-block">{{ $row->cashier?->name ?: 'Website / customer' }}</strong>
+              @if($row->cashier?->role?->role_name)<span class="small text-muted">{{ ucfirst($row->cashier->role->role_name) }}</span>@endif
+            </td>
             <td>
               <strong class="d-block">{{ $row->orderType?->order_name ?: '—' }}</strong>
               <span class="status-pill {{ $row->order_source === 'website' ? 'confirmed' : 'ready' }}">{{ ucfirst($row->order_source ?: 'pos') }}</span>
             </td>
             <td>${{ number_format((float) $row->total_amount, 2) }}</td>
-            <td>{{ number_format((float) $row->discount, 2) }}%</td>
+            <td class="text-danger fw-semibold">${{ number_format($discountAmount, 2) }}</td>
             <td class="fw-bold">${{ number_format((float) $row->final_price, 2) }}</td>
             <td>{{ $row->paymentMethod?->payment_name ?: ($payment?->provider === 'aba_payway' ? 'ABA KHQR' : '—') }}
             </td>
@@ -47,10 +57,6 @@
                 class="status-pill compact {{ in_array($orderStatus, $orderStatuses, true) ? $orderStatus : 'pending' }}"
                 title="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}"
                 aria-label="Order status: {{ str_replace('_', ' ', ucfirst($orderStatus)) }}">{{ $orderShort }}</span>
-            </td>
-            <td class="text-nowrap" style="min-width:96px;padding-left:10px;padding-right:10px">
-              <div style="color:#294233;font-size:11px;font-weight:850;line-height:1.25">{{ $row->order_date?->format('d M Y') ?: '—' }}</div>
-              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;color:#839087;font-size:10px;line-height:1.2"><i class="bi bi-clock" aria-hidden="true"></i><span>{{ $row->order_date?->format('h:i A') ?: '—' }}</span></div>
             </td>
             <td class="text-nowrap" data-order-actions-cell="{{ $row->order_id }}">
               <div class="d-flex flex-wrap align-items-center gap-1">
@@ -91,8 +97,11 @@
                     <strong>Items sold in order #{{ $row->order_id }}</strong>
                     <span class="text-muted small ms-2">{{ $row->orderItems->count() }} line(s)</span>
                   </div>
-                  <strong class="text-success">Order total:
-                    ${{ number_format((float) ($row->final_price ?? $row->total_amount), 2) }}</strong>
+                  <div class="text-end small">
+                    <div>Subtotal: <strong>${{ number_format((float) $row->total_amount, 2) }}</strong></div>
+                    <div class="text-danger">Discount value: <strong>−${{ number_format($discountAmount, 2) }}</strong></div>
+                    <div class="text-success">Final total: <strong>${{ number_format((float) ($row->final_price ?? $row->total_amount), 2) }}</strong></div>
+                  </div>
                 </div>
                 @if($row->orderItems->isNotEmpty())
                 <div class="table-responsive">
@@ -103,6 +112,7 @@
                         <th>Type</th>
                         <th class="text-end">Qty</th>
                         <th class="text-end">Unit price</th>
+                        <th class="text-end">Discount</th>
                         <th class="text-end">Line total</th>
                       </tr>
                     </thead>
@@ -115,8 +125,15 @@
                         </td>
                         <td class="text-end">{{ number_format((int) $line->quantity) }}</td>
                         <td class="text-end">${{ number_format((float) $line->price, 2) }}</td>
+                        <td class="text-end text-danger">
+                          @if((float) ($line->discount_amount ?? 0) > 0)
+                            −${{ number_format((float) $line->discount_amount, 2) }}
+                          @else
+                            —
+                          @endif
+                        </td>
                         <td class="text-end fw-semibold">
-                          ${{ number_format((float) $line->price * (int) $line->quantity, 2) }}</td>
+                          ${{ number_format(max(0, ((float) $line->price * (int) $line->quantity) - (float) ($line->discount_amount ?? 0)), 2) }}</td>
                       </tr>
                       @endforeach
                     </tbody>

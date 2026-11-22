@@ -1431,7 +1431,7 @@
                         <div class="orders-filter-heading">
                             <h2 class="orders-filter-title" id="ordersOptionFilterTitle"><span class="orders-filter-icon"><i
                                         class="bi bi-sliders"></i></span>Order filters</h2>
-                            <span class="small text-muted">Refine by customer, payment, status and source</span>
+                            <span class="small text-muted">Refine by staff member, customer, payment and status</span>
                         </div>
                         <div class="orders-filter">
                             <div class="orders-filter-field wide-search"><label for="ordersSearch">Search
@@ -1458,6 +1458,21 @@
                                     <option value="">All sources</option>
                                     <option value="pos" @selected(request('source') === 'pos')>POS</option>
                                     <option value="website" @selected(request('source') === 'website')>Website</option>
+                                </select></div>
+                            <div class="orders-filter-field"><label for="ordersStaffRole">Staff role</label><select
+                                    id="ordersStaffRole" class="form-select" name="staff_role">
+                                    <option value="">All staff roles</option>
+                                    <option value="admin" @selected(request('staff_role') === 'admin')>Administrator</option>
+                                    <option value="cashier" @selected(request('staff_role') === 'cashier')>Cashier</option>
+                                </select></div>
+                            <div class="orders-filter-field"><label for="ordersStaffId">Staff member</label><select
+                                    id="ordersStaffId" class="form-select" name="staff_id">
+                                    <option value="">All staff members</option>
+                                    @foreach ($staffMembers as $staff)
+                                        <option value="{{ $staff->user_id }}" @selected((string) request('staff_id') === (string) $staff->user_id)>
+                                            {{ $staff->name }} · {{ ucfirst($staff->role?->role_name ?? 'Staff') }}
+                                        </option>
+                                    @endforeach
                                 </select></div>
                             <div class="orders-filter-field"><label for="ordersReviewStatus">Review marker</label><select
                                     id="ordersReviewStatus" class="form-select" name="review_status">
@@ -1501,16 +1516,16 @@
                     <thead>
                         <tr>
                             <th>Order</th>
+                            <th>Date</th>
                             <th>Customer / phone</th>
-                            <th>Cashier</th>
+                            <th>Handled by</th>
                             <th>Type / source</th>
                             <th>Subtotal</th>
-                            <th>Discount</th>
+                            <th>Discount value</th>
                             <th>Final</th>
                             <th>Method</th>
                             <th>Payment</th>
                             <th>Status</th>
-                            <th>Date</th>
                             <th>Correction / receipt</th>
                         </tr>
                     </thead>
@@ -1522,13 +1537,13 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="6">FILTERED FINAL TOTAL <span class="text-muted fw-normal">(<span
+                            <td colspan="5">FILTERED TOTALS <span class="text-muted fw-normal">(<span
                                         data-filtered-order-count>{{ number_format($filteredOrderCount ?? 0) }}</span>
-                                    matching orders · all
-                                    pages)</span></td>
-                            <td class="grand-total" data-filtered-order-total>
-                                ${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
-                            <td colspan="5"></td>
+                                    matching orders · all pages)</span></td>
+                            <td class="grand-total" data-filtered-order-subtotal>${{ number_format((float) ($filteredSubtotalTotal ?? 0), 2) }}</td>
+                            <td class="grand-total" data-filtered-order-discount>${{ number_format((float) ($filteredDiscountTotal ?? 0), 2) }}</td>
+                            <td class="grand-total" data-filtered-order-total>${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
+                            <td colspan="4"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -1789,14 +1804,18 @@
                     if (countNode && payload.filtered_order_count !== undefined) {
                         countNode.textContent = Number(payload.filtered_order_count).toLocaleString();
                     }
-                    const totalNode = document.querySelector('[data-filtered-order-total]');
-                    if (totalNode && payload.filtered_final_total !== undefined) {
-                        totalNode.textContent = '$' + Number(payload.filtered_final_total || 0)
-                            .toLocaleString(undefined, {
+                    const updateMoneyTotal = (selector, value) => {
+                        const node = document.querySelector(selector);
+                        if (node && value !== undefined) {
+                            node.textContent = '$' + Number(value || 0).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             });
-                    }
+                        }
+                    };
+                    updateMoneyTotal('[data-filtered-order-subtotal]', payload.filtered_subtotal_total);
+                    updateMoneyTotal('[data-filtered-order-discount]', payload.filtered_discount_total);
+                    updateMoneyTotal('[data-filtered-order-total]', payload.filtered_final_total);
 
                     if (payload.replace_table && payload.rows_html !== undefined) {
                         const tbody = document.getElementById('ordersTableBody');

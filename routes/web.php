@@ -175,6 +175,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/store/checkout', [CustomerOrderController::class, 'checkoutPage'])->name('web.checkout');
     Route::post('/store/checkout', [CustomerOrderController::class, 'placeOrder'])->name('web.checkout.place');
     Route::get('/store/orders/{orderId}', [CustomerOrderController::class, 'showOrder'])->whereNumber('orderId')->name('web.orders.show');
+    Route::get('/store/orders/{orderId}/receipt', [CustomerOrderController::class, 'downloadReceipt'])->whereNumber('orderId')->name('web.orders.receipt');
     Route::get('/store/orders/{orderId}/status', [CustomerOrderController::class, 'orderStatus'])->whereNumber('orderId')->name('web.orders.status');
     Route::post('/store/orders/{orderId}/review', [ReviewController::class, 'storeFromCustomer'])->whereNumber('orderId')->name('web.orders.review');
     Route::post('/store/orders/{orderId}/cancel', [CustomerOrderController::class, 'cancelOrder'])->whereNumber('orderId')->name('web.orders.cancel');
@@ -243,6 +244,8 @@ Route::get('/admin/customer-service/{contactMessage}/thread-updates', [AdminCust
 
 Route::get('/admin/order-corrections/export/csv', [OrderCorrectionAuditController::class, 'csv'])
     ->name('admin.order-corrections.csv');
+Route::get('/admin/order-corrections/export/pdf', [OrderCorrectionAuditController::class, 'pdf'])
+    ->name('admin.order-corrections.pdf');
     // POS Price & Discount Audit
 Route::get('/admin/pos-price-discount-audit', [
     PosPriceDiscountAuditController::class,
@@ -254,6 +257,10 @@ Route::get('/admin/pos-price-discount-audit/export/csv', [
     PosPriceDiscountAuditController::class,
     'csv'
 ])->name('admin.pos-price-discount-audit.csv');
+Route::get('/admin/pos-price-discount-audit/export/pdf', [
+    PosPriceDiscountAuditController::class,
+    'pdf'
+])->name('admin.pos-price-discount-audit.pdf');
 
     // Customer-service enquiries submitted from the public storefront.
     Route::get('/admin/customer-service', [AdminCustomerServiceController::class, 'index'])->name('admin.customer-service.index');
@@ -378,6 +385,7 @@ Route::get('/admin/pos-price-discount-audit/export/csv', [
     // Product sales intelligence (paid, non-cancelled line items).
     Route::get('/admin/product-sales', [ProductSalesAnalyticsController::class, 'index'])->name('admin.product-sales.index');
     Route::get('/admin/product-sales/export/csv', [ProductSalesAnalyticsController::class, 'csv'])->name('admin.product-sales.csv');
+    Route::get('/admin/product-sales/export/pdf', [ProductSalesAnalyticsController::class, 'pdf'])->name('admin.product-sales.pdf');
 
     // Read-only audit of POS receipt corrections and staff-confirmed cash adjustments.
     Route::get('/admin/order-corrections', [OrderCorrectionAuditController::class, 'index'])->name('admin.order-corrections.index');

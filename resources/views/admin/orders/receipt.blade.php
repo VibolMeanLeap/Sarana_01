@@ -30,16 +30,29 @@
       <div><span class="muted">Payment</span><br><strong>{{ $order->paymentMethod?->payment_name ?: ($order->is_paid ? 'Paid' : 'Unpaid') }}</strong></div>
       <div><span class="muted">Status</span><br><strong>{{ ucfirst(str_replace('_',' ', $order->order_status ?: ($order->is_paid ? 'completed' : 'pending'))) }} · {{ $order->is_paid ? 'Paid' : ($order->payment_status ?: 'Unpaid') }}</strong></div>
     </section>
-    <table><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Total</th></tr></thead><tbody>
+    @php
+      $orderDiscountAmount = $order->discount_amount !== null
+          ? (float) $order->discount_amount
+          : round((float) $order->total_amount * (float) $order->discount / 100, 2);
+    @endphp
+    <table><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Discount</th><th class="num">Net amount</th></tr></thead><tbody>
       @forelse($order->orderItems as $item)
-        <tr><td>{{ $item->product?->product_name ?: ('Product #'.($item->product_id ?? '')) }}</td><td class="num">{{ (int)$item->quantity }}</td><td class="num">${{ number_format((float)$item->price,2) }}</td><td class="num">${{ number_format((float)$item->price * (int)$item->quantity,2) }}</td></tr>
+        @php($lineSubtotal = (float) $item->price * (int) $item->quantity)
+        @php($lineDiscount = (float) ($item->discount_amount ?? 0))
+        <tr>
+          <td>{{ $item->product?->product_name ?: ('Product #'.($item->product_id ?? '')) }}</td>
+          <td class="num">{{ (int)$item->quantity }}</td>
+          <td class="num">${{ number_format((float)$item->price,2) }}</td>
+          <td class="num">{{ $lineDiscount > 0 ? '−$'.number_format($lineDiscount,2) : '—' }}</td>
+          <td class="num">${{ number_format(max(0, $lineSubtotal - $lineDiscount),2) }}</td>
+        </tr>
       @empty
-        <tr><td colspan="4" class="muted">No item lines were recorded.</td></tr>
+        <tr><td colspan="5" class="muted">No item lines were recorded.</td></tr>
       @endforelse
     </tbody></table>
     <section class="totals">
       <div><span class="muted">Subtotal</span><strong>${{ number_format((float)$order->total_amount,2) }}</strong></div>
-      <div><span class="muted">Discount</span><strong>{{ number_format((float)$order->discount,2) }}%</strong></div>
+      <div><span class="muted">Discount</span><strong>−${{ number_format($orderDiscountAmount,2) }}</strong></div>
       <div class="grand"><span>Final total</span><span>${{ number_format((float)($order->final_price ?? $order->total_amount),2) }}</span></div>
     </section>
     @if($order->reviewFlags->isNotEmpty())

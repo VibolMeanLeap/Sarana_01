@@ -140,6 +140,119 @@ class OrderCorrectionAuditController extends Controller
         ]);
     }
 
+    /** Render a dedicated, readable before/after receipt-correction report. */
+    public function pdf(Request $request)
+    {
+        $filters = $this->validatedFilters($request);
+        $corrections = $this->filteredQuery($filters)
+            ->with(['order.customer', 'order.cashier', 'createdBy', 'adjustedBy'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('correction_id')
+            ->get();
+
+        $normaliseItems = static function ($items): array {
+            return collect(is_array($items) ? $items : [])->filter(fn ($line) => is_array($line))->map(function ($line): array {
+                $quantity = max(0, (int) ($line['quantity'] ?? 0));
+                $unitPrice = max(0, (float) ($line['unit_price'] ?? $line['price'] ?? 0));
+                $discountAmount = array_key_exists('discount_amount', $line)
+                    ? max(0, (float) $line['discount_amount'])
+                    : max(0, round($quantity * $unitPrice * ((float) ($line['discount_percent'] ?? 0) / 100), 2));
+                $lineSubtotal = round($quantity * $unitPrice, 2);
+
+                return [
+                    'product_name' => trim((string) ($line['product_name'] ?? 'Product')) ?: 'Product',
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'discount_amount' => $discountAmount,
+                    'line_total' => max(0, round($lineSubtotal - $discountAmount, 2)),
+                ];
+            })->values()->all();
+        };
+
+        $records = $corrections->map(function ($correction) use ($normaliseItems): array {
+            $difference = round((float) $correction->difference_amount, 2);
+            $status = (string) ($correction->payment_adjustment_status ?? 'not_required');
+            $type = (string) ($correction->payment_adjustment_type ?? '');
+            $confirmedAmount = $status === 'settled' ? abs($difference) : 0.0;
+            $beforeSnapshot = (array) ($correction->before_snapshot ?? []);
+            $afterSnapshot = (array) ($correction->after_snapshot ?? []);
+
+            return [
+                'id' => (int) $correction->correction_id,
+                'order_id' => (int) $correction->order_id,
+                'created_at' => optional($correction->created_at)->format('d M Y · h:i A') ?? '—',
+                'customer_before' => data_get($beforeSnapshot, 'customer.name') ?: 'Walk-in customer',
+                'customer_after' => data_get($afterSnapshot, 'customer.name') ?: 'Walk-in customer',
+                'cashier' => $correction->order?->cashier?->name ?? 'Not recorded',
+                'corrected_by' => $correction->createdBy?->name
+                    ?? ($correction->created_by ? 'Staff #'.$correction->created_by : 'Unknown staff'),
+                'reason' => ucwords(str_replace('_', ' ', (string) $correction->reason)),
+                'notes' => trim((string) ($correction->notes ?? '')),
+                'before_items' => $normaliseItems(data_get($beforeSnapshot, 'items', [])),
+                'after_items' => $normaliseItems(data_get($afterSnapshot, 'items', [])),
+                'original_total' => (float) $correction->original_total,
+                'corrected_total' => (float) $correction->corrected_total,
+                'difference' => $difference,
+                'adjustment_status' => $status,
+                'adjustment_type' => $type,
+                'adjustment_note' => trim((string) ($correction->payment_adjustment_note ?? '')),
+                'confirmed_amount' => $confirmedAmount,
+                'confirmed_by' => $correction->adjustedBy?->name ?? '—',
+                'confirmed_at' => optional($correction->payment_adjusted_at)->format('d M Y · h:i A') ?: '—',
+            ];
+        })->values();
+
+        $originalTotal = (float) $corrections->sum('original_total');
+        $correctedTotal = (float) $corrections->sum('corrected_total');
+        $differenceTotal = (float) $corrections->sum('difference_amount');
+        $confirmedTotal = (float) $corrections->sum(function ($correction) {
+            return $correction->payment_adjustment_status === 'settled'
+                ? abs((float) $correction->difference_amount)
+                : 0;
+        });
+        $cashCollected = (float) $corrections->filter(fn ($row) =>
+            $row->payment_adjustment_status === 'settled' && $row->payment_adjustment_type === 'collected'
+        )->sum('difference_amount');
+        $cashRefunded = (float) $corrections->filter(fn ($row) =>
+            $row->payment_adjustment_status === 'settled' && $row->payment_adjustment_type === 'refunded'
+        )->sum(fn ($row) => abs((float) $row->difference_amount));
+        $affectedReceipts = $corrections->pluck('order_id')->unique()->count();
+
+        $staffLabel = $filters['staff_id']
+            ? (User::query()->where('user_id', $filters['staff_id'])->value('name') ?: 'Staff #'.$filters['staff_id'])
+            : 'All staff';
+        $dateLabel = ($filters['date']['from'] || $filters['date']['to'])
+            ? (($filters['date']['from'] ?: 'Beginning').' to '.($filters['date']['to'] ?: 'Today'))
+            : 'All dates';
+        $filterSummary = collect([
+            'Date: '.$dateLabel,
+            'Staff: '.$staffLabel,
+            $filters['adjustment_status'] ? 'Adjustment status: '.ucwords(str_replace('_', ' ', $filters['adjustment_status'])) : null,
+            $filters['adjustment_type'] ? 'Cash action: '.ucwords($filters['adjustment_type']) : null,
+            $filters['search'] !== '' ? 'Search: '.$filters['search'] : null,
+        ])->filter()->implode(' · ');
+
+        return view('admin.exports.audit-print', [
+            'reportType' => 'corrections',
+            'title' => 'Receipt Correction Audit',
+            'records' => $records,
+            'totalRows' => $records->count(),
+            'summaryItems' => [
+                'Correction events' => number_format($corrections->count()),
+                'Receipts affected' => number_format($affectedReceipts),
+                'Original value' => '$'.number_format($originalTotal, 2),
+                'Corrected value' => '$'.number_format($correctedTotal, 2),
+                'Net difference' => ($differenceTotal > 0 ? '+' : '').'$'.number_format($differenceTotal, 2),
+                'Confirmed cash movement' => '$'.number_format($confirmedTotal, 2),
+                'Cash collected' => '$'.number_format($cashCollected, 2),
+                'Cash refunded' => '$'.number_format($cashRefunded, 2),
+            ],
+            'generatedAt' => now(),
+            'filterSummary' => $filterSummary ?: 'All receipt correction records',
+            'shopSettings' => app('shop.settings'),
+        ]);
+    }
+
     private function validatedFilters(Request $request): array
     {
         $validated = $request->validate([

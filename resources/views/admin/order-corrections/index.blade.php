@@ -434,9 +434,12 @@
                         {{ $corrections->firstItem() ?? 0 }}–{{ $corrections->lastItem() ?? 0 }} of
                         {{ number_format($corrections->total()) }} correction records</div>
                 </div>
-                <a href="{{ route('admin.order-corrections.csv', request()->query()) }}"
-                    class="btn btn-outline-success audit-btn"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export
-                    filtered CSV</a>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('admin.order-corrections.csv', request()->query()) }}"
+                        class="btn btn-outline-success audit-btn"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export filtered CSV</a>
+                    <a href="{{ route('admin.order-corrections.pdf', request()->query()) }}" target="_blank" rel="noopener"
+                        class="btn btn-outline-danger audit-btn"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -567,8 +570,8 @@
                                                         <div class="audit-detail-title mb-2">Original receipt</div>
                                                         <div class="small text-muted mb-2">
                                                             {{ data_get($correction->before_snapshot, 'customer.name', 'Walk-in customer') }}
-                                                            · Discount
-                                                            {{ number_format((float) data_get($correction->before_snapshot, 'discount_percent', 0), 2) }}%
+                                                            · Discount value
+                                                            {{ $money(data_get($correction->before_snapshot, 'discount_amount', ((float) data_get($correction->before_snapshot, 'total_amount', 0) * (float) data_get($correction->before_snapshot, 'discount_percent', 0) / 100))) }}
                                                         </div>
                                                         <div class="table-responsive">
                                                             <table class="table table-sm mb-2">
@@ -577,6 +580,7 @@
                                                                         <th>Product</th>
                                                                         <th class="text-end">Qty</th>
                                                                         <th class="text-end">Unit price</th>
+                                                                        <th class="text-end">Discount</th>
                                                                         <th class="text-end">Line total</th>
                                                                     </tr>
                                                                 </thead>
@@ -590,7 +594,9 @@
                                                                             <td class="text-end">
                                                                                 {{ $money($line['unit_price'] ?? 0) }}</td>
                                                                             <td class="text-end">
-                                                                                {{ $money(((float) ($line['quantity'] ?? 0)) * ((float) ($line['unit_price'] ?? 0))) }}
+                                                                                {{ (float) ($line['discount_amount'] ?? 0) > 0 ? '−'.$money($line['discount_amount']) : '—' }}</td>
+                                                                            <td class="text-end">
+                                                                                {{ $money(max(0, ((float) ($line['quantity'] ?? 0)) * ((float) ($line['unit_price'] ?? 0)) - (float) ($line['discount_amount'] ?? 0))) }}
                                                                             </td>
                                                                         </tr>
                                                                     @endforeach
@@ -608,8 +614,8 @@
                                                         <div class="audit-detail-title mb-2">Corrected receipt</div>
                                                         <div class="small text-muted mb-2">
                                                             {{ data_get($correction->after_snapshot, 'customer.name', 'Walk-in customer') }}
-                                                            · Discount
-                                                            {{ number_format((float) data_get($correction->after_snapshot, 'discount_percent', 0), 2) }}%
+                                                            · Discount value
+                                                            {{ $money(data_get($correction->after_snapshot, 'discount_amount', ((float) data_get($correction->after_snapshot, 'total_amount', 0) * (float) data_get($correction->after_snapshot, 'discount_percent', 0) / 100))) }}
                                                         </div>
                                                         <div class="table-responsive">
                                                             <table class="table table-sm mb-2">
@@ -618,6 +624,7 @@
                                                                         <th>Product</th>
                                                                         <th class="text-end">Qty</th>
                                                                         <th class="text-end">Unit price</th>
+                                                                        <th class="text-end">Discount</th>
                                                                         <th class="text-end">Line total</th>
                                                                     </tr>
                                                                 </thead>
@@ -631,7 +638,9 @@
                                                                             <td class="text-end">
                                                                                 {{ $money($line['unit_price'] ?? 0) }}</td>
                                                                             <td class="text-end">
-                                                                                {{ $money(((float) ($line['quantity'] ?? 0)) * ((float) ($line['unit_price'] ?? 0))) }}
+                                                                                {{ (float) ($line['discount_amount'] ?? 0) > 0 ? '−'.$money($line['discount_amount']) : '—' }}</td>
+                                                                            <td class="text-end">
+                                                                                {{ $money(max(0, ((float) ($line['quantity'] ?? 0)) * ((float) ($line['unit_price'] ?? 0)) - (float) ($line['discount_amount'] ?? 0))) }}
                                                                             </td>
                                                                         </tr>
                                                                     @endforeach

@@ -257,6 +257,28 @@
         .cart-price-tools .badge {
             font-size: 9px
         }
+        .cart-line-savings { color: #b04b45; font-size: 10px; font-weight: 750; }
+        .btn-pos-discount-set {
+            border: 1px solid #d8e8dc;
+            background: #f1f8f3;
+            color: #176b4b;
+            border-radius: 7px;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+        .btn-pos-discount-set:hover { background: #e4f1e8; border-color: #bcd9c5; }
+        .discount-preset-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+        .discount-preset-btn {
+            border:1px solid #dce8df; background:#f8fbf9; color:#315a40; border-radius:10px;
+            padding:10px 6px; font-size:13px; font-weight:850; transition:.15s ease;
+        }
+        .discount-preset-btn:hover,.discount-preset-btn.active { background:#176b4b; border-color:#176b4b; color:#fff; }
+        .discount-preview-card { background:#f1f8f3; border:1px solid #dcece0; border-radius:12px; padding:12px 14px; }
+        .discount-preview-card .preview-label { color:#738077; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+        .discount-preview-card .preview-value { color:#203c2d; font-size:15px; font-weight:900; font-variant-numeric:tabular-nums; }
+        .discount-preview-card .preview-saving { color:#176b4b; }
 
         .btn-pos-price-edit {
             border: 0;
@@ -449,7 +471,6 @@
                 <form id="checkoutForm" method="POST" action="{{ route('pos.checkout') }}">
                     @csrf
                     <input type="hidden" name="cart" id="cartPayload">
-                    <input type="hidden" name="discount" id="discountPayload" value="0">
                     <input type="hidden" name="discount_reason" id="discountReasonPayload" value="">
                     <div class="modal-header border-0 pb-0">
                         <div>
@@ -619,6 +640,53 @@
         </div>
     </div>
     @endif
+
+    @if ((float) ($maxDiscountPercent ?? 0) > 0)
+        <div class="modal fade" id="itemDiscountModal" tabindex="-1" aria-labelledby="itemDiscountTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content border-0 rounded-4 shadow">
+                    <form id="itemDiscountForm" novalidate>
+                        <div class="modal-header border-0 pb-0">
+                            <div>
+                                <div class="mini-label">Selected cart item</div>
+                                <h2 class="modal-title fs-5 fw-bold" id="itemDiscountTitle">Apply product discount</h2>
+                                <div class="small text-muted" id="itemDiscountProductName">Choose a percentage for this product only.</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body pt-3">
+                            <div class="small text-muted mb-2">Quick discount presets</div>
+                            <div class="discount-preset-grid mb-3" id="discountPresetOptions"></div>
+                            <label for="itemDiscountPercent" class="form-label fw-semibold">Custom discount (%)</label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" class="form-control" id="itemDiscountPercent" min="0"
+                                    max="{{ number_format((float) $maxDiscountPercent, 2, '.', '') }}" step="5" inputmode="decimal" value="0" title="Use the up/down arrows to change the discount by 5 percentage points">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="small text-muted mt-1">Use the ↑ / ↓ arrows to change by 5% each time. Maximum allowed: {{ number_format((float) $maxDiscountPercent, 2) }}%.</div>
+                            <div class="discount-preview-card mt-3">
+                                <div class="d-flex justify-content-between gap-2 mb-2"><span class="preview-label">Line subtotal</span><strong class="preview-value" id="discountPreviewSubtotal">$0.00</strong></div>
+                                <div class="d-flex justify-content-between gap-2 mb-2"><span class="preview-label">You save</span><strong class="preview-value preview-saving" id="discountPreviewSaving">$0.00</strong></div>
+                                <div class="d-flex justify-content-between gap-2 border-top pt-2"><span class="fw-bold small">New line total</span><strong class="preview-value" id="discountPreviewTotal">$0.00</strong></div>
+                            </div>
+                            <label for="discountReasonInput" class="form-label fw-semibold mt-3">Discount reason <span class="text-danger">*</span></label>
+                            <input type="text" id="discountReasonInput" class="form-control" maxlength="500"
+                                placeholder="e.g. Selected-item promotion / manager approval">
+                            <div class="small text-danger mt-2 d-none" id="itemDiscountError" role="alert"></div>
+                            <div class="small text-muted mt-2"><i class="bi bi-shield-check me-1"></i>This discount changes only the selected cart item. The regular product price stays unchanged.</div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0 d-flex justify-content-between">
+                            <button type="button" class="btn btn-link text-danger text-decoration-none" id="removeItemDiscountBtn">Remove discount</button>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-pos-outline" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-pos">Apply to item</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -631,13 +699,10 @@
             const searchInput = document.getElementById('searchInput');
             const cartContainer = document.getElementById('cartItems');
             const subtotalEl = document.getElementById('subTotal');
-            const discountEl = document.getElementById('discountInput');
-            const discountPresetButtons = [...document.querySelectorAll('[data-discount-preset]')];
             const totalEl = document.getElementById('grandTotal');
             const payButton = document.getElementById('payBtn');
             const previewTotal = document.getElementById('paymentPreviewTotal');
             const cartPayload = document.getElementById('cartPayload');
-            const discountPayload = document.getElementById('discountPayload');
             const discountReasonInput = document.getElementById('discountReasonInput');
             const discountReasonPayload = document.getElementById('discountReasonPayload');
             const canManagePricing = document.body.dataset.canManagePricing === '1';
@@ -746,6 +811,7 @@
                         price: basePrice,
                         basePrice,
                         priceOverridden: false,
+                        discountPercent: 0,
                         qty: 1,
                         stock,
                         tracksStock
@@ -763,6 +829,108 @@
                 button.addEventListener('click', onClick);
                 return button;
             }
+
+            // Product discounts are configured in a dedicated dialog instead of a tiny inline number field.
+            let activeDiscountItemId = null;
+            const itemDiscountModalEl = document.getElementById('itemDiscountModal');
+            const itemDiscountModal = itemDiscountModalEl ? bootstrap.Modal.getOrCreateInstance(itemDiscountModalEl) : null;
+            const itemDiscountForm = document.getElementById('itemDiscountForm');
+            const itemDiscountInput = document.getElementById('itemDiscountPercent');
+            const itemDiscountProductName = document.getElementById('itemDiscountProductName');
+            const discountPresetOptions = document.getElementById('discountPresetOptions');
+            const itemDiscountError = document.getElementById('itemDiscountError');
+            const discountPreviewSubtotal = document.getElementById('discountPreviewSubtotal');
+            const discountPreviewSaving = document.getElementById('discountPreviewSaving');
+            const discountPreviewTotal = document.getElementById('discountPreviewTotal');
+            const discountPresets = [5, 10, 15, 20, 25, 30, 50, 75, 100];
+
+            function activeDiscountItem() {
+                return cart.find(item => item.id === activeDiscountItemId) || null;
+            }
+
+            function showItemDiscountError(message = '') {
+                if (!itemDiscountError) return;
+                itemDiscountError.textContent = message;
+                itemDiscountError.classList.toggle('d-none', !message);
+            }
+
+            function updateDiscountPreview() {
+                const item = activeDiscountItem();
+                if (!item || !itemDiscountInput) return;
+                const requested = Number(itemDiscountInput.value || 0);
+                const percent = Number.isFinite(requested) ? Math.min(maximumDiscountPercent, Math.max(0, requested)) : 0;
+                const subtotal = Math.round((item.price * item.qty + Number.EPSILON) * 100) / 100;
+                const saving = Math.round((subtotal * percent / 100 + Number.EPSILON) * 100) / 100;
+                if (discountPreviewSubtotal) discountPreviewSubtotal.textContent = money(subtotal);
+                if (discountPreviewSaving) discountPreviewSaving.textContent = '−' + money(saving);
+                if (discountPreviewTotal) discountPreviewTotal.textContent = money(Math.max(0, subtotal - saving));
+                discountPresetOptions?.querySelectorAll('[data-discount-preset]').forEach(button => {
+                    const value = Number(button.dataset.discountPreset || 0);
+                    button.classList.toggle('active', Math.abs(value - percent) < 0.001);
+                });
+            }
+
+            function openItemDiscount(itemId) {
+                const item = cart.find(row => row.id === String(itemId));
+                if (!item || !itemDiscountModal || !itemDiscountInput) return;
+                activeDiscountItemId = item.id;
+                if (itemDiscountProductName) itemDiscountProductName.textContent = `${item.title} · ${money(item.price)} each · Qty ${item.qty}`;
+                itemDiscountInput.value = Number(item.discountPercent || 0).toFixed(2).replace(/\.00$/, '');
+                showItemDiscountError('');
+                if (discountPresetOptions) {
+                    discountPresetOptions.replaceChildren();
+                    discountPresets.filter(value => value <= maximumDiscountPercent).forEach(value => {
+                        const presetButton = makeButton(`${value}%`, 'discount-preset-btn', () => {
+                            itemDiscountInput.value = String(value);
+                            updateDiscountPreview();
+                        }, `Apply ${value}% to ${item.title}`);
+                        presetButton.dataset.discountPreset = String(value);
+                        discountPresetOptions.appendChild(presetButton);
+                    });
+                    const noDiscountButton = makeButton('0%', 'discount-preset-btn', () => {
+                        itemDiscountInput.value = '0';
+                        updateDiscountPreview();
+                    }, 'Remove this item discount');
+                    noDiscountButton.dataset.discountPreset = '0';
+                    discountPresetOptions.appendChild(noDiscountButton);
+                }
+                updateDiscountPreview();
+                itemDiscountModal.show();
+            }
+
+            itemDiscountInput?.addEventListener('input', updateDiscountPreview);
+            itemDiscountForm?.addEventListener('submit', event => {
+                event.preventDefault();
+                const item = activeDiscountItem();
+                if (!item) return;
+                const requested = Number(itemDiscountInput?.value || 0);
+                if (!Number.isFinite(requested) || requested < 0 || requested > maximumDiscountPercent) {
+                    showItemDiscountError(`Enter a percentage between 0 and ${maximumDiscountPercent}.`);
+                    itemDiscountInput?.focus();
+                    return;
+                }
+                if (requested > 0 && !(discountReasonInput?.value || '').trim()) {
+                    showItemDiscountError('Enter a reason for this discount before applying it.');
+                    discountReasonInput?.focus();
+                    return;
+                }
+                item.discountPercent = Math.round(requested * 100) / 100;
+                if (item.discountPercent === 0 && !cart.some(row => row.id !== item.id && Number(row.discountPercent || 0) > 0)) {
+                    if (discountReasonInput) discountReasonInput.value = '';
+                }
+                itemDiscountModal?.hide();
+                renderCart();
+            });
+            document.getElementById('removeItemDiscountBtn')?.addEventListener('click', () => {
+                const item = activeDiscountItem();
+                if (!item) return;
+                item.discountPercent = 0;
+                if (!cart.some(row => Number(row.discountPercent || 0) > 0)) {
+                    if (discountReasonInput) discountReasonInput.value = '';
+                }
+                itemDiscountModal?.hide();
+                renderCart();
+            });
 
             function syncCustomerDetails() {
                 const option = customerSelect?.selectedOptions[0];
@@ -823,6 +991,9 @@
                         const removeCell = document.createElement('td');
                         removeCell.appendChild(makeButton('×', 'btn btn-sm p-0 text-danger fw-bold', () => {
                             cart = cart.filter(row => row.id !== item.id);
+                            if (!cart.some(row => Number(row.discountPercent || 0) > 0) && discountReasonInput) {
+                                discountReasonInput.value = '';
+                            }
                             renderCart();
                         }, 'Remove item'));
                         const nameCell = document.createElement('td');
@@ -845,6 +1016,21 @@
                             priceTools.appendChild(makeButton('Edit price', 'btn-pos-price-edit', () =>
                                 openPriceOverride(item.id), 'Adjust the price for this order only'));
                         }
+                        if (maximumDiscountPercent > 0) {
+                            const hasLineDiscount = Number(item.discountPercent || 0) > 0;
+                            const discountLabel = hasLineDiscount
+                                ? `${Number(item.discountPercent).toFixed(2).replace(/\.00$/, '')}% discount · Edit`
+                                : 'Set discount';
+                            priceTools.appendChild(makeButton(discountLabel, 'btn-pos-discount-set', () =>
+                                openItemDiscount(item.id), 'Choose a discount for this product only'));
+                        }
+                        if (Number(item.discountPercent || 0) > 0) {
+                            const saving = document.createElement('span');
+                            saving.className = 'cart-line-savings';
+                            const lineSavings = Math.round((item.price * item.qty * Number(item.discountPercent) / 100 + Number.EPSILON) * 100) / 100;
+                            saving.textContent = 'Savings ' + money(lineSavings);
+                            priceTools.appendChild(saving);
+                        }
                         nameCell.append(name, priceTools);
                         const qtyCell = document.createElement('td');
                         qtyCell.className = 'text-center';
@@ -853,6 +1039,9 @@
                         qtyWrap.appendChild(makeButton('−', 'qty-btn', () => {
                             item.qty -= 1;
                             if (item.qty < 1) cart = cart.filter(row => row.id !== item.id);
+                            if (!cart.some(row => Number(row.discountPercent || 0) > 0) && discountReasonInput) {
+                                discountReasonInput.value = '';
+                            }
                             renderCart();
                         }));
                         const qty = document.createElement('span');
@@ -866,7 +1055,20 @@
                         qtyCell.appendChild(qtyWrap);
                         const totalCell = document.createElement('td');
                         totalCell.className = 'text-end fw-bold';
-                        totalCell.textContent = money(item.price * item.qty);
+                        const lineSubtotal = Math.round((item.price * item.qty + Number.EPSILON) * 100) / 100;
+                        const lineDiscount = Math.round((lineSubtotal * Number(item.discountPercent || 0) / 100 + Number.EPSILON) * 100) / 100;
+                        const lineTotal = Math.max(0, Math.round((lineSubtotal - lineDiscount + Number.EPSILON) * 100) / 100);
+                        if (lineDiscount > 0) {
+                            const originalAmount = document.createElement('small');
+                            originalAmount.className = 'd-block text-muted text-decoration-line-through';
+                            originalAmount.textContent = money(lineSubtotal);
+                            const discountedAmount = document.createElement('span');
+                            discountedAmount.className = 'text-success';
+                            discountedAmount.textContent = money(lineTotal);
+                            totalCell.append(originalAmount, discountedAmount);
+                        } else {
+                            totalCell.textContent = money(lineTotal);
+                        }
                         row.append(removeCell, nameCell, qtyCell, totalCell);
                         cartContainer.appendChild(row);
                     });
@@ -875,17 +1077,16 @@
             }
 
             function calculateTotals() {
-                const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-                const discountRate = Math.min(maximumDiscountPercent, Math.max(0, Number(discountEl.value || 0)));
-                discountEl.value = String(discountRate);
-                discountPresetButtons.forEach(button => {
-                    const selected = Number(button.dataset.discountPreset) === discountRate;
-                    button.classList.toggle('active', selected);
-                    button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-                });
+                const subtotal = Math.round((cart.reduce((sum, item) => sum + item.price * item.qty, 0) + Number.EPSILON) * 100) / 100;
+                const discountAmount = Math.round((cart.reduce((sum, item) => {
+                    const lineSubtotal = Math.round((item.price * item.qty + Number.EPSILON) * 100) / 100;
+                    return sum + Math.round((lineSubtotal * Number(item.discountPercent || 0) / 100 + Number.EPSILON) * 100) / 100;
+                }, 0) + Number.EPSILON) * 100) / 100;
                 const fee = isDeliverySelected() ? deliveryFee : 0;
-                const total = (subtotal + fee) * (1 - discountRate / 100);
+                const total = Math.max(0, Math.round((subtotal + fee - discountAmount + Number.EPSILON) * 100) / 100);
                 subtotalEl.textContent = money(subtotal);
+                const discountTotalEl = document.getElementById('discountTotal');
+                if (discountTotalEl) discountTotalEl.textContent = '−' + money(discountAmount);
                 totalEl.textContent = money(total);
                 payButton.textContent = 'Checkout · ' + money(total);
                 payButton.disabled = cart.length === 0;
@@ -899,11 +1100,6 @@
                     ' item(s)';
             }
 
-            discountEl?.addEventListener('input', calculateTotals);
-            discountPresetButtons.forEach(button => button.addEventListener('click', () => {
-                discountEl.value = button.dataset.discountPreset || '0';
-                calculateTotals();
-            }));
             orderTypeSelect?.addEventListener('change', syncCheckoutOptions);
             customerSelect?.addEventListener('change', syncCheckoutOptions);
             paymentSelect?.addEventListener('change', syncCheckoutOptions);
@@ -932,11 +1128,11 @@
                         return;
                     }
                 }
-                const selectedDiscount = Number(discountEl?.value || 0);
+                const hasDiscount = cart.some(item => Number(item.discountPercent || 0) > 0);
                 const selectedDiscountReason = (discountReasonInput?.value || '').trim();
-                if (selectedDiscount > 0 && !selectedDiscountReason) {
+                if (hasDiscount && !selectedDiscountReason) {
                     event.preventDefault();
-                    alert('Enter a reason before applying a discount.');
+                    alert('Enter a reason before applying a discount to any product.');
                     discountReasonInput?.focus();
                     return;
                 }
@@ -945,9 +1141,9 @@
                     quantity: item.qty,
                     price_override: Boolean(item.priceOverridden),
                     unit_price: item.priceOverridden ? Number(item.price.toFixed(2)) : null,
-                    override_reason: item.priceOverridden ? (item.overrideReason || '') : null
+                    override_reason: item.priceOverridden ? (item.overrideReason || '') : null,
+                    discount_percent: Number(item.discountPercent || 0)
                 })));
-                discountPayload.value = discountEl.value;
                 if (discountReasonPayload) discountReasonPayload.value = selectedDiscountReason;
                 confirmSaleBtn.disabled = true;
                 confirmSaleBtn.innerHTML =

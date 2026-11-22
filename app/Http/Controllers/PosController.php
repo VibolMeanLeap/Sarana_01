@@ -215,6 +215,9 @@ class PosController extends Controller
             'order_channel' => 'nullable|in:walk_in,facebook,instagram,telegram,phone,referral,other',
             'order_type_id' => 'required|integer|exists:order_type,order_type_id',
             'payment_method_id' => 'required|integer|exists:payment_method,payment_method_id',
+            // The old order-wide discount field is accepted only as zero so a stale
+            // browser cannot silently apply a ticket-wide discount. Discounts now
+            // arrive on individual cart lines as items.*.discount_percent.
             'discount' => 'nullable|numeric|min:0|max:100',
             'discount_reason' => 'nullable|string|max:500',
         ]);
@@ -245,10 +248,10 @@ class PosController extends Controller
             'items.*.price_override' => 'sometimes|boolean',
             'items.*.unit_price' => 'nullable|numeric|min:0|max:99999999.99',
             'items.*.override_reason' => 'nullable|string|max:500',
+            'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
         ])->validate()['items'];
 
         $isAdministrator = strtolower((string) auth()->user()?->role?->role_name) === 'admin';
-        $discount = round((float) ($validated['discount'] ?? 0), 2);
         $maximumDiscount = (float) config(
             $isAdministrator ? 'pos.admin_max_discount_percent' : 'pos.cashier_max_discount_percent',
             $isAdministrator ? 100 : 0
@@ -256,15 +259,27 @@ class PosController extends Controller
         $maximumDiscount = min(100, max(0, $maximumDiscount));
         $discountReason = trim((string) ($validated['discount_reason'] ?? ''));
 
-        if ($discount > $maximumDiscount) {
+        // Ticket-wide discounts are intentionally disabled. Every discount must
+        // be attached to a selected product line so it cannot affect other items.
+        if ((float) ($validated['discount'] ?? 0) > 0) {
             throw ValidationException::withMessages([
-                'discount' => 'Your staff role is not allowed to apply this discount. Ask an administrator for approval.',
+                'discount' => 'Please apply the discount to the specific product line(s), not to the whole order.',
             ]);
         }
 
-        if ($discount > 0 && $discountReason === '') {
+        $hasLineDiscount = collect($items)->contains(fn (array $item): bool => (float) ($item['discount_percent'] ?? 0) > 0);
+        foreach ($items as $item) {
+            $lineDiscountPercent = round((float) ($item['discount_percent'] ?? 0), 2);
+            if ($lineDiscountPercent > $maximumDiscount) {
+                throw ValidationException::withMessages([
+                    'cart' => 'Your staff role is not allowed to apply this discount. Ask an administrator to approve it.',
+                ]);
+            }
+        }
+
+        if ($hasLineDiscount && $discountReason === '') {
             throw ValidationException::withMessages([
-                'discount_reason' => 'Enter a reason before applying a discount.',
+                'discount_reason' => 'Enter a reason before applying a discount to any product.',
             ]);
         }
 
@@ -311,7 +326,7 @@ class PosController extends Controller
             $result = DB::transaction(function () use (
                 $validated, $items, $methodName, $isCash, $isKhqr, $isCashOnDelivery,
                 $isDelivery, $deliveryFee, $orderChannel, $orderType, $paymentMethod, $payWay,
-                $discount, $discountReason
+                $maximumDiscount, $discountReason
             ) {
                 $productIds = collect($items)->pluck('product_id')->map(fn ($id) => (int) $id)->unique()->sort()->values()->all();
                 $products = Product::query()
@@ -329,8 +344,11 @@ class PosController extends Controller
                 }
 
                 $subtotal = 0.0;
+                $discountAmount = 0.0;
                 $salePrices = [];
+                $lineDiscounts = [];
                 $priceOverrideAudits = [];
+                $selectedDiscountLines = [];
                 foreach ($items as $item) {
                     $product = $products->get((int) $item['product_id']);
                     $quantity = (int) $item['quantity'];
@@ -358,7 +376,30 @@ class PosController extends Controller
                         ];
                     }
                     $salePrices[$product->product_id] = $salePrice;
-                    $subtotal += $salePrice * $quantity;
+                    $lineSubtotal = round($salePrice * $quantity, 2);
+                    $subtotal += $lineSubtotal;
+
+                    $lineDiscountPercent = round((float) ($item['discount_percent'] ?? 0), 2);
+                    if ($lineDiscountPercent > $maximumDiscount) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'A product discount exceeds the maximum allowed for your staff role.',
+                        ]);
+                    }
+                    $lineDiscountAmount = round($lineSubtotal * ($lineDiscountPercent / 100), 2);
+                    $discountAmount += $lineDiscountAmount;
+                    $lineDiscounts[$product->product_id] = [
+                        'percent' => $lineDiscountPercent,
+                        'amount' => $lineDiscountAmount,
+                    ];
+                    if ($lineDiscountPercent > 0) {
+                        $selectedDiscountLines[] = [
+                            'product_id' => (int) $product->product_id,
+                            'product_name' => (string) $product->product_name,
+                            'quantity' => $quantity,
+                            'discount_percent' => $lineDiscountPercent,
+                            'discount_amount' => $lineDiscountAmount,
+                        ];
+                    }
                 }
 
                 $customer = null;
@@ -381,8 +422,16 @@ class PosController extends Controller
                     ]);
                 }
 
+                $subtotal = round($subtotal, 2);
+                $discountAmount = round($discountAmount, 2);
                 $totalAmount = round($subtotal + $deliveryFee, 2);
-                $finalPrice = round($totalAmount * (1 - ($discount / 100)), 2);
+                // Keep orders.discount as the legacy effective percentage so
+                // existing database triggers still calculate final_price correctly.
+                // The true customer-facing discount is stored in discount_amount.
+                $discount = $totalAmount > 0
+                    ? round(($discountAmount / $totalAmount) * 100, 4)
+                    : 0.0000;
+                $finalPrice = max(0, round($totalAmount - $discountAmount, 2));
                 $isPaidAtCreation = $isCash;
                 $initialStatus = $isDelivery ? 'pending' : ($isPaidAtCreation ? 'completed' : 'pending');
 
@@ -392,6 +441,7 @@ class PosController extends Controller
                     'order_type_id' => $orderType->order_type_id,
                     'total_amount' => $totalAmount,
                     'discount' => $discount,
+                    'discount_amount' => $discountAmount,
                     'final_price' => $finalPrice,
                     'exchange_rate' => Settings::query()->value('exchange_rate') ?: 4100,
                     'payment_method_id' => $paymentMethod->payment_method_id,
@@ -410,6 +460,8 @@ class PosController extends Controller
                         'product_id' => $product->product_id,
                         'quantity' => (int) $item['quantity'],
                         'price' => $salePrices[$product->product_id] ?? (float) $product->price,
+                        'discount_percent' => $lineDiscounts[$product->product_id]['percent'] ?? 0,
+                        'discount_amount' => $lineDiscounts[$product->product_id]['amount'] ?? 0,
                         'unit_cost' => (float) $product->cost,
                     ]);
                 }
@@ -449,7 +501,10 @@ class PosController extends Controller
                     ]);
                 }
 
-                if ($discount > 0) {
+                if ($discountAmount > 0) {
+                    $weightedProductDiscount = $subtotal > 0
+                        ? round(($discountAmount / $subtotal) * 100, 2)
+                        : 0;
                     OrderStatusHistory::create([
                         'order_id' => $order->order_id,
                         'event_type' => 'pos_discount_applied',
@@ -459,8 +514,10 @@ class PosController extends Controller
                         'actor_id' => auth()->id(),
                         'actor_label' => auth()->user()?->name ?? 'POS Staff',
                         'note' => json_encode([
-                            'discount_percent' => $discount,
-                            'discount_amount' => round($totalAmount * ($discount / 100), 2),
+                            'discount_percent' => $weightedProductDiscount,
+                            'effective_order_discount_percent' => $discount,
+                            'discount_amount' => $discountAmount,
+                            'discounted_products' => $selectedDiscountLines,
                             'reason' => $discountReason,
                         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                         'created_at' => now(),

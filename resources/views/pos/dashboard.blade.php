@@ -132,38 +132,20 @@
                 </div>
                 <div class="border-top mt-3 pt-3">
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label for="discountInput" class="text-muted mb-0">Discount (%)</label>
-                            @if ($isAdmin)
-                                <input type="number" id="discountInput" class="form-control form-control-sm text-end"
-                                    value="0" min="0" max="{{ $maxDiscountPercent }}" step="5" style="width:82px"
-                                    inputmode="numeric" aria-describedby="discountStepHelp">
-                            @else
-                                <input type="number" id="discountInput" class="form-control form-control-sm text-end"
-                                    value="0" min="0" max="0" step="1" style="width:82px" readonly
-                                    aria-describedby="discountStepHelp">
-                            @endif
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                            <span class="text-muted fw-semibold">Product-specific discount</span>
+                            <span class="badge rounded-pill text-bg-light">Per item</span>
                         </div>
-                        @if ($isAdmin)
-                            <div class="d-flex flex-wrap gap-2" role="group" aria-label="Discount presets">
-                                <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn active"
-                                    data-discount-preset="0">No discount</button>
-                                @foreach ([10, 20, 30] as $preset)
-                                    @if ($maxDiscountPercent >= $preset)
-                                        <button type="button" class="btn btn-sm btn-pos-outline discount-preset-btn"
-                                            data-discount-preset="{{ $preset }}">{{ $preset }}%</button>
-                                    @endif
-                                @endforeach
-                            </div>
-                            <label for="discountReasonInput" class="form-label small text-muted mt-2 mb-1">Discount reason (required when discount is used)</label>
-                            <input type="text" id="discountReasonInput" class="form-control form-control-sm"
-                                maxlength="500" placeholder="e.g. Customer promotion / manager approval">
+                        @if ($maxDiscountPercent > 0)
+                            <small class="text-muted d-block">Click <strong>Set discount</strong> under a cart item to choose a quick preset or enter a custom percentage. The live preview shows the exact amount saved on that item only.</small>
                         @else
-                            <small id="discountStepHelp" class="text-muted d-block mt-1">Discounts require administrator approval.</small>
+                            <small class="text-muted d-block">Product discounts require administrator approval.</small>
                         @endif
                     </div>
                     <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal</span><strong
                             id="subTotal">$0.00</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span class="text-muted">Discount value</span><strong
+                            id="discountTotal" class="text-danger">−$0.00</strong></div>
                     <div class="d-flex justify-content-between align-items-center pt-3 mt-2 border-top"><span
                             class="fw-bold fs-6">Amount due</span><strong class="fs-4" style="color:var(--pos-green)"
                             id="grandTotal">$0.00</strong></div>
