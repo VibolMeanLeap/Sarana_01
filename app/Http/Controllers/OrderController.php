@@ -414,11 +414,14 @@ class OrderController extends Controller
         }
 
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customer,customer_id',
+            'customer_id' => ['nullable', 'integer', 'exists:customer,customer_id'],
             'order_type_id' => 'required|exists:order_type,order_type_id',
             'payment_method_id' => 'nullable|exists:payment_method,payment_method_id',
             'total_amount' => 'required|numeric|min:0',
         ]);
+        $validated['customer_id'] = isset($validated['customer_id'])
+            ? (int) $validated['customer_id']
+            : null;
 
         $totalAmount = round((float) $validated['total_amount'], 2);
         // Admin draft edits cannot apply a ticket-wide discount. Product

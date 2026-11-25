@@ -4349,3 +4349,128 @@ html[data-cc-theme="dark"] .store-info-page .btn-success:hover {
         color 0.3s ease,
         text-shadow 0.3s ease;
 }
+
+
+/* =========================================================
+   SK COFFEE — CASHIER ORDER FILTER DARK MODE
+   Date range + Order filters
+   ========================================================= */
+
+/* 1. DATE RANGE PANEL */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm > section:first-of-type,
+
+/* 2. ORDER FILTERS PANEL */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm > section:last-of-type {
+    background: var(--cc-theme-surface-muted) !important;
+    background-image: none !important;
+    color: var(--cc-theme-text) !important;
+    border: 1px solid var(--cc-theme-border) !important;
+    border-radius: 18px !important;
+    box-shadow: none !important;
+}
+
+/* Date range heading */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm
+.small.fw-bold[style*="#176b4b"] {
+    color: #91dcaf !important;
+}
+
+/* Order filters heading */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm
+.small.fw-bold.text-dark {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Filter descriptions */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .text-muted {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Date and payment labels */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-label {
+    color: var(--cc-theme-text) !important;
+}
+
+/* Filter icon background */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm
+span[style*="background:#dcefe2"] {
+    background: var(--cc-theme-green-soft) !important;
+    color: #91dcaf !important;
+}
+
+/* Search input, date input and payment dropdown */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-control,
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-select {
+    background-color: var(--cc-theme-input) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Input placeholders */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-control::placeholder {
+    color: var(--cc-theme-muted) !important;
+}
+
+/* Focus effect */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-control:focus,
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-select:focus {
+    border-color: var(--cc-theme-green) !important;
+    box-shadow: var(--cc-theme-focus) !important;
+}
+
+/* Dropdown options */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .form-select option {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+}
+
+/* Quick date range buttons */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .btn-outline-success {
+    color: #91dcaf !important;
+    border-color: #568b69 !important;
+}
+
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .btn-outline-success:hover {
+    background: #294637 !important;
+    color: #ffffff !important;
+}
+
+/* Apply filters button */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .btn-green {
+    background: #27845c !important;
+    color: #ffffff !important;
+    border-color: #27845c !important;
+}
+
+/* Reset button */
+html[data-cc-theme="dark"]
+.cashier-main #cashierOrdersFilterForm .btn-outline-secondary {
+    background: var(--cc-theme-surface) !important;
+    color: var(--cc-theme-text) !important;
+    border-color: var(--cc-theme-border) !important;
+}
+
+/* Smooth theme transition */
+.cashier-main #cashierOrdersFilterForm > section {
+    transition:
+        background .3s ease,
+        color .3s ease,
+        border-color .3s ease;
+}
+

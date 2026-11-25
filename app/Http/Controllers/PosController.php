@@ -43,7 +43,10 @@ class PosController extends Controller
             ->where('product.status', 'Active')
             ->orderBy('product.product_name')
             ->get();
-        $customers = Costumer::query()->orderBy('name')->get();
+        $customers = Costumer::query()
+            ->activeForPos()
+            ->orderBy('name')
+            ->get();
         $orderTypes = OrderType::query()->orderBy('order_name')->get();
         $paymentMethods = PaymentMethod::query()
             ->whereIn(DB::raw('LOWER(TRIM(payment_name))'), ['cash', 'khqr', 'cash on delivery', 'cash-on-delivery', 'cod'])
@@ -405,9 +408,16 @@ class PosController extends Controller
                 $customer = null;
                 if (! empty($validated['customer_id'])) {
                     $customer = Costumer::query()
+                        ->activeForPos()
                         ->where('customer_id', $validated['customer_id'])
                         ->lockForUpdate()
-                        ->firstOrFail();
+                        ->first();
+
+                    if (! $customer) {
+                        throw ValidationException::withMessages([
+                            'customer_id' => 'Only active customer accounts can be selected. Please choose an active customer or use Walk-in / no linked customer.',
+                        ]);
+                    }
                 } elseif ($isDelivery) {
                     $customer = Costumer::create([
                         'user_id' => null,

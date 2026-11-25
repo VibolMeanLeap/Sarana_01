@@ -509,7 +509,7 @@
                                 <label for="checkoutCustomer" class="form-label fw-semibold">Existing customer <span
                                         class="text-muted fw-normal">(optional)</span></label>
                                 <select class="form-select" name="customer_id" id="checkoutCustomer" data-optional>
-                                    <option value="">New / walk-in customer</option>
+                                    <option value="" selected>New / walk-in customer</option>
                                     @foreach ($customers as $customer)
                                         <option value="{{ $customer->customer_id }}"
                                             data-name="{{ $customer->name }}" data-phone="{{ $customer->phone }}">

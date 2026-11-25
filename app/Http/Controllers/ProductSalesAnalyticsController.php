@@ -21,8 +21,15 @@ class ProductSalesAnalyticsController extends Controller
             COUNT(DISTINCT p.product_id) as products_sold,
             COUNT(DISTINCT o.order_id) as orders_count,
             COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) as item_sales_total,
+            COALESCE(SUM(COALESCE(oi.discount_amount, 0)), 0) as item_discount_total,
             COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as cogs_total
         ')->first();
+
+        // The summary is calculated from every matching order item, not just
+        // the current 20-row page. This also supplies the table footer totals.
+        $summary->average_selling_price = (float) $summary->units_sold > 0
+            ? (float) $summary->item_sales_total / (float) $summary->units_sold
+            : 0.0;
 
         $productsQuery = $this->productPerformanceQuery($itemsQuery);
         $products = (clone $productsQuery)
@@ -85,7 +92,7 @@ class ProductSalesAnalyticsController extends Controller
             ->get(['u.user_id', 'u.name', 'r.role_name', 'u.status']);
         $categoryOptions = DB::table('category')->orderBy('category_name')->get(['category_id', 'category_name']);
 
-        $summary->gross_margin = (float) $summary->item_sales_total - (float) $summary->cogs_total;
+        $summary->gross_margin = (float) $summary->item_sales_total - (float) $summary->item_discount_total - (float) $summary->cogs_total;
 
         return view('admin.product-sales.index', compact(
             'filters',
@@ -103,14 +110,31 @@ class ProductSalesAnalyticsController extends Controller
     public function csv(Request $request): StreamedResponse
     {
         $filters = $this->validatedFilters($request);
-        $query = $this->productPerformanceQuery($this->filteredItemSalesQuery($filters))
+        $itemsQuery = $this->filteredItemSalesQuery($filters);
+        $query = $this->productPerformanceQuery($itemsQuery)
             ->orderByDesc('units_sold')
             ->orderByDesc('item_sales_total')
             ->orderBy('p.product_name');
 
+        // Export totals use the full filtered dataset, never a page-limited query.
+        $summary = (clone $itemsQuery)->selectRaw('
+            COALESCE(SUM(COALESCE(oi.quantity, 0)), 0) as units_sold,
+            COUNT(DISTINCT p.product_id) as products_sold,
+            COUNT(DISTINCT o.order_id) as orders_count,
+            COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) as item_sales_total,
+            COALESCE(SUM(COALESCE(oi.discount_amount, 0)), 0) as item_discount_total,
+            COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as cogs_total
+        ')->first();
+        $averageSellingPrice = (float) ($summary->units_sold ?? 0) > 0
+            ? (float) $summary->item_sales_total / (float) $summary->units_sold
+            : 0.0;
+        $grossMargin = (float) ($summary->item_sales_total ?? 0)
+            - (float) ($summary->item_discount_total ?? 0)
+            - (float) ($summary->cogs_total ?? 0);
+
         $filename = 'product-sales-' . now()->format('Ymd-His') . '.csv';
 
-        return response()->streamDownload(function () use ($query, $filters) {
+        return response()->streamDownload(function () use ($query, $filters, $summary, $averageSellingPrice, $grossMargin) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Product sales report']);
@@ -121,7 +145,7 @@ class ProductSalesAnalyticsController extends Controller
             fputcsv($out, ['Category', $filters['category_name'] ?: 'All categories']);
             fputcsv($out, ['Search', $filters['search'] ?: '—']);
             fputcsv($out, []);
-            fputcsv($out, ['Product ID', 'Product', 'Category', 'Units sold', 'Orders', 'Item sales subtotal (USD)', 'Estimated COGS (USD)', 'Estimated gross margin (USD)']);
+            fputcsv($out, ['Product ID', 'Product', 'Category', 'Units sold', 'Orders', 'Average selling price (USD/unit)', 'Item sales subtotal (USD)', 'Item discount (USD)', 'Estimated COGS (USD)', 'Estimated gross margin (USD)']);
 
             foreach ($query->cursor() as $row) {
                 fputcsv($out, [
@@ -130,9 +154,27 @@ class ProductSalesAnalyticsController extends Controller
                     $this->safeCsvValue($row->category_name),
                     (int) $row->units_sold,
                     (int) $row->orders_count,
+                    number_format((float) $row->average_selling_price, 2, '.', ''),
                     number_format((float) $row->item_sales_total, 2, '.', ''),
+                    number_format((float) $row->item_discount_total, 2, '.', ''),
                     number_format((float) $row->cogs_total, 2, '.', ''),
                     number_format((float) $row->gross_margin, 2, '.', ''),
+                ]);
+            }
+
+            if ((int) ($summary->products_sold ?? 0) > 0) {
+                fputcsv($out, []);
+                fputcsv($out, [
+                    'TOTAL',
+                    '',
+                    '',
+                    (int) ($summary->units_sold ?? 0),
+                    (int) ($summary->orders_count ?? 0),
+                    number_format($averageSellingPrice, 2, '.', ''),
+                    number_format((float) ($summary->item_sales_total ?? 0), 2, '.', ''),
+                    number_format((float) ($summary->item_discount_total ?? 0), 2, '.', ''),
+                    number_format((float) ($summary->cogs_total ?? 0), 2, '.', ''),
+                    number_format($grossMargin, 2, '.', ''),
                 ]);
             }
 
@@ -162,13 +204,19 @@ class ProductSalesAnalyticsController extends Controller
             COUNT(DISTINCT p.product_id) as products_sold,
             COUNT(DISTINCT o.order_id) as orders_count,
             COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) as item_sales_total,
+            COALESCE(SUM(COALESCE(oi.discount_amount, 0)), 0) as item_discount_total,
             COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as cogs_total
         ')->first();
-        $grossMargin = (float) ($summary->item_sales_total ?? 0) - (float) ($summary->cogs_total ?? 0);
+        $averageSellingPrice = (float) ($summary->units_sold ?? 0) > 0
+            ? (float) $summary->item_sales_total / (float) $summary->units_sold
+            : 0.0;
+        $grossMargin = (float) ($summary->item_sales_total ?? 0)
+            - (float) ($summary->item_discount_total ?? 0)
+            - (float) ($summary->cogs_total ?? 0);
 
         $headers = [
             'Product ID', 'Product', 'Category', 'Units sold', 'Orders',
-            'Item sales subtotal (USD)', 'Estimated COGS (USD)', 'Estimated gross margin (USD)',
+            'Average selling price (USD/unit)', 'Item sales subtotal (USD)', 'Item discount (USD)', 'Estimated COGS (USD)', 'Estimated gross margin (USD)',
         ];
         $rows = $products->map(fn ($row) => [
             $row->product_id,
@@ -176,14 +224,18 @@ class ProductSalesAnalyticsController extends Controller
             $row->category_name,
             number_format((int) $row->units_sold),
             number_format((int) $row->orders_count),
+            '$'.$this->formatAverageSellingPrice((float) $row->average_selling_price),
             '$'.number_format((float) $row->item_sales_total, 2),
+            '$'.number_format((float) $row->item_discount_total, 2),
             '$'.number_format((float) $row->cogs_total, 2),
             '$'.number_format((float) $row->gross_margin, 2),
         ])->all();
 
         $totalRow = [
-            'TOTAL', '', '', number_format((int) ($summary->units_sold ?? 0)), '',
+            'TOTAL', '', '', number_format((int) ($summary->units_sold ?? 0)), number_format((int) ($summary->orders_count ?? 0)),
+            '$'.$this->formatAverageSellingPrice($averageSellingPrice),
             '$'.number_format((float) ($summary->item_sales_total ?? 0), 2),
+            '$'.number_format((float) ($summary->item_discount_total ?? 0), 2),
             '$'.number_format((float) ($summary->cogs_total ?? 0), 2),
             '$'.number_format($grossMargin, 2),
         ];
@@ -220,7 +272,9 @@ class ProductSalesAnalyticsController extends Controller
                 'Units sold' => number_format((int) ($summary->units_sold ?? 0)),
                 'Products sold' => number_format((int) ($summary->products_sold ?? 0)),
                 'Orders' => number_format((int) ($summary->orders_count ?? 0)),
+                'Average selling price' => '$'.$this->formatAverageSellingPrice($averageSellingPrice),
                 'Item sales subtotal' => '$'.number_format((float) ($summary->item_sales_total ?? 0), 2),
+                'Product discounts' => '$'.number_format((float) ($summary->item_discount_total ?? 0), 2),
                 'Estimated COGS' => '$'.number_format((float) ($summary->cogs_total ?? 0), 2),
                 'Estimated gross margin' => '$'.number_format($grossMargin, 2),
             ],
@@ -312,9 +366,20 @@ class ProductSalesAnalyticsController extends Controller
             ->selectRaw('COALESCE(SUM(COALESCE(oi.quantity, 0)), 0) as units_sold')
             ->selectRaw('COUNT(DISTINCT o.order_id) as orders_count')
             ->selectRaw('COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) as item_sales_total')
+            ->selectRaw('COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)) / NULLIF(SUM(COALESCE(oi.quantity, 0)), 0), 0) as average_selling_price')
+            ->selectRaw('COALESCE(SUM(COALESCE(oi.discount_amount, 0)), 0) as item_discount_total')
             ->selectRaw('COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as cogs_total')
-            ->selectRaw('COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) - COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as gross_margin')
+            ->selectRaw('COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.price, 0)), 0) - COALESCE(SUM(COALESCE(oi.discount_amount, 0)), 0) - COALESCE(SUM(COALESCE(oi.quantity, 0) * COALESCE(oi.unit_cost, p.cost, 0)), 0) as gross_margin')
             ->groupBy('p.product_id', 'p.product_name', 'p.image', 'c.category_name');
+    }
+
+    /**
+     * Display averaged prices consistently to two decimal places.
+     * Item sales remains the exact sum of recorded quantity × unit price.
+     */
+    private function formatAverageSellingPrice(float $value): string
+    {
+        return number_format($value, 2, '.', ',');
     }
 
     private function safeCsvValue(mixed $value): string|int|float|null

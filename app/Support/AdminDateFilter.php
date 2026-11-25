@@ -74,7 +74,7 @@ class AdminDateFilter
             }
         }
         if (! $preset) {
-            $preset = ($from || $to) ? 'custom' : 'all';
+            $preset = ($from || $to) ? 'custom' : 'today';
         }
 
         $today = today();

@@ -20,9 +20,9 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $allowedRanges = ['today', 'week', 'this_month', 'all', 'custom'];
-        $range = (string) $request->query('range', 'this_month');
+        $range = (string) $request->query('range', 'today');
         if (! in_array($range, $allowedRanges, true)) {
-            $range = 'this_month';
+            $range = 'today';
         }
 
         $now = now();

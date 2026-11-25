@@ -55,8 +55,9 @@
                 <div class="ord-form-row">
                     <div class="ord-form-group">
                         <label for="customer_id" class="ord-form-label">Customer</label>
+                        @php($selectedCustomerId = old('customer_id', $order->customer_id))
                         <select name="customer_id" id="customer_id" class="ord-form-control">
-                            <option value="">-- Select Customer --</option>
+                            <option value="" @selected($selectedCustomerId === null || $selectedCustomerId === '')>Walk-in / no linked customer</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->customer_id }}" @selected(old('customer_id', $order->customer_id) == $customer->customer_id)>{{ $customer->name }}</option>
                             @endforeach

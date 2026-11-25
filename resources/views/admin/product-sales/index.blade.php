@@ -16,6 +16,7 @@
     .ps-product-thumb{width:43px;height:43px;border-radius:11px;object-fit:cover;background:#f1f5f2;border:1px solid #edf1ee}
     .ps-table thead th{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#849088;font-weight:850;border-bottom:1px solid #e9efeb;white-space:nowrap}
     .ps-table tbody td{padding-top:12px;padding-bottom:12px;border-color:#f0f3f1;vertical-align:middle}
+    .ps-table tfoot th{padding:14px 8px;background:#f4f8f5;border-top:2px solid #dfe9e2;color:#244333;font-size:12px;white-space:nowrap}
     .ps-filter-shell{padding:14px;border:1px solid #e5ede7;border-radius:18px;background:#fff;box-shadow:0 5px 18px rgba(24,65,42,.035)}
     .ps-filter-shell-title{display:flex;align-items:center;gap:9px;font-weight:850;color:#263b30;margin:0 0 12px;font-size:13px}
     .ps-filter-label{font-size:10px;font-weight:850;color:#77827b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
@@ -129,12 +130,12 @@
     <div class="col-12 col-sm-6 col-xl-3"><div class="ps-kpi p-3"><div class="d-flex justify-content-between align-items-center"><span class="small ps-muted fw-semibold">Total units sold</span><span class="ps-kpi-icon"><i class="bi bi-box-seam"></i></span></div><div class="fs-2 fw-bold mt-2">{{ number_format((int)$summary->units_sold) }}</div><div class="small ps-muted">Across the selected products</div></div></div>
     <div class="col-12 col-sm-6 col-xl-3"><div class="ps-kpi p-3"><div class="d-flex justify-content-between align-items-center"><span class="small ps-muted fw-semibold">Products sold</span><span class="ps-kpi-icon"><i class="bi bi-tags"></i></span></div><div class="fs-2 fw-bold mt-2">{{ number_format((int)$summary->products_sold) }}</div><div class="small ps-muted">Unique product types</div></div></div>
     <div class="col-12 col-sm-6 col-xl-3"><div class="ps-kpi p-3"><div class="d-flex justify-content-between align-items-center"><span class="small ps-muted fw-semibold">Orders with products</span><span class="ps-kpi-icon"><i class="bi bi-receipt"></i></span></div><div class="fs-2 fw-bold mt-2">{{ number_format((int)$summary->orders_count) }}</div><div class="small ps-muted">Paid orders in this selection</div></div></div>
-    <div class="col-12 col-sm-6 col-xl-3"><div class="ps-kpi p-3"><div class="d-flex justify-content-between align-items-center"><span class="small ps-muted fw-semibold">Item sales subtotal</span><span class="ps-kpi-icon"><i class="bi bi-currency-dollar"></i></span></div><div class="fs-2 fw-bold mt-2">${{ number_format((float)$summary->item_sales_total, 2) }}</div><div class="small ps-muted">Before order-level discounts</div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="ps-kpi p-3"><div class="d-flex justify-content-between align-items-center"><span class="small ps-muted fw-semibold">Item sales subtotal</span><span class="ps-kpi-icon"><i class="bi bi-currency-dollar"></i></span></div><div class="fs-2 fw-bold mt-2">${{ number_format((float)$summary->item_sales_total, 2) }}</div><div class="small ps-muted">Before item-level discounts</div></div></div>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-6"><div class="ps-kpi p-3"><div class="small ps-muted fw-semibold">Estimated cost of goods sold</div><div class="h3 fw-bold mt-2 mb-1">${{ number_format((float)$summary->cogs_total, 2) }}</div><div class="small ps-muted">Based on saved item unit cost at sale time.</div></div></div>
-    <div class="col-12 col-md-6"><div class="ps-kpi p-3"><div class="small ps-muted fw-semibold">Estimated item gross margin</div><div class="h3 fw-bold mt-2 mb-1 {{ $summary->gross_margin >= 0 ? 'text-success' : 'text-danger' }}">${{ number_format((float)$summary->gross_margin, 2) }}</div><div class="small ps-muted">Item sales subtotal minus estimated item cost.</div></div></div>
+    <div class="col-12 col-md-6"><div class="ps-kpi p-3"><div class="small ps-muted fw-semibold">Estimated item gross margin</div><div class="h3 fw-bold mt-2 mb-1 {{ $summary->gross_margin >= 0 ? 'text-success' : 'text-danger' }}">${{ number_format((float)$summary->gross_margin, 2) }}</div><div class="small ps-muted">Item sales subtotal minus product discounts and estimated item cost.</div></div></div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -196,7 +197,7 @@
     <div class="ps-section-head d-flex flex-wrap align-items-center justify-content-between gap-2"><div><h2 class="h5 fw-bold mb-1">Product sales breakdown</h2><div class="small ps-muted">Every matching product, ranked by quantity sold</div></div><span class="badge rounded-pill text-bg-light">{{ number_format($products->total()) }} products</span></div>
     <div class="table-responsive">
         <table class="table ps-table mb-0">
-            <thead><tr><th class="ps-3">Product</th><th>Category</th><th class="text-end">Units sold</th><th class="text-end">Orders</th><th class="text-end">Item sales</th><th class="text-end">Est. margin</th></tr></thead>
+            <thead><tr><th class="ps-3">Product</th><th>Category</th><th class="text-end">Units sold</th><th class="text-end" title="Distinct orders containing this product">Orders</th><th class="text-end" title="Item sales subtotal divided by units sold; a quantity-weighted average of recorded unit prices before item discounts">Avg. selling price</th><th class="text-end">Item sales</th><th class="text-end" title="Total item-level discount saved on this product across the selected period">Discount</th><th class="text-end">Est. margin</th></tr></thead>
             <tbody>
                 @forelse($products as $product)
                     <tr>
@@ -208,17 +209,32 @@
                         <td><span class="small">{{ $product->category_name }}</span></td>
                         <td class="text-end fw-bold">{{ number_format((int)$product->units_sold) }}</td>
                         <td class="text-end">{{ number_format((int)$product->orders_count) }}</td>
+                        <td class="text-end">${{ number_format((float)$product->average_selling_price, 2, '.', ',') }}</td>
                         <td class="text-end">${{ number_format((float)$product->item_sales_total,2) }}</td>
+                        <td class="text-end">${{ number_format((float)$product->item_discount_total,2) }}</td>
                         <td class="text-end {{ $product->gross_margin >= 0 ? 'text-success' : 'text-danger' }}">${{ number_format((float)$product->gross_margin,2) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-center text-muted py-5">No product sales match the selected filters.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-5">No product sales match the selected filters.</td></tr>
                 @endforelse
             </tbody>
+            @if($products->total() > 0)
+                <tfoot>
+                    <tr>
+                        <th class="ps-3" colspan="2">TOTAL</th>
+                        <th class="text-end">{{ number_format((int)$summary->units_sold) }}</th>
+                        <th class="text-end" title="Distinct orders across the full filtered report">{{ number_format((int)$summary->orders_count) }}</th>
+                        <th class="text-end">${{ number_format((float)$summary->average_selling_price, 2, '.', ',') }}</th>
+                        <th class="text-end">${{ number_format((float)$summary->item_sales_total, 2) }}</th>
+                        <th class="text-end">${{ number_format((float)$summary->item_discount_total, 2) }}</th>
+                        <th class="text-end {{ $summary->gross_margin >= 0 ? 'text-success' : 'text-danger' }}">${{ number_format((float)$summary->gross_margin, 2) }}</th>
+                    </tr>
+                </tfoot>
+            @endif
         </table>
     </div>
     @if($products->hasPages())<div class="p-3 border-top">{{ $products->links() }}</div>@endif
 </section>
 
-<div class="small text-muted mt-3"><i class="bi bi-info-circle me-1"></i>Counts are calculated from saved order-item quantities on paid, non-cancelled orders. Item sales value is quantity × recorded item price before any order-level discount; it may differ from the final paid order total. Product corrections are reflected using the current saved order items.</div>
+<div class="small text-muted mt-3"><i class="bi bi-info-circle me-1"></i>Average selling price is the quantity-weighted average of recorded unit prices before item discounts; multiply it by units sold to approximate item sales (small rounding differences may occur). Item sales is the exact sum of quantity × recorded item price. Discount is the total saved item-level discount for each product. Estimated margin subtracts item discounts and estimated item cost. Footer totals cover every product matching the filters, including products on other pages; Orders is a distinct count, not a sum of product order counts. Historic order-wide discounts that were not assigned to individual products are not allocated to product rows.</div>
 @endsection

@@ -1521,7 +1521,7 @@
                             <th>Handled by</th>
                             <th>Type / source</th>
                             <th>Subtotal</th>
-                            <th>Discount value</th>
+                            <th>Discount</th>
                             <th>Final</th>
                             <th>Method</th>
                             <th>Payment</th>
@@ -1540,9 +1540,12 @@
                             <td colspan="5">FILTERED TOTALS <span class="text-muted fw-normal">(<span
                                         data-filtered-order-count>{{ number_format($filteredOrderCount ?? 0) }}</span>
                                     matching orders · all pages)</span></td>
-                            <td class="grand-total" data-filtered-order-subtotal>${{ number_format((float) ($filteredSubtotalTotal ?? 0), 2) }}</td>
-                            <td class="grand-total" data-filtered-order-discount>${{ number_format((float) ($filteredDiscountTotal ?? 0), 2) }}</td>
-                            <td class="grand-total" data-filtered-order-total>${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
+                            <td class="grand-total" data-filtered-order-subtotal>
+                                ${{ number_format((float) ($filteredSubtotalTotal ?? 0), 2) }}</td>
+                            <td class="grand-total" data-filtered-order-discount>
+                                ${{ number_format((float) ($filteredDiscountTotal ?? 0), 2) }}</td>
+                            <td class="grand-total" data-filtered-order-total>
+                                ${{ number_format((float) ($filteredFinalTotal ?? 0), 2) }}</td>
                             <td colspan="4"></td>
                         </tr>
                     </tfoot>

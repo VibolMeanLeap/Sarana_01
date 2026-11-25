@@ -1,10 +1,10 @@
 @php
-    $dateFilter = $dateFilter ?? ['preset' => 'all', 'from' => null, 'to' => null];
+    $dateFilter = $dateFilter ?? ['preset' => 'today', 'from' => today()->toDateString(), 'to' => today()->toDateString()];
     $dateFromField = $dateFromField ?? 'start_date';
     $dateToField = $dateToField ?? 'end_date';
     $dateFilterTitle = $dateFilterTitle ?? 'Date range';
     $dateFilterHint = $dateFilterHint ?? 'Choose a quick period or set an exact range.';
-    $datePreset = $dateFilter['preset'] ?? 'all';
+    $datePreset = $dateFilter['preset'] ?? 'today';
     $dateFromValue = $dateFilter['from'] ?? '';
     $dateToValue = $dateFilter['to'] ?? '';
 @endphp

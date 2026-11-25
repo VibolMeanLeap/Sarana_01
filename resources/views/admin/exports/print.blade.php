@@ -29,7 +29,7 @@
         <a href="javascript:window.close()">Close report</a>
         <button type="button" onclick="window.print()"><span>Print / Save as PDF</span></button>
     </div>
-    <main class="report-shell {{ count($headers) > 10 ? 'wide-report' : '' }}">
+    <main class="report-shell {{ count($headers) >= 10 ? 'wide-report' : '' }}">
         <header class="report-head">
             <div class="store-identity">
                 @if($storeLogo)

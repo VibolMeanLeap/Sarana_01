@@ -1536,5 +1536,6 @@
     "96": "៩៦",
     "97": "៩៧",
     "98": "៩៨",
-    "99": "៩៩"
+    "99": "៩៩",
+    "Average selling price is the quantity-weighted average of recorded unit prices before item discounts; multiply it by units sold to approximate item sales (small rounding differences may occur). Item sales is the exact sum of quantity × recorded item price. Discount is the total saved item-level discount for each product. Estimated margin subtracts item discounts and estimated item cost. Footer totals cover every product matching the filters, including products on other pages; Orders is a distinct count, not a sum of product order counts. Historic order-wide discounts that were not assigned to individual products are not allocated to product rows." : "តម្លៃលក់ជាមធ្យមគឺជាតម្លៃមធ្យមភាគដែលមានទម្ងន់តាមបរិមាណនៃតម្លៃឯកតាដែលបានកត់ត្រាមុនពេលបញ្ចុះតម្លៃលើទំនិញ។ គុណវាដោយឯកតាដែលបានលក់ទៅនឹងការលក់ទំនិញប្រហាក់ប្រហែល (ភាពខុសគ្នានៃការបង្គត់តូចតាចអាចកើតឡើង)។ ការលក់ទំនិញគឺជាផលបូកពិតប្រាកដនៃបរិមាណ × តម្លៃទំនិញដែលបានកត់ត្រា។ ការបញ្ចុះតម្លៃគឺជាការបញ្ចុះតម្លៃកម្រិតទំនិញសរុបដែលបានរក្សាទុកសម្រាប់ផលិតផលនីមួយៗ។ រឹមដែលបានប៉ាន់ស្មានដកការបញ្ចុះតម្លៃទំនិញ និងតម្លៃទំនិញដែលបានប៉ាន់ស្មាន។ សរុបបាតកថាគ្របដណ្តប់លើផលិតផលនីមួយៗដែលត្រូវគ្នានឹងតម្រង រួមទាំងផលិតផលនៅលើទំព័រផ្សេងទៀត។ ការបញ្ជាទិញគឺជាចំនួនដាច់ដោយឡែក មិនមែនជាផលបូកនៃចំនួនការបញ្ជាទិញផលិតផលទេ។ ការបញ្ចុះតម្លៃទូទាំងការបញ្ជាទិញប្រវត្តិសាស្ត្រដែលមិនត្រូវបានកំណត់ទៅផលិតផលនីមួយៗមិនត្រូវបានបែងចែកទៅជួរផលិតផលទេ។"
 }

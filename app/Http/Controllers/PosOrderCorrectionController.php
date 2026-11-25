@@ -98,6 +98,19 @@ class PosOrderCorrectionController extends Controller
             ->orderBy('product_name')
             ->get(['product_id', 'product_name', 'price', 'cost', 'qty', 'product_type', 'status']);
 
+        // Show active customers for a new selection, but retain this order's
+        // current customer even if that account has since been deactivated.
+        // Otherwise the browser could silently fall back to the Walk-in option
+        // when an older inactive customer is no longer in the selectable list.
+        $correctionCustomers = Costumer::query()
+            ->activeForPos()
+            ->with('user.role')
+            ->when($order->customer_id, function (Builder $query) use ($order): void {
+                $query->orWhere('customer_id', $order->customer_id);
+            })
+            ->orderBy('name')
+            ->get(['customer_id', 'user_id', 'name', 'phone']);
+
         $productOptions = $products->map(fn (Product $product) => [
             'id' => (int) $product->product_id,
             'name' => (string) $product->product_name,
@@ -143,6 +156,7 @@ class PosOrderCorrectionController extends Controller
                 'pendingAdjustment',
                 'initialItems',
                 'productOptions',
+                'correctionCustomers',
                 'returnTo',
                 'maxDiscountPercent'
             ),
@@ -152,6 +166,13 @@ class PosOrderCorrectionController extends Controller
 
     public function update(Request $request, int $orderId)
     {
+        // Use an explicit form sentinel for Walk-in, then normalize it to SQL NULL.
+        // This avoids ambiguity between an intentional Walk-in selection and a blank field.
+        $customerSelection = $request->input('customer_id');
+        if (in_array($customerSelection, [null, '', '__WALK_IN__'], true)) {
+            $request->merge(['customer_id' => null]);
+        }
+
         $validated = $request->validate([
             'return_to' => ['nullable', 'string', 'max:2048'],
             'customer_id' => ['nullable', 'integer', 'exists:customer,customer_id'],
@@ -174,6 +195,10 @@ class PosOrderCorrectionController extends Controller
             'items.min' => 'A corrected order must contain at least one product.',
             'items.*.product_id.distinct' => 'Each product may appear only once. Combine quantities for duplicate products.',
         ]);
+        // After validation, keep a real customer ID or an explicit NULL for Walk-in.
+        $validated['customer_id'] = isset($validated['customer_id'])
+            ? (int) $validated['customer_id']
+            : null;
         $returnTo = $this->safeOrdersReturnUrl($validated['return_to'] ?? null);
 
         try {
@@ -302,10 +327,32 @@ class PosOrderCorrectionController extends Controller
                 }
 
                 $newCustomer = null;
-                if (! empty($validated['customer_id'])) {
+                if ($validated['customer_id'] !== null) {
                     $newCustomer = Costumer::query()
+                        ->with('user.role')
                         ->where('customer_id', (int) $validated['customer_id'])
-                        ->firstOrFail();
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $newCustomer) {
+                        throw ValidationException::withMessages([
+                            'customer_id' => 'The selected customer no longer exists. Please refresh and choose another customer.',
+                        ]);
+                    }
+
+                    $isNotActiveCustomerAccount = $newCustomer->user_id !== null
+                        && (strtolower((string) $newCustomer->user?->status) !== 'active'
+                            || strtolower((string) $newCustomer->user?->role?->role_name) !== 'customer');
+
+                    // An inactive customer may remain attached to its existing
+                    // historical order, but it cannot be newly assigned to a
+                    // different order during correction.
+                    if ($isNotActiveCustomerAccount
+                        && (int) $newCustomer->customer_id !== (int) $order->customer_id) {
+                        throw ValidationException::withMessages([
+                            'customer_id' => 'Only active customer accounts can be assigned. Choose an active customer or Walk-in / no linked customer.',
+                        ]);
+                    }
                 }
 
                 $beforeSnapshot = $this->makeSnapshot(
@@ -543,6 +590,7 @@ class PosOrderCorrectionController extends Controller
     private function checkoutLayoutData(): array
     {
         $customers = Costumer::query()
+            ->activeForPos()
             ->orderBy('name')
             ->get(['customer_id', 'name', 'phone']);
 
